@@ -14,7 +14,7 @@
     const POINT_KEY_PRECISION = 7;
 
     window.TerrainContours = {
-        VERSION: "2.6.0-alpha.3",
+        VERSION: "2.6.0-alpha.4",
         dataSource: null,
         visible: true,
 
@@ -57,7 +57,6 @@
                         ),
                         width: major ? 2.8 : 1.35,
                         material: color.withAlpha(major ? 0.95 : 0.78),
-                        depthFailMaterial: color.withAlpha(major ? 0.5 : 0.32),
                         clampToGround: false,
                         arcType: Cesium.ArcType.NONE
                     },
