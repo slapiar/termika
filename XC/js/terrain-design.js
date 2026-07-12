@@ -142,25 +142,31 @@
         const kRel = Math.max(convexity, concavity);
         const bRel = clamp01(geometry.breakIntensity);
         const sRel = clamp01((Number(cell.slopeDeg) || 0) / 60);
+        const contrastRel = clamp01(Math.max(kRel, bRel, 0.75 * sRel));
         let saturation = hsl.s;
         let lightness = hsl.l;
 
+        // V2 používa podstatne širší svetlostný rozsah. Slabé prejavy sa
+        // zosvetlia, silné geometrické prejavy a zlomy sa zreteľne stmavia.
         if (["G01", "G02", "G03", "G04"].includes(family)) {
-            saturation += 8 * sRel;
-            lightness += 5 - 8 * sRel;
+            saturation += 16 * sRel;
+            lightness += 12 - 24 * sRel;
         } else if (["G05", "G06", "G07"].includes(family)) {
-            saturation += 12 * kRel + 8 * bRel;
-            lightness += 7 - 10 * kRel - 6 * bRel;
+            saturation += 22 * kRel + 14 * bRel;
+            lightness += 16 - 30 * kRel - 14 * bRel;
         } else if (["G09", "G10", "G11", "G12"].includes(family)) {
-            saturation += 12 * kRel + 8 * bRel;
-            lightness += 7 - 10 * kRel - 6 * bRel;
+            saturation += 22 * kRel + 14 * bRel;
+            lightness += 16 - 30 * kRel - 14 * bRel;
         } else if (["G08", "G15", "G16"].includes(family)) {
-            saturation += 18 * bRel;
-            lightness += 4 - 10 * bRel;
+            saturation += 28 * bRel + 8 * kRel;
+            lightness += 10 - 28 * bRel - 8 * kRel;
         } else {
-            saturation += 7 * kRel + 8 * bRel;
-            lightness += 4 - 5 * bRel;
+            saturation += 14 * kRel + 16 * bRel;
+            lightness += 12 - 20 * Math.max(kRel, bRel);
         }
+
+        saturation = clamp(saturation, 45, 100);
+        lightness = clamp(lightness, 18, 82);
 
         const finalHex = hslToHex(hsl.h, saturation, lightness);
         return {
@@ -171,9 +177,12 @@
             kRel,
             sRel,
             bRel,
+            contrastRel,
+            saturationPercent: saturation,
+            lightnessPercent: lightness,
             relativeHeight: null,
             relativeDepth: null,
-            shadeMethod: "GEOMETRY_STRENGTH_V1"
+            shadeMethod: "GEOMETRY_CONTRAST_V2"
         };
     };
 
@@ -188,10 +197,10 @@
         });
 
         result.design = {
-            version: "2.6.0-alpha.1",
+            version: "2.6.0-alpha.2",
             palette: "G01-G16",
             familyMethod: "LOCAL_GEOMETRY_PLUS_LEGACY_CANDIDATE_V1",
-            shadeMethod: "GEOMETRY_STRENGTH_V1",
+            shadeMethod: "GEOMETRY_CONTRAST_V2",
             relativeHeightMethod: null,
             relativeDepthMethod: null
         };
@@ -201,11 +210,11 @@
 
     const colorForCell = function (cell) {
         const finalHex = cell?.color?.finalHex || palette.G14.hex;
-        return Cesium.Color.fromCssColorString(finalHex).withAlpha(0.92);
+        return Cesium.Color.fromCssColorString(finalHex).withAlpha(0.98);
     };
 
     window.TerrainDesign = {
-        VERSION: "2.6.0-alpha.1",
+        VERSION: "2.6.0-alpha.2",
         palette,
         familyForCell,
         shadeForCell,
@@ -229,15 +238,20 @@
 
         result.cells.forEach((cell) => {
             const breakIntensity = clamp01(cell.geometry?.breakIntensity);
+            const geometryStrength = Math.max(
+                clamp01(cell.geometry?.convexity),
+                clamp01(cell.geometry?.concavity)
+            );
+
             collection.add({
                 position: Cesium.Cartesian3.fromDegrees(
                     cell.lon,
                     cell.lat,
                     cell.heightM + offsetM
                 ),
-                pixelSize: 5 + 1.5 * breakIntensity,
+                pixelSize: 6 + 2.5 * breakIntensity + 0.8 * geometryStrength,
                 color: colorForCell(cell),
-                outlineColor: Cesium.Color.BLACK.withAlpha(0.5),
+                outlineColor: Cesium.Color.BLACK.withAlpha(0.65),
                 outlineWidth: 1,
                 id: {
                     type: "terrain-analysis-cell",
