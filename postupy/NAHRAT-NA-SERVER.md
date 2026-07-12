@@ -10,6 +10,21 @@ Toto je kompletný balík projektu, nie čiastkový patch.
 4. Skontroluj, že súbor je priamo v ceste `/termika/index.php`.
 5. Otvor stránku a stlač `Ctrl + F5`.
 
+## Rychle nastavenie bez terminalu (v2.6+)
+
+Ak hostujes projekt bez SSH pristupu, otvor po nahrani:
+
+`/termika/setup.php`
+
+Tam vies ulozit lokalny konfiguracny subor `XC/asset/local-config.php` priamo formularom:
+
+- Cesium token (aby mapa fungovala okamzite),
+- Telegram token/chat (volitelne),
+- `UPDATE_SHARED_KEY` pre ochranu `update.php` (volitelne, odporucane),
+- DB udaje (len ak ich pouzivas).
+
+Po ulozeni nemusis nastavovat serverove env premenne. Nastavenie ostava lokalne na tom hostingu.
+
 ## Novinky v2.5
 
 - kontrolný súhrn AGL v pravom paneli:

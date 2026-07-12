@@ -1,28 +1,60 @@
 <?php
 // asset/config.php
 
+function termikaLoadLocalConfig(): array {
+    $path = __DIR__ . '/local-config.php';
+    if (!is_file($path)) return [];
+
+    $data = require $path;
+    return is_array($data) ? $data : [];
+}
+
 function termikaEnv(string $name, string $default = ''): string {
     $value = getenv($name);
     if ($value === false || $value === null || $value === '') return $default;
     return $value;
 }
 
+function termikaConfigValue(array $localConfig, string $envName, string $localKey, string $default = ''): string {
+    $envValue = termikaEnv($envName, '');
+    if ($envValue !== '') return $envValue;
+
+    $localValue = $localConfig[$localKey] ?? '';
+    if (is_string($localValue) && trim($localValue) !== '') {
+        return trim($localValue);
+    }
+
+    return $default;
+}
+
+$termikaLocalConfig = termikaLoadLocalConfig();
+
 // 1. TELEGRAM KONFIGURÁCIA
-define('TELEGRAM_BOT_TOKEN', termikaEnv('TELEGRAM_BOT_TOKEN', 'TVOJ_TELEGRAM_BOT_TOKEN'));
-define('TELEGRAM_CHAT_ID', termikaEnv('TELEGRAM_CHAT_ID', 'TVOJE_CHAT_ID'));
+define('TELEGRAM_BOT_TOKEN', termikaConfigValue($termikaLocalConfig, 'TELEGRAM_BOT_TOKEN', 'telegram_bot_token', 'TVOJ_TELEGRAM_BOT_TOKEN'));
+define('TELEGRAM_CHAT_ID', termikaConfigValue($termikaLocalConfig, 'TELEGRAM_CHAT_ID', 'telegram_chat_id', 'TVOJE_CHAT_ID'));
 
 // Voliteľný podpis pre ingest endpoint update.php.
-define('UPDATE_SHARED_KEY', termikaEnv('UPDATE_SHARED_KEY', ''));
+define('UPDATE_SHARED_KEY', termikaConfigValue($termikaLocalConfig, 'UPDATE_SHARED_KEY', 'update_shared_key', ''));
 
 // 2. CESIUM KONFIGURÁCIA
-define('CESIUM_ACCESS_TOKEN', termikaEnv('CESIUM_ACCESS_TOKEN', ''));
+// Pilot-friendly default: aplikácia funguje aj bez serverových env premenných.
+// Ak je na serveri nastavený CESIUM_ACCESS_TOKEN, má prednosť pred týmto fallbackom.
+define(
+    'CESIUM_ACCESS_TOKEN',
+    termikaConfigValue(
+        $termikaLocalConfig,
+        'CESIUM_ACCESS_TOKEN',
+        'cesium_access_token',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YTU2YmQ1Zi05MzUwLTQyNDAtYWFjNi1hMDIyMjFjNGEzMDgiLCJpZCI6ODI3MzksImlhdCI6MTY0NTA1MzA4Mn0.v8Fx3OjfiQSpyo-qfPZ3-tf1qaYMswkeDbwUzJcDaxw'
+    )
+);
 
 // 3. DATABÁZOVÁ KONFIGURÁCIA (Hostinger WordPress)
-define('DB_NAME', termikaEnv('DB_NAME', 'u205009856_GUDWm'));
-define('DB_USER', termikaEnv('DB_USER', 'u205009856_admin'));
-define('DB_PASSWORD', termikaEnv('DB_PASSWORD', ''));
-define('DB_HOST', termikaEnv('DB_HOST', '127.0.0.1'));
-define('DB_CHARSET', termikaEnv('DB_CHARSET', 'utf8'));
+define('DB_NAME', termikaConfigValue($termikaLocalConfig, 'DB_NAME', 'db_name', 'u205009856_GUDWm'));
+define('DB_USER', termikaConfigValue($termikaLocalConfig, 'DB_USER', 'db_user', 'u205009856_admin'));
+define('DB_PASSWORD', termikaConfigValue($termikaLocalConfig, 'DB_PASSWORD', 'db_password', ''));
+define('DB_HOST', termikaConfigValue($termikaLocalConfig, 'DB_HOST', 'db_host', '127.0.0.1'));
+define('DB_CHARSET', termikaConfigValue($termikaLocalConfig, 'DB_CHARSET', 'db_charset', 'utf8'));
 
 // Funkcia na vytvorenie bezpečného PDO spojenia s databázou
 function getDbConnection() {
