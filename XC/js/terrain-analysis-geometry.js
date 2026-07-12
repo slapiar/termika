@@ -94,7 +94,7 @@
                 cellsBeforeMask: rawResult.cells.length,
                 cellsAfterMask: circularResult.cells.length,
                 palette: "G01-G16",
-                shadeMethod: "GEOMETRY_STRENGTH_V1",
+                shadeMethod: "GEOMETRY_CONTRAST_V2",
                 relativeHeightMethod: null,
                 relativeDepthMethod: null
             };
