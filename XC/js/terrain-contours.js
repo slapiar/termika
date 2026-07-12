@@ -1,5 +1,6 @@
 // js/terrain-contours.js
 // TermikaXC v2.6 – priehľadná mapová vrstva 3D vrstevníc.
+// Opätovne commitnuté na main kvôli spoľahlivému nasadeniu a obnoveniu cache.
 
 (function () {
     if (!window.TerrainAnalysisCore) {
@@ -11,7 +12,7 @@
     const HEIGHT_OFFSET_M = 1.5;
 
     window.TerrainContours = {
-        VERSION: "2.6.0-alpha.1",
+        VERSION: "2.6.0-alpha.2",
         dataSource: null,
         visible: true,
 
