@@ -9,7 +9,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     http_response_code(500);
     exit('Chýba CESIUM_ACCESS_TOKEN.');
 }
-$assetVersion = '20260712-02';
+$assetVersion = '20260712-03';
 ?>
 <!doctype html>
 <html lang="sk">
@@ -20,14 +20,22 @@ $assetVersion = '20260712-02';
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Cesium.js"></script>
     <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Widgets/widgets.css">
     <script src="js/terrain-analysis.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/terrain-analysis-core.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/terrain-analysis-geometry.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <style>
         html,body,#cesiumContainer{width:100%;height:100%;margin:0;overflow:hidden;background:#071018}
         #panel,#legend{position:absolute;z-index:10;padding:12px;background:rgba(7,16,24,.92);color:#eef;font:14px/1.4 system-ui;border:1px solid #426277;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
-        #panel{top:12px;left:12px;width:min(390px,calc(100vw - 24px))}
+        #panel{top:12px;left:12px;width:min(420px,calc(100vw - 24px));max-height:calc(100vh - 48px);overflow:auto}
         #legend{top:12px;right:12px;width:260px}
         #panel h1,#legend h2{font-size:15px;margin:0 0 8px;color:#70e8ff}
         #panel p{margin:5px 0}
         #panel button{margin:4px 4px 4px 0;padding:7px 10px;cursor:pointer}
+        #panel fieldset{margin:10px 0;padding:9px;border:1px solid #35505f;border-radius:6px}
+        #panel legend{padding:0 6px;color:#70e8ff;font-weight:700}
+        #panel label{display:flex;gap:8px;align-items:center;margin:6px 0}
+        #panel input[type="number"]{width:90px;padding:4px;background:#10212b;color:#fff;border:1px solid #426277;border-radius:4px}
+        #panel .future{color:#7f98a5}
+        #panel .future input{opacity:.55}
         #status{max-height:180px;overflow:auto;white-space:pre-wrap;color:#d7e7ef}
         .ok{color:#8cff9d}.err{color:#ff8585}
         .legend-item{display:grid;grid-template-columns:18px 1fr;gap:9px;align-items:start;margin:8px 0}
@@ -36,16 +44,33 @@ $assetVersion = '20260712-02';
         .legend-item span{display:block;font-size:12px;color:#b9cbd5}
         .legend-note{margin:10px 0 0;padding-top:9px;border-top:1px solid #35505f;font-size:11px;color:#8fa9b8}
         .flat{background:#d3d3d3}.slope{background:#ffd700}.ridge{background:#ff0000}.hill{background:#ff4500}.gully{background:#00bfff}.depression{background:#0000ff}.transition{background:#9370db}
-        @media (max-width:760px){#legend{top:auto;right:12px;bottom:12px;left:12px;width:auto;max-height:38vh;overflow:auto}#panel{right:12px;width:auto}}
+        @media (max-width:760px){#legend{top:auto;right:12px;bottom:12px;left:12px;width:auto;max-height:34vh;overflow:auto}#panel{right:12px;width:auto;max-height:55vh}}
     </style>
 </head>
 <body>
 <div id="cesiumContainer"></div>
 <section id="panel">
-    <h1>TermikaXC v2.6 · geometria terénu</h1>
-    <p>Klikni do terénu a potom spusti analýzu.</p>
+    <h1>TermikaXC v2.6 · modulárna analýza terénu</h1>
+    <p>Klikni do terénu. Zvolený bod je stredom prvotného kruhového pohľadu.</p>
     <p>Stred: <strong id="centerText">46.43000, 11.85000</strong></p>
-    <button id="analyzeButton" type="button">Analyzovať terén</button>
+
+    <fieldset>
+        <legend>Rozsah analýzy</legend>
+        <label>Polomer kruhu <input id="radiusInput" type="number" min="40" max="20000" step="40" value="400"> m</label>
+        <label>Rozostup vzoriek <input id="spacingInput" type="number" min="5" max="1000" step="5" value="40"> m</label>
+    </fieldset>
+
+    <fieldset>
+        <legend>Analytické vrstvy</legend>
+        <label><input class="module-toggle" type="checkbox" value="geometry" checked> Geometria reliéfu</label>
+        <label class="future"><input type="checkbox" disabled> Doliny a žľaby – pripravujeme</label>
+        <label class="future"><input type="checkbox" disabled> Hydrológia – pripravujeme</label>
+        <label class="future"><input type="checkbox" disabled> Povrchový kryt – pripravujeme</label>
+        <label class="future"><input type="checkbox" disabled> Geológia – pripravujeme</label>
+        <label class="future"><input type="checkbox" disabled> Oslnenie – pripravujeme</label>
+    </fieldset>
+
+    <button id="analyzeButton" type="button">Spustiť vybrané analýzy</button>
     <button id="clearButton" type="button">Skryť diagnostiku</button>
     <div id="status"></div>
 </section>
@@ -58,7 +83,7 @@ $assetVersion = '20260712-02';
     <div class="legend-item"><i class="legend-swatch gully"></i><div><strong>Žľab alebo zbernica</strong><span>Konkávna línia, do ktorej sa terén zbieha.</span></div></div>
     <div class="legend-item"><i class="legend-swatch depression"></i><div><strong>Depresia</strong><span>Lokálne prehĺbená časť terénu.</span></div></div>
     <div class="legend-item"><i class="legend-swatch transition"></i><div><strong>Prechodový terén</strong><span>Nejednoznačný alebo zmiešaný geometrický tvar.</span></div></div>
-    <p class="legend-note">Farby zatiaľ vyjadrujú iba geometriu terénu, nie silu termiky ani pravdepodobnosť hotspotu.</p>
+    <p class="legend-note">Farby zatiaľ vyjadrujú iba geometriu terénu. Zobrazené sú iba bunky vo vnútri prvotného kruhového pohľadu.</p>
 </aside>
 <script>
     const statusEl = document.getElementById('status');
@@ -98,27 +123,42 @@ $assetVersion = '20260712-02';
             lon: Cesium.Math.toDegrees(point.longitude)
         };
         centerText.textContent = selectedCenter.lat.toFixed(5) + ', ' + selectedCenter.lon.toFixed(5);
-        logStatus('Vybraný stred analýzy.');
+        logStatus('Vybraný nový stred kruhovej analýzy.');
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
     document.getElementById('analyzeButton').addEventListener('click', async () => {
         const button = document.getElementById('analyzeButton');
+        const enabledModules = Array.from(document.querySelectorAll('.module-toggle:checked'))
+            .map((input) => input.value);
+
         button.disabled = true;
         statusEl.replaceChildren();
-        logStatus('Odoberám výšky terénu...');
+        logStatus('Spúšťam moduly: ' + enabledModules.join(', ') + '.');
+
         try {
-            const result = await TerrainAnalysis.analyzujOblast(viewer, {
+            const result = await TerrainAnalysisCore.analyze(viewer, {
                 center: selectedCenter,
-                rows: 21,
-                cols: 21,
-                spacingM: 40
+                radiusM: Number(document.getElementById('radiusInput').value),
+                spacingM: Number(document.getElementById('spacingInput').value),
+                enabledModules
             });
-            TerrainAnalysis.zobrazDiagnostiku(viewer, result);
+
+            const geometry = result.layers.geometry;
+            TerrainAnalysis.zobrazDiagnostiku(viewer, geometry);
+
             logStatus(
-                'Hotovo: ' + result.summary.cellCount + ' buniek, reliéf ' +
-                result.summary.reliefM.toFixed(1) + ' m, priemerný sklon ' +
-                result.summary.meanSlopeDeg.toFixed(1) + '°.',
+                'Kruhový pohľad: polomer ' + geometry.radiusM.toFixed(0) + ' m, ' +
+                geometry.summary.cellCount + ' buniek, reliéf ' +
+                geometry.summary.reliefM.toFixed(1) + ' m, priemerný sklon ' +
+                geometry.summary.meanSlopeDeg.toFixed(1) + '°.',
                 'success'
+            );
+
+            const diagnostics = result.diagnostics.geometry;
+            logStatus(
+                'Hrubá podkladová mriežka: ' + diagnostics.gridRows + ' × ' +
+                diagnostics.gridCols + '; po kruhovej maske ostalo ' +
+                diagnostics.cellsAfterMask + ' z ' + diagnostics.cellsBeforeMask + ' buniek.'
             );
         } catch (error) {
             logStatus('Chyba: ' + error.message, 'error');
