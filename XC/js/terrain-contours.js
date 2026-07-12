@@ -1,6 +1,7 @@
 // js/terrain-contours.js
 // TermikaXC v2.6 – priehľadná mapová vrstva 3D vrstevníc.
-// Opätovne commitnuté na main kvôli spoľahlivému nasadeniu a obnoveniu cache.
+// Vrstevnice sa po výpočte spájajú do súvislých čiar a ich body sa znovu
+// vzorkujú na skutočnom Cesium teréne, aby sa nestrácali vo vnútri prudkých stien.
 
 (function () {
     if (!window.TerrainAnalysisCore) {
@@ -9,10 +10,11 @@
 
     const DEFAULT_INTERVAL_M = 10;
     const INDEX_INTERVAL_M = 50;
-    const HEIGHT_OFFSET_M = 1.5;
+    const HEIGHT_OFFSET_M = 3;
+    const POINT_KEY_PRECISION = 7;
 
     window.TerrainContours = {
-        VERSION: "2.6.0-alpha.2",
+        VERSION: "2.6.0-alpha.3",
         dataSource: null,
         visible: true,
 
@@ -29,34 +31,39 @@
         },
 
         render: async function (viewer, contourResult) {
-            if (!viewer || !contourResult?.segments?.length) {
+            const lines = contourResult?.lines || contourResult?.segments || [];
+            if (!viewer || !lines.length) {
                 this.clear(viewer);
                 return null;
             }
 
             this.clear(viewer);
+            const correctedLines = await correctLinesToTerrain(viewer, lines);
             const dataSource = new Cesium.CustomDataSource("terrain-contours");
 
-            contourResult.segments.forEach((segment, index) => {
-                const major = segment.levelM % INDEX_INTERVAL_M === 0;
+            correctedLines.forEach((line, index) => {
+                const major = line.levelM % INDEX_INTERVAL_M === 0;
+                const color = Cesium.Color.fromCssColorString("#404040");
+
                 dataSource.entities.add({
                     id: "terrain-contour-" + index,
                     polyline: {
-                        positions: segment.points.map((point) =>
+                        positions: line.points.map((point) =>
                             Cesium.Cartesian3.fromDegrees(
                                 point.lon,
                                 point.lat,
-                                segment.levelM + HEIGHT_OFFSET_M
+                                point.renderHeightM
                             )
                         ),
-                        width: major ? 2.2 : 1.0,
-                        material: Cesium.Color.fromCssColorString("#404040").withAlpha(major ? 0.92 : 0.72),
+                        width: major ? 2.8 : 1.35,
+                        material: color.withAlpha(major ? 0.95 : 0.78),
+                        depthFailMaterial: color.withAlpha(major ? 0.5 : 0.32),
                         clampToGround: false,
                         arcType: Cesium.ArcType.NONE
                     },
                     properties: {
                         layer: "VRSTEVNICE",
-                        elevationM: segment.levelM,
+                        elevationM: line.levelM,
                         kind: major ? "HLAVNÁ_VRSTEVNICA" : "BEŽNÁ_VRSTEVNICA"
                     }
                 });
@@ -68,6 +75,10 @@
             return dataSource;
         }
     };
+
+    function pointKey(point) {
+        return point.lat.toFixed(POINT_KEY_PRECISION) + "," + point.lon.toFixed(POINT_KEY_PRECISION);
+    }
 
     function interpolate(a, b, levelM) {
         const delta = b.heightM - a.heightM;
@@ -133,6 +144,113 @@
         return { intervalM, minLevelM: minLevel, maxLevelM: maxLevel, segments };
     }
 
+    function stitchSegments(segments) {
+        const byLevel = new Map();
+        segments.forEach((segment, index) => {
+            if (!byLevel.has(segment.levelM)) byLevel.set(segment.levelM, []);
+            byLevel.get(segment.levelM).push({ ...segment, sourceIndex: index });
+        });
+
+        const lines = [];
+
+        byLevel.forEach((levelSegments, levelM) => {
+            const endpointMap = new Map();
+            levelSegments.forEach((segment, index) => {
+                segment.points.forEach((point, endpointIndex) => {
+                    const key = pointKey(point);
+                    if (!endpointMap.has(key)) endpointMap.set(key, []);
+                    endpointMap.get(key).push({ index, endpointIndex });
+                });
+            });
+
+            const used = new Set();
+
+            const walk = (startIndex, startEndpointIndex) => {
+                const first = levelSegments[startIndex];
+                const linePoints = startEndpointIndex === 0
+                    ? [first.points[0], first.points[1]]
+                    : [first.points[1], first.points[0]];
+                used.add(startIndex);
+
+                while (true) {
+                    const tail = linePoints[linePoints.length - 1];
+                    const candidates = endpointMap.get(pointKey(tail)) || [];
+                    const next = candidates.find((candidate) => !used.has(candidate.index));
+                    if (!next) break;
+
+                    const segment = levelSegments[next.index];
+                    const nextPoint = next.endpointIndex === 0 ? segment.points[1] : segment.points[0];
+                    linePoints.push(nextPoint);
+                    used.add(next.index);
+                }
+
+                return linePoints;
+            };
+
+            levelSegments.forEach((segment, index) => {
+                if (used.has(index)) return;
+                const degree0 = (endpointMap.get(pointKey(segment.points[0])) || []).length;
+                const degree1 = (endpointMap.get(pointKey(segment.points[1])) || []).length;
+                const startEndpointIndex = degree0 === 1 ? 0 : (degree1 === 1 ? 1 : 0);
+                const points = walk(index, startEndpointIndex);
+                if (points.length >= 2) lines.push({ levelM, points });
+            });
+        });
+
+        return lines;
+    }
+
+    async function correctLinesToTerrain(viewer, lines) {
+        const provider = viewer?.scene?.globe?.terrainProvider || viewer?.terrainProvider;
+        if (!provider) {
+            return lines.map((line) => ({
+                ...line,
+                points: line.points.map((point) => ({
+                    ...point,
+                    renderHeightM: line.levelM + HEIGHT_OFFSET_M
+                }))
+            }));
+        }
+
+        const flatPoints = [];
+        lines.forEach((line, lineIndex) => {
+            line.points.forEach((point, pointIndex) => {
+                flatPoints.push({ lineIndex, pointIndex, point });
+            });
+        });
+
+        const cartographics = flatPoints.map((item) =>
+            Cesium.Cartographic.fromDegrees(item.point.lon, item.point.lat)
+        );
+
+        let sampled;
+        try {
+            sampled = await Cesium.sampleTerrainMostDetailed(provider, cartographics);
+        } catch (error) {
+            return lines.map((line) => ({
+                ...line,
+                points: line.points.map((point) => ({
+                    ...point,
+                    renderHeightM: line.levelM + HEIGHT_OFFSET_M
+                }))
+            }));
+        }
+
+        const corrected = lines.map((line) => ({
+            ...line,
+            points: line.points.map((point) => ({ ...point }))
+        }));
+
+        sampled.forEach((cartographic, index) => {
+            const item = flatPoints[index];
+            const sampledHeight = Number(cartographic?.height);
+            corrected[item.lineIndex].points[item.pointIndex].renderHeightM =
+                (Number.isFinite(sampledHeight) ? sampledHeight : lines[item.lineIndex].levelM) + HEIGHT_OFFSET_M;
+        });
+
+        return corrected;
+    }
+
     TerrainAnalysisCore.registerModule({
         id: "contours",
         title: "Vrstevnice",
@@ -142,10 +260,11 @@
         run: async function (context) {
             const geometry = context.layers.geometry;
             const result = buildSegments(geometry, DEFAULT_INTERVAL_M);
+            result.lines = stitchSegments(result.segments);
 
             context.provenance.contours = {
                 dataOrigin: "ODVODENÉ Z MODELOVÉHO TERÉNU CESIUM",
-                method: "lineárna interpolácia priesečníkov výškových hladín v bunkách mriežky",
+                method: "lineárna interpolácia priesečníkov výškových hladín, spojenie úsekov a spätná korekcia na povrch terénu",
                 intervalM: DEFAULT_INTERVAL_M,
                 indexIntervalM: INDEX_INTERVAL_M,
                 moduleVersion: TerrainContours.VERSION
@@ -155,6 +274,7 @@
                 intervalM: DEFAULT_INTERVAL_M,
                 indexIntervalM: INDEX_INTERVAL_M,
                 segmentCount: result.segments.length,
+                lineCount: result.lines.length,
                 minLevelM: result.minLevelM,
                 maxLevelM: result.maxLevelM
             };
