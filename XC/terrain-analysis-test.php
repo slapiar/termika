@@ -9,7 +9,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     http_response_code(500);
     exit('Chýba CESIUM_ACCESS_TOKEN.');
 }
-$assetVersion = '20260712-05';
+$assetVersion = '20260712-06';
 ?>
 <!doctype html>
 <html lang="sk">
@@ -22,13 +22,15 @@ $assetVersion = '20260712-05';
     <script src="js/terrain-analysis.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-analysis-core.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-analysis-geometry.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/terrain-contours.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <style>
         :root{color-scheme:dark}
         html,body,#cesiumContainer{width:100%;height:100%;margin:0;overflow:hidden;background:#071018}
         #cesiumContainer{cursor:crosshair}
+        [hidden]{display:none!important}
         .floating-window{position:absolute;z-index:20;display:flex;flex-direction:column;min-width:250px;min-height:120px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);background:rgba(7,16,24,.94);color:#eef;font:14px/1.4 system-ui;border:1px solid #426277;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.38);resize:both;overflow:hidden}
-        #panel{top:12px;left:12px;width:420px;height:560px}
-        #legend{top:12px;right:12px;width:285px;height:500px}
+        #panel{top:12px;left:12px;width:420px;height:620px}
+        #legend{top:12px;right:12px;width:285px;height:540px}
         .window-header{display:flex;align-items:center;gap:8px;flex:0 0 auto;padding:8px 9px;background:rgba(28,58,73,.95);border-bottom:1px solid #426277;cursor:move;user-select:none;touch-action:none}
         .window-title{flex:1;color:#70e8ff;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .window-actions{display:flex;gap:4px}
@@ -46,6 +48,8 @@ $assetVersion = '20260712-05';
         .ok{color:#8cff9d}.err{color:#ff8585}
         .legend-item{display:grid;grid-template-columns:18px 1fr;gap:9px;align-items:start;margin:8px 0}
         .legend-swatch{width:14px;height:14px;margin-top:2px;border:1px solid rgba(255,255,255,.65);border-radius:50%;box-shadow:0 0 8px rgba(255,255,255,.18)}
+        .legend-line{width:18px;height:0;margin-top:8px;border-top:2px solid #404040}
+        .legend-line.major{border-top-width:4px}
         .legend-item strong{display:block;font-size:13px;color:#fff}
         .legend-item span{display:block;font-size:12px;color:#b9cbd5}
         .legend-note{margin:10px 0 0;padding-top:9px;border-top:1px solid #35505f;font-size:11px;color:#8fa9b8}
@@ -54,7 +58,7 @@ $assetVersion = '20260712-05';
         #windowDock button{padding:6px 10px;border:1px solid #54778a;border-radius:5px;background:#10212b;color:#dff7ff;cursor:pointer}
         #windowDock button:hover{background:#1c3b4b}
         #aimHint{position:absolute;left:50%;top:12px;z-index:12;transform:translateX(-50%);padding:6px 10px;background:rgba(7,16,24,.78);color:#d8f8ff;border:1px solid #426277;border-radius:6px;font:12px/1.2 system-ui;pointer-events:none}
-        @media (max-width:760px){#panel{width:calc(100vw - 24px);height:55vh}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:34vh}.floating-window{max-width:calc(100vw - 24px)}#windowDock{bottom:6px}}
+        @media (max-width:760px){#panel{width:calc(100vw - 24px);height:60vh}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}.floating-window{max-width:calc(100vw - 24px)}#windowDock{bottom:6px}}
     </style>
 </head>
 <body>
@@ -79,6 +83,7 @@ $assetVersion = '20260712-05';
         <fieldset>
             <legend>Analytické vrstvy</legend>
             <label><input class="module-toggle" type="checkbox" value="geometry" checked> Geometria reliéfu</label>
+            <label><input class="module-toggle" type="checkbox" value="contours" checked> Vrstevnice</label>
             <label class="future"><input type="checkbox" disabled> Doliny a žľaby – pripravujeme</label>
             <label class="future"><input type="checkbox" disabled> Hydrológia – pripravujeme</label>
             <label class="future"><input type="checkbox" disabled> Povrchový kryt – pripravujeme</label>
@@ -86,8 +91,13 @@ $assetVersion = '20260712-05';
             <label class="future"><input type="checkbox" disabled> Oslnenie – pripravujeme</label>
         </fieldset>
 
+        <fieldset>
+            <legend>Mapové vrstvy</legend>
+            <label><input id="contoursVisible" type="checkbox" checked> Zobraziť tmavošedé vrstevnice</label>
+        </fieldset>
+
         <button id="analyzeButton" type="button">Spustiť vybrané analýzy</button>
-        <button id="clearButton" type="button">Skryť diagnostiku</button>
+        <button id="clearButton" type="button">Skryť výsledky</button>
         <div id="status"></div>
     </div>
 </section>
@@ -105,7 +115,9 @@ $assetVersion = '20260712-05';
         <div class="legend-item"><i class="legend-swatch gully"></i><div><strong>Žľab alebo zbernica</strong><span>Konkávna línia, do ktorej sa terén zbieha.</span></div></div>
         <div class="legend-item"><i class="legend-swatch depression"></i><div><strong>Depresia</strong><span>Lokálne prehĺbená časť terénu.</span></div></div>
         <div class="legend-item"><i class="legend-swatch transition"></i><div><strong>Prechodový terén</strong><span>Nejednoznačný alebo zmiešaný geometrický tvar.</span></div></div>
-        <p class="legend-note">Farby zatiaľ vyjadrujú iba geometriu terénu. Zobrazené sú iba bunky vo vnútri prvotného kruhového pohľadu.</p>
+        <div class="legend-item"><i class="legend-line"></i><div><strong>Vrstevnica</strong><span>Tmavošedá čiara každých 10 m.</span></div></div>
+        <div class="legend-item"><i class="legend-line major"></i><div><strong>Hlavná vrstevnica</strong><span>Hrubšia čiara každých 50 m.</span></div></div>
+        <p class="legend-note">Vrstevnice sú samostatná priehľadná mapová vrstva bez výplne. Farebné body zostávajú čitateľné nad terénom.</p>
     </div>
 </aside>
 
@@ -118,6 +130,7 @@ $assetVersion = '20260712-05';
     const statusEl = document.getElementById('status');
     const centerText = document.getElementById('centerText');
     const radiusInput = document.getElementById('radiusInput');
+    const contoursVisible = document.getElementById('contoursVisible');
     let selectedCenter = { lat: 46.43, lon: 11.85 };
     let previewCenter = { ...selectedCenter };
     let highestWindowZ = 20;
@@ -197,6 +210,10 @@ $assetVersion = '20260712-05';
         logStatus('Vybraný nový stred kruhovej analýzy.');
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
+    contoursVisible.addEventListener('change', () => {
+        TerrainContours.setVisible(contoursVisible.checked);
+    });
+
     document.getElementById('analyzeButton').addEventListener('click', async () => {
         const button = document.getElementById('analyzeButton');
         const enabledModules = Array.from(document.querySelectorAll('.module-toggle:checked'))
@@ -215,22 +232,36 @@ $assetVersion = '20260712-05';
             });
 
             const geometry = result.layers.geometry;
-            TerrainAnalysis.zobrazDiagnostiku(viewer, geometry);
+            if (geometry) TerrainAnalysis.zobrazDiagnostiku(viewer, geometry);
 
-            logStatus(
-                'Kruhový pohľad: polomer ' + geometry.radiusM.toFixed(0) + ' m, ' +
-                geometry.summary.cellCount + ' buniek, reliéf ' +
-                geometry.summary.reliefM.toFixed(1) + ' m, priemerný sklon ' +
-                geometry.summary.meanSlopeDeg.toFixed(1) + '°.',
-                'success'
-            );
+            if (result.layers.contours) {
+                TerrainContours.setVisible(contoursVisible.checked);
+                await TerrainContours.render(viewer, result.layers.contours);
+                const contourDiagnostics = result.diagnostics.contours;
+                logStatus(
+                    'Vrstevnice: interval ' + contourDiagnostics.intervalM + ' m, hlavné každých ' +
+                    contourDiagnostics.indexIntervalM + ' m, ' + contourDiagnostics.segmentCount + ' úsekov.'
+                );
+            } else {
+                TerrainContours.clear(viewer);
+            }
 
-            const diagnostics = result.diagnostics.geometry;
-            logStatus(
-                'Hrubá podkladová mriežka: ' + diagnostics.gridRows + ' × ' +
-                diagnostics.gridCols + '; po kruhovej maske ostalo ' +
-                diagnostics.cellsAfterMask + ' z ' + diagnostics.cellsBeforeMask + ' buniek.'
-            );
+            if (geometry) {
+                logStatus(
+                    'Kruhový pohľad: polomer ' + geometry.radiusM.toFixed(0) + ' m, ' +
+                    geometry.summary.cellCount + ' buniek, reliéf ' +
+                    geometry.summary.reliefM.toFixed(1) + ' m, priemerný sklon ' +
+                    geometry.summary.meanSlopeDeg.toFixed(1) + '°.',
+                    'success'
+                );
+
+                const diagnostics = result.diagnostics.geometry;
+                logStatus(
+                    'Hrubá podkladová mriežka: ' + diagnostics.gridRows + ' × ' +
+                    diagnostics.gridCols + '; po kruhovej maske ostalo ' +
+                    diagnostics.cellsAfterMask + ' z ' + diagnostics.cellsBeforeMask + ' buniek.'
+                );
+            }
         } catch (error) {
             logStatus('Chyba: ' + error.message, 'error');
         } finally {
@@ -240,7 +271,8 @@ $assetVersion = '20260712-05';
 
     document.getElementById('clearButton').addEventListener('click', () => {
         TerrainAnalysis.skryDiagnostiku(viewer);
-        logStatus('Diagnostická vrstva bola skrytá.');
+        TerrainContours.clear(viewer);
+        logStatus('Výsledné mapové vrstvy boli skryté.');
     });
 
     function keepWindowInViewport(windowEl) {
@@ -286,7 +318,8 @@ $assetVersion = '20260712-05';
         header.addEventListener('pointerup', stopDrag);
         header.addEventListener('pointercancel', stopDrag);
 
-        windowEl.querySelector('.close-window').addEventListener('click', () => {
+        windowEl.querySelector('.close-window').addEventListener('click', (event) => {
+            event.stopPropagation();
             windowEl.hidden = true;
         });
     });
