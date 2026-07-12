@@ -280,3 +280,168 @@ Celkový výpočtový reťazec má byť:
 - Geometriu, energetiku povrchu, hydrológiu, geológiu a atmosféru spracúvať ako samostatné, navzájom previazané vrstvy.
 - Modelové, odvodené a interpolované údaje nikdy neoznačovať ako merané.
 - Každý významný fyzikálny predpoklad zapisovať do dokumentácie a nenechávať ho iba v kóde.
+
+## 14. Modulárna architektúra analýzy
+
+Celková analýza terénu sa nesmie rozvíjať ako jeden stále väčší skript, ktorý pri každom spustení automaticky vykoná všetky dostupné výpočty.
+
+Základ systému má fungovať ako správca analyzovanej oblasti, spoločného dátového modelu a samostatných analytických modulov. Má načítať iba tie analytické vrstvy, ktoré sú pre daný účel zapnuté alebo potrebné.
+
+Pracovná architektúra:
+
+```text
+terrain-analysis-core.js
+        │
+        ├── terrain-elevation.js
+        ├── terrain-slope.js
+        ├── terrain-curvature.js
+        ├── terrain-morphology.js
+        ├── terrain-valleys.js
+        ├── terrain-hydrology.js
+        ├── terrain-surface.js
+        ├── terrain-geology.js
+        ├── solar-analysis.js
+        ├── surface-energy.js
+        └── ďalšie analytické moduly
+```
+
+Názvy modulov sú pracovné a môžu sa počas implementácie spresniť. Záväzný je princíp, že jednotlivé fyzikálne a geometrické úlohy majú zostať oddelené, samostatne testovateľné a podľa potreby zapínateľné.
+
+Jadro analýzy má najmä:
+
+- určiť stred a rozsah analýzy,
+- vytvoriť a spravovať spoločnú mapu buniek alebo terénnych prvkov,
+- evidovať dostupnosť a pôvod údajov,
+- odovzdávať modulom iba potrebné vstupy,
+- zapisovať výsledky modulov do spoločného dátového modelu,
+- riadiť poradie a závislosti výpočtov,
+- zabrániť opakovanému výpočtu už dostupných údajov,
+- uchovávať výsledky vhodné na ďalšie použitie pri pohybe po trase letu.
+
+Samotná veľkosť načítaného JavaScriptu nie je jediným problémom výkonu. Kritickejší je objem opakovane vykonávaných výpočtov nad veľkým počtom buniek. Preto sa nesmú automaticky spúšťať všetky analytické vrstvy pri každom posune analýzy.
+
+## 15. Spoločný dátový model krajiny
+
+Každý analytický modul má zapisovať výsledok do spoločného objektu bunky alebo terénneho prvku. Nevypočítaná vrstva musí zostať výslovne prázdna alebo označená ako nedostupná.
+
+Pracovný príklad:
+
+```js
+cell = {
+    terrain: {
+        heightM: 842,
+        slopeDeg: 18,
+        aspectDeg: 214
+    },
+
+    morphology: {
+        type: "SVAH",
+        ridgeScore: 0.18,
+        valleyScore: 0.04
+    },
+
+    surface: null,
+    hydrology: null,
+    solar: null,
+    thermal: null
+};
+```
+
+Hodnota `null` neznamená nulový fyzikálny účinok. Znamená, že daný modul ešte nebol vykonaný alebo nemá dostupné vstupy.
+
+Každý výsledok má podľa možností obsahovať aj:
+
+- pôvod údaja,
+- čas platnosti,
+- mierku alebo rozlíšenie,
+- použitú metódu,
+- odhad neistoty alebo mieru dôvery,
+- identifikáciu modulu a jeho verzie.
+
+## 16. Kruhový prvotný pohľad
+
+Prvotná hrubá analýza sa má vykonávať ako kruhový pohľad okolo zvoleného stredu.
+
+Kruh je prirodzenejší počiatočný rozsah než štvorec, pretože:
+
+- vzdialenosť hranice od stredu je vo všetkých smeroch rovnaká,
+- nevznikajú umelé rohy analyzovanej oblasti,
+- analýza nie je zvýhodnená v smeroch osí mriežky,
+- jednotlivé uhlové sektory možno neskôr rozširovať samostatne.
+
+Vnútorné vzorkovanie môže byť počas vývoja naďalej založené na pravouhlej mriežke. Bunky mimo zvoleného kruhu sa však nemusia vyhodnocovať alebo sa nezaradia do aktívnej analyzovanej oblasti.
+
+Kruhový pohľad nie je konečnou hranicou fyzikálnej analýzy. Je počiatočným rozhľadom systému do krajiny.
+
+Pracovný postup:
+
+```text
+zvolený stred
+→ základný kruhový pohľad
+→ hrubá analýza reliéfu
+→ zistenie otvorených morfologických smerov
+→ rozšírenie iba relevantných sektorov
+→ nepravidelná adaptívna oblasť zodpovedajúca krajine
+```
+
+Ak napríklad svah, dolina, hrebeň alebo žľab pokračuje cez hranicu základného kruhu, analýza sa má neskôr rozšíriť iba v príslušnom smere a nemá zväčšovať celý štvorec alebo celý kruh bez fyzikálneho dôvodu.
+
+## 17. Ručný výber analytických vrstiev počas vývoja
+
+Počas vývoja sa má vytvoriť samostatná ovládacia lišta, na ktorej bude možné ručne zapínať jednotlivé druhy analýzy.
+
+Pracovný návrh:
+
+```text
+ANALÝZA TERÉNU
+
+[✓] Výška terénu
+[✓] Sklon a orientácia
+[✓] Zakrivenie
+[ ] Morfológia
+[ ] Doliny a žľaby
+[ ] Hydrológia
+[ ] Povrchový kryt
+[ ] Geológia
+[ ] Oslnenie
+[ ] Energetika povrchu
+
+Polomer:       400 m
+Rozlíšenie:    Hrubé
+Rozsah:        Kruhový
+
+[ Spustiť analýzu ]
+```
+
+Ručný výber umožní:
+
+- samostatne overovať správnosť jednotlivých modulov,
+- merať ich výpočtovú náročnosť,
+- porovnávať výsledky bez zásahu ostatných vrstiev,
+- odhaľovať chyby v poradí alebo závislostiach výpočtov,
+- počas vývoja nespúšťať drahé výpočty bez potreby.
+
+Neskôr možno doplniť prednastavené pracovné režimy:
+
+- Rýchly prieskum,
+- Geometria reliéfu,
+- Morfológia,
+- Energetika povrchu,
+- Kompletná analýza,
+- Vlastný výber.
+
+Možné režimy rozsahu:
+
+- kruhový,
+- podľa aktuálneho pohľadu kamery,
+- adaptívny.
+
+V prvej etape zostane rozhodujúci ručný režim. Automatické zapínanie modulov príde až po overení ich samostatnej funkcie, výpočtovej ceny a vzájomných závislostí.
+
+## 18. Záväzné architektonické rozhodnutie
+
+`terrain-analysis-core.js` nemá byť monolitický výpočtový modul. Má byť správcom analyzovanej oblasti, spoločného dátového modelu a samostatných analytických modulov.
+
+Prvotná analýza začne kruhovým pohľadom okolo zvoleného stredu. Používateľ bude počas vývoja ručne určovať, ktoré analytické vrstvy sa majú vykonať. Neskôr bude systém moduly zapínať automaticky podľa účelu analýzy, mierky, členitosti terénu, dostupných vstupných údajov a už vypočítaných výsledkov.
+
+Cieľom je vytvoriť nie jeden veľký skript, ale modulárny systém fyzikálnej mapy krajiny, ktorý možno rozširovať, testovať a optimalizovať bez narušenia ostatných častí TermikaXC.
