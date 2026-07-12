@@ -12,6 +12,8 @@
 
     let hoverHandler = null;
     let hoverViewer = null;
+    let hoverCanvas = null;
+    let hoverCanvasLeaveListener = null;
     let hoverTooltip = null;
 
     const typeLabels = {
@@ -215,10 +217,17 @@
         if (hoverHandler && hoverViewer === viewer) return;
 
         if (hoverHandler) hoverHandler.destroy();
+        if (hoverCanvas && hoverCanvasLeaveListener) {
+            hoverCanvas.removeEventListener("mouseleave", hoverCanvasLeaveListener);
+        }
         hideHoverTooltip();
 
         hoverViewer = viewer;
-        hoverHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        hoverCanvas = viewer.scene.canvas;
+        hoverCanvasLeaveListener = hideHoverTooltip;
+        hoverCanvas.addEventListener("mouseleave", hoverCanvasLeaveListener);
+
+        hoverHandler = new Cesium.ScreenSpaceEventHandler(hoverCanvas);
         hoverHandler.setInputAction((event) => {
             const picked = viewer.scene.pick(event.endPosition);
             const pickedId = picked?.id;
@@ -230,8 +239,6 @@
 
             hideHoverTooltip();
         }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
-
-        hoverHandler.setInputAction(hideHoverTooltip, Cesium.ScreenSpaceEventType.MOUSE_LEAVE);
     };
 
     const originalShowDiagnostics = TerrainAnalysis.zobrazDiagnostiku;
