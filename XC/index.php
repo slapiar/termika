@@ -22,6 +22,29 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
 
 // Zmena verzie prinúti prehliadač načítať nové JS/CSS namiesto starej cache.
 $assetVersion = '20260711-07';
+
+$jsDirectory = __DIR__ . '/js';
+$jsPriority = [
+    'meteo-core.js',
+    'skewt-render.js',
+    'glider-core.js',
+    'pilot-network.js',
+    'cesium-render.js',
+    'terrain-analysis.js',
+    'workspace-ui.js',
+];
+$jsFiles = glob($jsDirectory . '/*.js') ?: [];
+$jsFiles = array_map('basename', $jsFiles);
+$jsFiles = array_values(array_unique($jsFiles));
+
+usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
+    $aIndex = array_search($a, $jsPriority, true);
+    $bIndex = array_search($b, $jsPriority, true);
+    $aRank = $aIndex === false ? PHP_INT_MAX : $aIndex;
+    $bRank = $bIndex === false ? PHP_INT_MAX : $bIndex;
+
+    return $aRank === $bRank ? strnatcasecmp($a, $b) : $aRank <=> $bRank;
+});
 ?>
 <!DOCTYPE html>
 <html lang="sk">
@@ -36,12 +59,9 @@ $assetVersion = '20260711-07';
 
     <link href="asset/style.css?v=<?php echo rawurlencode($assetVersion); ?>" rel="stylesheet">
 
-    <script src="js/meteo-core.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
-    <script src="js/skewt-render.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
-    <script src="js/glider-core.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
-    <script src="js/pilot-network.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
-    <script src="js/cesium-render.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
-    <script src="js/workspace-ui.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+<?php foreach ($jsFiles as $jsFile): ?>
+    <script src="js/<?php echo rawurlencode($jsFile); ?>?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+<?php endforeach; ?>
 </head>
 <body>
     <div id="appShell">
