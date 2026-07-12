@@ -494,7 +494,7 @@ window.TerrainAnalysis = {
         const colors = {
             ROVINA: Cesium.Color.LIGHTGRAY.withAlpha(0.8),
             SVAH: Cesium.Color.GOLD.withAlpha(0.82),
-            REBRO_ALEBO_HRANA: Cesium.Color.RED.withAlpha(0.9),
+            REBRO_ALEBO_HRANA: Cesium.Color.DARKRED.withAlpha(0.92),
             VYVÝŠENINA: Cesium.Color.ORANGERED.withAlpha(0.88),
             ŽĽAB_ALEBO_ZBERNICA: Cesium.Color.DEEPSKYBLUE.withAlpha(0.9),
             DEPRESIA: Cesium.Color.BLUE.withAlpha(0.86),
