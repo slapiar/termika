@@ -1,0 +1,80 @@
+Patch je pripravený a aplikovaný. Zameral som ho presne na to, čo sme riešili: Telegram, bezpečnosť ingestu a robustnosť zápisu.
+
+Zmenené súbory:
+1. config.php
+2. update.php
+
+Čo som opravil:
+1. Telegram API endpoint je opravený na správny tvar `https://api.telegram.org/bot.../sendMessage` v config.php.
+2. update.php už používa spoločnú helper funkciu `sendTelegramAlert()` namiesto duplicitného a chybného volania v update.php.
+3. Pridal som voliteľný podpis požiadavky cez header `X-Termika-Key` (aktivuje sa len keď je nastavený `UPDATE_SHARED_KEY`) v update.php.
+4. Ingest endpoint teraz striktne akceptuje len `POST` (okrem `OPTIONS`) v update.php.
+5. JSON parsovanie je robustné (`JSON_THROW_ON_ERROR`) + jasné HTTP odpovede pri chybe v update.php.
+6. Zápis `data.json` je atómový (tmp + rename + lock), aby sa znížilo riziko poškodenia pri súbehu v update.php.
+7. Konfigurácia je pripravená na env premenné (`TELEGRAM_*`, `CESIUM_ACCESS_TOKEN`, `DB_*`, `UPDATE_SHARED_KEY`) v config.php.
+
+Overenie po patchi:
+1. `php -l XC/asset/config.php` bez chyby.
+2. `php -l XC/update.php` bez chyby.
+3. Smoke test validného JSON na `/update.php` vrátil success.
+4. Smoke test neplatného JSON vrátil korektnú chybu.
+
+Dôležité po nasadení:
+1. Nastav reálne env premenné pre `CESIUM_ACCESS_TOKEN` a prípadne `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`.
+2. Ak chceš zapnúť podpis ingestu, nastav `UPDATE_SHARED_KEY` a klient nech posiela header `X-Termika-Key`.
+
+Ak chceš, hneď spravím aj krátky deploy checklist pre server (presné `export`/Apache-Nginx env kroky podľa tvojho hostingu).
+
+Super, tu je krátky deploy checklist pre server, aby patch fungoval bezpečne aj v produkcii.
+
+1. Nahraj zmenené súbory na server.
+- config.php
+- update.php
+
+2. Nastav serverové environment premenné.
+- CESIUM_ACCESS_TOKEN
+- TELEGRAM_BOT_TOKEN
+- TELEGRAM_CHAT_ID
+- UPDATE_SHARED_KEY (odporúčané, môže byť dlhý náhodný reťazec)
+- DB_NAME
+- DB_USER
+- DB_PASSWORD
+- DB_HOST
+- DB_CHARSET
+
+3. Skontroluj práva zápisu pre priečinok XC.
+- Proces PHP musí vedieť zapisovať do data.json cez dočasný súbor a rename.
+- Ak je to potrebné, nastav vlastníka/skupinu web serveru a práva na zápis len pre potrebný adresár.
+
+4. Over syntax na serveri.
+- php -l config.php
+- php -l update.php
+
+5. Otestuj update endpoint bez podpisu (len ak UPDATE_SHARED_KEY nie je nastavený).
+- POST JSON na /update.php
+- Očakávanie: status success
+
+6. Otestuj update endpoint so zapnutým podpisom.
+- Nastav UPDATE_SHARED_KEY
+- Posielaj header X-Termika-Key s rovnakou hodnotou
+- Bez headeru musí vrátiť 401
+- So správnym headerom musí vrátiť success
+
+7. Otestuj chybové stavy.
+- Pošli neplatný JSON
+- Očakávanie: status error, hláška Neplatný JSON formát
+
+8. Otestuj Telegram notifikácie.
+- Pošli test payload pod prahmi alarmov (napr. blood_oxygen_spo2 pod 90)
+- Over, že správa príde do chatu
+
+9. Urob rýchly smoke test aplikácie v prehliadači.
+- Načítanie indexu
+- Načítanie terrain-analysis test stránky
+- Over, že nič nepadá na chybe konfigurácie
+
+10. Po deployi sprav krátky rollback plán.
+- Záloha pôvodných dvoch súborov pred nahratím
+- Ak by niečo zlyhalo, okamžitý návrat na predchádzajúce verzie
+
+Ak chceš, pripravím ti hneď aj konkrétne hodnoty pre Apache .htaccess/.user.ini alebo Nginx/FPM podľa toho, kde to hostuješ, aby si premenné nastavil na prvý pokus správne.

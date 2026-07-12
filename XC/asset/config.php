@@ -1,19 +1,28 @@
 <?php
 // asset/config.php
 
+function termikaEnv(string $name, string $default = ''): string {
+    $value = getenv($name);
+    if ($value === false || $value === null || $value === '') return $default;
+    return $value;
+}
+
 // 1. TELEGRAM KONFIGURÁCIA
-define('TELEGRAM_BOT_TOKEN', 'TVOJ_TELEGRAM_BOT_TOKEN');
-define('TELEGRAM_CHAT_ID', 'TVOJE_CHAT_ID');
+define('TELEGRAM_BOT_TOKEN', termikaEnv('TELEGRAM_BOT_TOKEN', 'TVOJ_TELEGRAM_BOT_TOKEN'));
+define('TELEGRAM_CHAT_ID', termikaEnv('TELEGRAM_CHAT_ID', 'TVOJE_CHAT_ID'));
+
+// Voliteľný podpis pre ingest endpoint update.php.
+define('UPDATE_SHARED_KEY', termikaEnv('UPDATE_SHARED_KEY', ''));
 
 // 2. CESIUM KONFIGURÁCIA
-define('CESIUM_ACCESS_TOKEN', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI0YTU2YmQ1Zi05MzUwLTQyNDAtYWFjNi1hMDIyMjFjNGEzMDgiLCJpZCI6ODI3MzksImlhdCI6MTY0NTA1MzA4Mn0.v8Fx3OjfiQSpyo-qfPZ3-tf1qaYMswkeDbwUzJcDaxw');
+define('CESIUM_ACCESS_TOKEN', termikaEnv('CESIUM_ACCESS_TOKEN', ''));
 
 // 3. DATABÁZOVÁ KONFIGURÁCIA (Hostinger WordPress)
-define('DB_NAME', 'u205009856_GUDWm');
-define('DB_USER', 'u205009856_admin');
-define('DB_PASSWORD', 'Sp610223/7174');
-define('DB_HOST', '127.0.0.1');
-define('DB_CHARSET', 'utf8');
+define('DB_NAME', termikaEnv('DB_NAME', 'u205009856_GUDWm'));
+define('DB_USER', termikaEnv('DB_USER', 'u205009856_admin'));
+define('DB_PASSWORD', termikaEnv('DB_PASSWORD', ''));
+define('DB_HOST', termikaEnv('DB_HOST', '127.0.0.1'));
+define('DB_CHARSET', termikaEnv('DB_CHARSET', 'utf8'));
 
 // Funkcia na vytvorenie bezpečného PDO spojenia s databázou
 function getDbConnection() {
@@ -33,11 +42,28 @@ function getDbConnection() {
 
 // Pomocná funkcia na odosielanie správ na Telegram
 function sendTelegramAlert($message) {
-    if (TELEGRAM_BOT_TOKEN === 'TVOJ_TELEGRAM_BOT_TOKEN' || empty($message)) {
+    if (
+        empty($message) ||
+        TELEGRAM_BOT_TOKEN === 'TVOJ_TELEGRAM_BOT_TOKEN' ||
+        TELEGRAM_CHAT_ID === 'TVOJE_CHAT_ID'
+    ) {
         return false;
     }
-    $urlMsg = urlencode($message);
-    $url = "https://telegram.org" . TELEGRAM_BOT_TOKEN . "/sendMessage?chat_id=" . TELEGRAM_CHAT_ID . "&parse_mode=Markdown&text=" . $urlMsg;
-    return @file_get_contents($url);
+
+    $url = 'https://api.telegram.org/bot' . TELEGRAM_BOT_TOKEN . '/sendMessage';
+    $query = http_build_query([
+        'chat_id' => TELEGRAM_CHAT_ID,
+        'parse_mode' => 'Markdown',
+        'text' => $message,
+    ]);
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'GET',
+            'timeout' => 3,
+        ],
+    ]);
+
+    return @file_get_contents($url . '?' . $query, false, $context);
 }
 ?>
