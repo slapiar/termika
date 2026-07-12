@@ -190,3 +190,19 @@ window.TerrainAnalysisCore = {
         };
     }
 };
+
+// Diagnostická paleta v2.6: rebrá a hrany sú tmavočervené, aby sa
+// jasne odlíšili od oranžových vyvýšenín.
+if (window.TerrainAnalysis?.farbaTvaru) {
+    const povodnaFarbaTvaru = window.TerrainAnalysis.farbaTvaru.bind(window.TerrainAnalysis);
+    window.TerrainAnalysis.farbaTvaru = function (type) {
+        if (type === "REBRO_ALEBO_HRANA") {
+            return Cesium.Color.DARKRED.withAlpha(0.92);
+        }
+        return povodnaFarbaTvaru(type);
+    };
+}
+
+const terrainPaletteStyle = document.createElement("style");
+terrainPaletteStyle.textContent = ".ridge{background:#8b0000!important}";
+document.head.appendChild(terrainPaletteStyle);
