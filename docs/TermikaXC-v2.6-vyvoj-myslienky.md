@@ -17,4 +17,4 @@ Tento dokument zachytáva vývoj fyzikálneho modelu TermikaXC, najmä:
 - správanie termiky pri stabilných vrstvách,
 - vizualizáciu stúpavého prúdenia.
 
-Prepis rozhovoru zo 7.7.2026 tvorí prílohu tohoto Markdownu: TermikaXC - Oprava chyby v Cesium.html
+Prepis rozhovoru zo 7.7.2026 tvorí prílohu tohoto Markdownu: TermikaXC - Oprava chyby v Cesium.htm
