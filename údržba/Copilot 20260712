@@ -78,3 +78,41 @@ Super, tu je krátky deploy checklist pre server, aby patch fungoval bezpečne a
 - Ak by niečo zlyhalo, okamžitý návrat na predchádzajúce verzie
 
 Ak chceš, pripravím ti hneď aj konkrétne hodnoty pre Apache .htaccess/.user.ini alebo Nginx/FPM podľa toho, kde to hostuješ, aby si premenné nastavil na prvý pokus správne.
+
+Hotovo. Urobil som presne ten smer, ktorý chceš: nasadenie pre kamarátov bez terminalu a bez server admin krokov.
+
+Čo je pridané
+1. Web setup stránka: setup.php  
+Vyplníš hodnoty vo formulári a uloží sa lokálna konfigurácia.
+
+2. Lokálny config loader: config.php  
+Konfigurácia teraz berie hodnoty v poradí:
+- server env (ak existuje)
+- lokálny súbor
+- fallback default
+
+3. Vzor konfigu: local-config.php.example
+
+4. Ignore pre lokálny config (aby sa netlačil do gitu): .gitignore
+
+5. Krátky návod doplnený: NAHRAT-NA-SERVER.md
+
+Ako to teraz funguje pre hocikoho
+1. Nahrať projekt na hosting.
+2. Otvoriť setup stránku:
+- /setup.php
+3. Vyplniť hlavne Cesium token.
+4. Uložiť.
+5. Otvoriť appku (index alebo terrain test) a funguje bez SSH, bez env nastavovania.
+
+Overenie, ktoré som spravil
+1. PHP syntax OK:
+- config.php
+- setup.php
+- update.php
+2. Setup URL vracia 200 OK.
+3. Cesium token sa injektuje správne aj bez env.
+
+Poznámka pre produkciu
+Po úspešnom nastavení odporúčam setup stránku neskôr vypnúť alebo obmedziť prístup (napr. rename súboru), aby ju neotváral hocikto.  
+Ak chceš, v ďalšom kroku ti hneď doplním jednoduchý lock režim (jedno tlačidlo Zamknúť setup).
