@@ -200,10 +200,9 @@ Pred začiatkom práce v novom chate treba prečítať najmä:
 ```text
 docs/TermikaXC-v2.6-vyvoj-myslienky.md
 docs/TermikaXC - Oprava chyby v Cesium.htm
-postupy/TermikaXC-v2.6-postupnost-vypoctu-hotspotu.md
 ```
 
-HTML export obsahuje úplný pracovný rozhovor a vývoj myšlienky. Markdownové súbory slúžia ako stručné technické východisko.
+HTML export obsahuje úplný pracovný rozhovor a vývoj myšlienky. Tento Markdown slúži ako stručné technické východisko.
 
 ## Pravidlá ďalšej práce
 
