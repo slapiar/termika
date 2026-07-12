@@ -9,7 +9,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     http_response_code(500);
     exit('Chýba CESIUM_ACCESS_TOKEN.');
 }
-$assetVersion = '20260712-06';
+$assetVersion = '20260712-07';
 ?>
 <!doctype html>
 <html lang="sk">
@@ -20,6 +20,7 @@ $assetVersion = '20260712-06';
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Cesium.js"></script>
     <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Widgets/widgets.css">
     <script src="js/terrain-analysis.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/terrain-analysis-diagnostics.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-analysis-core.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-analysis-geometry.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-contours.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
@@ -31,6 +32,7 @@ $assetVersion = '20260712-06';
         .floating-window{position:absolute;z-index:20;display:flex;flex-direction:column;min-width:250px;min-height:120px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);background:rgba(7,16,24,.94);color:#eef;font:14px/1.4 system-ui;border:1px solid #426277;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.38);resize:both;overflow:hidden}
         #panel{top:12px;left:12px;width:420px;height:620px}
         #legend{top:12px;right:12px;width:285px;height:540px}
+        #cellDiagnostics{left:50%;bottom:64px;width:420px;height:560px;transform:translateX(-50%)}
         .window-header{display:flex;align-items:center;gap:8px;flex:0 0 auto;padding:8px 9px;background:rgba(28,58,73,.95);border-bottom:1px solid #426277;cursor:move;user-select:none;touch-action:none}
         .window-title{flex:1;color:#70e8ff;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .window-actions{display:flex;gap:4px}
@@ -54,16 +56,25 @@ $assetVersion = '20260712-06';
         .legend-item span{display:block;font-size:12px;color:#b9cbd5}
         .legend-note{margin:10px 0 0;padding-top:9px;border-top:1px solid #35505f;font-size:11px;color:#8fa9b8}
         .flat{background:#d3d3d3}.slope{background:#ffd700}.ridge{background:#8b0000}.hill{background:#ff4500}.gully{background:#00bfff}.depression{background:#0000ff}.transition{background:#9370db}
+        .diagnostic-intro{margin:0 0 10px;color:#b9cbd5}
+        .diagnostic-grid{display:grid;grid-template-columns:minmax(145px,auto) 1fr;gap:4px 12px;margin:8px 0 12px}
+        .diagnostic-grid dt{color:#8fa9b8}
+        .diagnostic-grid dd{margin:0;color:#fff;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+        .diagnostic-section{margin-top:13px;padding-top:10px;border-top:1px solid #35505f}
+        .diagnostic-section h3{margin:0 0 7px;color:#70e8ff;font-size:13px}
+        .diagnostic-reasons{margin:0;padding-left:20px}
+        .diagnostic-reasons li{margin:4px 0;color:#d7e7ef}
+        .diagnostic-pending{padding:8px 9px;border:1px dashed #426277;border-radius:6px;color:#8fa9b8;background:rgba(16,33,43,.55)}
         #windowDock{position:absolute;left:50%;bottom:12px;z-index:30;display:flex;gap:7px;transform:translateX(-50%);padding:6px;background:rgba(7,16,24,.88);border:1px solid #426277;border-radius:8px;box-shadow:0 5px 18px rgba(0,0,0,.35)}
         #windowDock button{padding:6px 10px;border:1px solid #54778a;border-radius:5px;background:#10212b;color:#dff7ff;cursor:pointer}
         #windowDock button:hover{background:#1c3b4b}
         #aimHint{position:absolute;left:50%;top:12px;z-index:12;transform:translateX(-50%);padding:6px 10px;background:rgba(7,16,24,.78);color:#d8f8ff;border:1px solid #426277;border-radius:6px;font:12px/1.2 system-ui;pointer-events:none}
-        @media (max-width:760px){#panel{width:calc(100vw - 24px);height:60vh}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}.floating-window{max-width:calc(100vw - 24px)}#windowDock{bottom:6px}}
+        @media (max-width:760px){#panel{width:calc(100vw - 24px);height:60vh}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}#windowDock{bottom:6px}}
     </style>
 </head>
 <body>
 <div id="cesiumContainer"></div>
-<div id="aimHint">Pohybom kurzora vyber oblasť · kliknutím nastav stred</div>
+<div id="aimHint">Klik na farebný bod = diagnostika · klik na terén = nový stred analýzy</div>
 
 <section id="panel" class="floating-window" data-window-name="Ovládanie">
     <header class="window-header">
@@ -71,7 +82,7 @@ $assetVersion = '20260712-06';
         <div class="window-actions"><button class="window-action close-window" type="button" title="Zavrieť okno">×</button></div>
     </header>
     <div class="window-body">
-        <p>Kruhový zameriavač ukazuje oblasť prvotného pohľadu. Kliknutím zvolíš jej stred.</p>
+        <p>Kruhový zameriavač ukazuje oblasť prvotného pohľadu. Kliknutím na terén zvolíš jej stred.</p>
         <p>Stred: <strong id="centerText">46.43000, 11.85000</strong></p>
 
         <fieldset>
@@ -121,9 +132,20 @@ $assetVersion = '20260712-06';
     </div>
 </aside>
 
+<section id="cellDiagnostics" class="floating-window" data-window-name="Diagnostika bunky" hidden>
+    <header class="window-header">
+        <div class="window-title">Diagnostika geometrickej bunky</div>
+        <div class="window-actions"><button class="window-action close-window" type="button" title="Zavrieť okno">×</button></div>
+    </header>
+    <div id="cellDiagnosticsBody" class="window-body">
+        <p class="diagnostic-intro">Po vykonaní analýzy klikni na farebný bod. Zobrazia sa vstupné metriky, aktuálne pravidlo a dôvody klasifikácie.</p>
+    </div>
+</section>
+
 <nav id="windowDock" aria-label="Ovládanie okien">
     <button type="button" data-show-window="panel">Ovládanie</button>
     <button type="button" data-show-window="legend">Legenda</button>
+    <button type="button" data-show-window="cellDiagnostics">Diagnostika bodu</button>
 </nav>
 
 <script>
@@ -131,6 +153,8 @@ $assetVersion = '20260712-06';
     const centerText = document.getElementById('centerText');
     const radiusInput = document.getElementById('radiusInput');
     const contoursVisible = document.getElementById('contoursVisible');
+    const cellDiagnostics = document.getElementById('cellDiagnostics');
+    const cellDiagnosticsBody = document.getElementById('cellDiagnosticsBody');
     let selectedCenter = { lat: 46.43, lon: 11.85 };
     let previewCenter = { ...selectedCenter };
     let highestWindowZ = 20;
@@ -143,6 +167,83 @@ $assetVersion = '20260712-06';
         statusEl.scrollTop = statusEl.scrollHeight;
     }
     window.logStatus = logStatus;
+
+    function formatNumber(value, digits = 2, suffix = '') {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return 'zatiaľ nevypočítané';
+        return number.toLocaleString('sk-SK', {
+            minimumFractionDigits: digits,
+            maximumFractionDigits: digits
+        }) + suffix;
+    }
+
+    function diagnosticRow(list, label, value) {
+        const dt = document.createElement('dt');
+        const dd = document.createElement('dd');
+        dt.textContent = label;
+        dd.textContent = value;
+        list.append(dt, dd);
+    }
+
+    function showCellDiagnostics(cell) {
+        const diagnostic = TerrainAnalysis.vytvorDiagnostikuBunky(cell);
+        const metrics = diagnostic.metrics;
+        const position = diagnostic.position;
+
+        const intro = document.createElement('p');
+        intro.className = 'diagnostic-intro';
+        intro.textContent = 'Aktuálna pracovná klasifikácia. Zobrazené hodnoty sú podkladom na overenie farby voči vrstevniciam a 3D reliéfu.';
+
+        const grid = document.createElement('dl');
+        grid.className = 'diagnostic-grid';
+        diagnosticRow(grid, 'Typ', String(diagnostic.type || 'neurčený').replaceAll('_', ' '));
+        diagnosticRow(grid, 'Pravidlo', diagnostic.rule || 'neuvedené');
+        diagnosticRow(grid, 'Dôvera', formatNumber(diagnostic.confidence, 2));
+        diagnosticRow(grid, 'Výška', formatNumber(metrics.heightM, 1, ' m'));
+        diagnosticRow(grid, 'Sklon', formatNumber(metrics.slopeDeg, 2, '°'));
+        diagnosticRow(grid, 'Orientácia', formatNumber(metrics.aspectDeg, 1, '°'));
+        diagnosticRow(grid, 'Lokálny reliéf', formatNumber(metrics.localReliefM, 2, ' m'));
+        diagnosticRow(grid, 'Gradient', formatNumber(metrics.gradient, 5));
+        diagnosticRow(grid, 'Laplacián', formatNumber(metrics.laplacian, 7));
+        diagnosticRow(grid, 'Profilová krivosť', formatNumber(metrics.profileCurvature, 7));
+        diagnosticRow(grid, 'Normalizovaný Laplacián', formatNumber(metrics.scaledLaplacian, 3));
+        diagnosticRow(grid, 'Normalizovaná profilová krivosť', formatNumber(metrics.scaledProfileCurvature, 3));
+        diagnosticRow(grid, 'Lokálna konvexnosť', metrics.convexity || 'neurčená');
+        diagnosticRow(grid, 'Poloha', formatNumber(position.lat, 6) + ', ' + formatNumber(position.lon, 6));
+        diagnosticRow(grid, 'Bunka mriežky', 'riadok ' + position.row + ', stĺpec ' + position.col);
+        diagnosticRow(grid, 'Pôvod', diagnostic.dataOrigin || 'neuvedený');
+
+        const reasonsSection = document.createElement('section');
+        reasonsSection.className = 'diagnostic-section';
+        const reasonsTitle = document.createElement('h3');
+        reasonsTitle.textContent = 'Prečo bola bunka takto zaradená';
+        const reasons = document.createElement('ul');
+        reasons.className = 'diagnostic-reasons';
+        const reasonItems = diagnostic.reasons.length
+            ? diagnostic.reasons
+            : ['Starší výsledok analýzy neobsahuje uložené dôvody. Spusť analýzu znova.'];
+        reasonItems.forEach((reason) => {
+            const item = document.createElement('li');
+            item.textContent = '✓ ' + reason;
+            reasons.appendChild(item);
+        });
+        reasonsSection.append(reasonsTitle, reasons);
+
+        const pendingSection = document.createElement('section');
+        pendingSection.className = 'diagnostic-section';
+        const pendingTitle = document.createElement('h3');
+        pendingTitle.textContent = 'Nasledujúce vrstvy ešte nie sú dopočítané';
+        const pending = document.createElement('div');
+        pending.className = 'diagnostic-pending';
+        pending.textContent = 'Morfologická rola, farebná rodina G01–G16, relatívna výška alebo hĺbka a intenzita zlomu ostávajú zatiaľ null. Nebudeme ich predstierať odhadom.';
+        pendingSection.append(pendingTitle, pending);
+
+        cellDiagnosticsBody.replaceChildren(intro, grid, reasonsSection, pendingSection);
+        cellDiagnostics.hidden = false;
+        highestWindowZ += 1;
+        cellDiagnostics.style.zIndex = highestWindowZ;
+        keepWindowInViewport(cellDiagnostics);
+    }
 
     Cesium.Ion.defaultAccessToken = <?php echo json_encode(CESIUM_ACCESS_TOKEN, JSON_UNESCAPED_SLASHES); ?>;
     const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -201,6 +302,13 @@ $assetVersion = '20260712-06';
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
     handler.setInputAction((event) => {
+        const picked = viewer.scene.pick(event.position);
+        const pickedId = picked?.id;
+        if (pickedId?.type === 'terrain-analysis-cell' && pickedId.cell) {
+            showCellDiagnostics(pickedId.cell);
+            return;
+        }
+
         const point = pickTerrainPosition(event.position);
         if (!point) return;
         selectedCenter = point;
@@ -261,6 +369,7 @@ $assetVersion = '20260712-06';
                     diagnostics.gridCols + '; po kruhovej maske ostalo ' +
                     diagnostics.cellsAfterMask + ' z ' + diagnostics.cellsBeforeMask + ' buniek.'
                 );
+                logStatus('Kliknutím na ľubovoľný farebný bod otvoríš jeho číselnú diagnostiku a dôvody klasifikácie.');
             }
         } catch (error) {
             logStatus('Chyba: ' + error.message, 'error');
@@ -272,6 +381,7 @@ $assetVersion = '20260712-06';
     document.getElementById('clearButton').addEventListener('click', () => {
         TerrainAnalysis.skryDiagnostiku(viewer);
         TerrainContours.clear(viewer);
+        cellDiagnostics.hidden = true;
         logStatus('Výsledné mapové vrstvy boli skryté.');
     });
 
@@ -283,6 +393,7 @@ $assetVersion = '20260712-06';
         windowEl.style.top = Math.min(Math.max(0, rect.top), maxTop) + 'px';
         windowEl.style.right = 'auto';
         windowEl.style.bottom = 'auto';
+        windowEl.style.transform = 'none';
     }
 
     document.querySelectorAll('.floating-window').forEach((windowEl) => {
@@ -301,6 +412,7 @@ $assetVersion = '20260712-06';
             windowEl.style.top = rect.top + 'px';
             windowEl.style.right = 'auto';
             windowEl.style.bottom = 'auto';
+            windowEl.style.transform = 'none';
             dragState = { x: event.clientX, y: event.clientY, left: rect.left, top: rect.top };
             header.setPointerCapture(event.pointerId);
             event.preventDefault();
