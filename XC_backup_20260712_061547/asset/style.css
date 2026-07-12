@@ -1,0 +1,663 @@
+:root {
+    color-scheme: dark;
+    --bg: #030609;
+    --panel: rgba(10, 14, 18, 0.96);
+    --panel-soft: rgba(8, 12, 16, 0.9);
+    --line: #26313a;
+    --text: #f5f7f8;
+    --muted: #a8b0b7;
+    --cyan: #00e5ff;
+    --orange: #ff9800;
+    --green: #00e676;
+    --red: #ff5252;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: radial-gradient(circle at 50% 15%, #101923 0, var(--bg) 55%);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+}
+
+#appShell {
+    --left-column: 340px;
+    --right-column: 320px;
+    --debug-row: 190px;
+    width: 100vw;
+    height: 100vh;
+    display: grid;
+    grid-template-columns: var(--left-column) minmax(420px, 1fr) var(--right-column);
+    grid-template-rows: minmax(0, 1fr) var(--debug-row);
+    grid-template-areas:
+        "left map right"
+        "debug debug debug";
+    column-gap: 12px;
+    row-gap: 12px;
+    padding: 12px;
+    transition: grid-template-columns 0.18s ease, grid-template-rows 0.18s ease;
+}
+
+#appShell.left-panel-floating { --left-column: 0px; }
+#appShell.right-panel-floating { --right-column: 0px; }
+#appShell.debug-panel-floating,
+#appShell.debug-hidden {
+    --debug-row: 0px;
+    row-gap: 0;
+}
+
+.dashboard-panel,
+.map-panel,
+.debug-panel {
+    min-width: 0;
+    min-height: 0;
+    background: var(--panel);
+    border-radius: 10px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.42);
+    overflow: hidden;
+}
+
+.workspace-window {
+    isolation: isolate;
+}
+
+.workspace-window.is-floating {
+    position: fixed !important;
+    margin: 0 !important;
+    z-index: 40;
+    min-width: 240px;
+    min-height: 120px;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+    resize: both;
+    overflow: auto;
+    box-shadow: 0 18px 55px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.workspace-window.is-floating.is-dragging {
+    user-select: none;
+    opacity: 0.96;
+}
+
+.dashboard-panel {
+    padding: 0;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#leftPanel {
+    grid-area: left;
+    border: 1px solid var(--cyan);
+}
+
+#rightPanel {
+    grid-area: right;
+    border: 1px solid var(--orange);
+}
+
+.window-header,
+.debug-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 39px;
+    padding: 9px 11px 8px 13px;
+    border-bottom: 1px solid #35414a;
+    background: linear-gradient(180deg, rgba(25, 34, 41, 0.98), rgba(10, 15, 19, 0.98));
+    font-size: 13px;
+    letter-spacing: 0.8px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.window-header:active,
+.debug-header:active {
+    cursor: grabbing;
+}
+
+.window-header strong,
+.debug-header strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.drag-symbol {
+    flex: 0 0 auto;
+    color: #83929c;
+    font-size: 17px;
+    line-height: 1;
+    letter-spacing: 0;
+}
+
+.panel-content {
+    padding: 13px 15px 15px;
+}
+
+.cyan { color: var(--cyan); }
+.orange { color: var(--orange); }
+.magenta { color: #ff2c7d; }
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin: 8px 0;
+    font-size: 13px;
+}
+
+.label {
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+.val {
+    min-width: 0;
+    max-width: 68%;
+    text-align: right;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.separator {
+    height: 1px;
+    margin: 15px 0 11px;
+    background: #2b343c;
+}
+
+.chart-wrap {
+    position: relative;
+    height: 185px;
+    margin-top: 12px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.46);
+    overflow: hidden;
+}
+
+#liveBioChart {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.danger {
+    color: #ff1744;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 0.42; }
+    50% { opacity: 1; }
+}
+
+.map-panel {
+    grid-area: map;
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) 78px;
+    border: 1px solid #40515e;
+    background: #000;
+}
+
+.map-toolbar {
+    display: grid;
+    grid-template-columns: minmax(170px, auto) minmax(0, 1fr);
+    grid-template-areas:
+        "title actions"
+        "title cameras";
+    align-items: center;
+    gap: 6px 12px;
+    min-height: 78px;
+    padding: 7px 9px 7px 14px;
+    background: linear-gradient(180deg, #141b21, #0a0e12);
+    border-bottom: 1px solid #35414a;
+    z-index: 3;
+}
+
+.map-title-group {
+    grid-area: title;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+}
+
+.map-title-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    font-size: 13px;
+    letter-spacing: 0.8px;
+}
+
+.igc-file-name {
+    display: block;
+    max-width: 240px;
+    color: #8ea0aa;
+    font: 10px/1.2 "Courier New", monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.state-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 3px 7px;
+    border: 1px solid #62727d;
+    border-radius: 999px;
+    color: #d8e0e5;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.state-badge.success {
+    border-color: #00a95c;
+    color: #6cffb4;
+}
+
+.state-badge.error {
+    border-color: #e53935;
+    color: #ff8a80;
+}
+
+.map-actions {
+    grid-area: actions;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-width: 0;
+}
+
+.camera-toolbar {
+    grid-area: cameras;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+}
+
+.camera-label {
+    margin-right: 3px;
+    color: #8697a1;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.map-actions button,
+.camera-mode-button,
+.playback-buttons button,
+.debug-header button {
+    border: 1px solid #50616e;
+    border-radius: 6px;
+    background: #111a21;
+    color: #eef4f7;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.map-actions button,
+.camera-mode-button {
+    padding: 5px 8px;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.map-actions button:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+.camera-mode-button.is-active {
+    border-color: var(--cyan);
+    color: #91f5ff;
+    background: #12303a;
+    box-shadow: inset 0 0 0 1px rgba(0, 229, 255, 0.17);
+}
+
+.playback-buttons button {
+    min-width: 92px;
+    padding: 7px 10px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.map-actions button:hover:not(:disabled),
+.camera-mode-button:hover,
+.playback-buttons button:hover:not(:disabled),
+.debug-header button:hover {
+    border-color: var(--cyan);
+    background: #172630;
+}
+
+#cesiumContainer {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    background: #000;
+}
+
+#cesiumContainer .cesium-viewer,
+#cesiumContainer .cesium-viewer-cesiumWidgetContainer,
+#cesiumContainer .cesium-widget,
+#cesiumContainer canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.flight-controls {
+    display: grid;
+    grid-template-columns: auto minmax(220px, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+    padding: 8px 12px;
+    border-top: 1px solid #35414a;
+    background: linear-gradient(180deg, #0b1014, #111920);
+    z-index: 3;
+}
+
+.playback-buttons {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.playback-buttons button:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+}
+
+.playback-buttons button.is-playing {
+    border-color: var(--green);
+    color: #8cffc2;
+    box-shadow: inset 0 0 0 1px rgba(0, 230, 118, 0.18);
+}
+
+.timeline-area {
+    min-width: 0;
+}
+
+.timeline-meta {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr) 72px;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    color: #d9e2e7;
+    font: 11px/1.15 "Courier New", monospace;
+}
+
+#flightCurrentTime {
+    text-align: left;
+    color: #8ff4ff;
+}
+
+#flightEndTime {
+    text-align: right;
+    color: #c2cbd1;
+}
+
+#flightProgressText {
+    min-width: 0;
+    text-align: center;
+    color: #aeb9c0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#flightTimeline {
+    display: block;
+    width: 100%;
+    height: 20px;
+    margin: 0;
+    accent-color: var(--cyan);
+    cursor: ew-resize;
+}
+
+#flightTimeline:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+}
+
+.vario-legend {
+    display: grid;
+    grid-template-columns: repeat(5, auto);
+    gap: 4px 8px;
+    align-items: center;
+    color: #b8c1c7;
+    font-size: 9px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.vario-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.vario-swatch {
+    display: inline-block;
+    width: 15px;
+    height: 4px;
+    border-radius: 999px;
+    box-shadow: 0 0 5px currentColor;
+}
+
+.vario-swatch.strong-up { background: #00ff40; color: #00ff40; }
+.vario-swatch.up { background: #73ff00; color: #73ff00; }
+.vario-swatch.neutral { background: #ffeb00; color: #ffeb00; }
+.vario-swatch.down { background: #ff7a00; color: #ff7a00; }
+.vario-swatch.strong-down { background: #ff1414; color: #ff1414; }
+
+/* V režime celej obrazovky ostáva horná lišta s vlastným tlačidlom návratu. */
+#mapPanel:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    border: 0;
+    border-radius: 0;
+}
+
+.debug-panel {
+    grid-area: debug;
+    display: grid;
+    grid-template-rows: 39px minmax(0, 1fr);
+    border: 1px solid #00d96f;
+    background: rgba(3, 8, 5, 0.97);
+    font-family: "Courier New", monospace;
+}
+
+#appShell.debug-hidden #debugConsole {
+    display: none !important;
+}
+
+.debug-header {
+    padding: 5px 9px 5px 12px;
+    color: #c0c9c4;
+    border-bottom-color: #26372d;
+    font-size: 11px;
+    letter-spacing: 0.4px;
+}
+
+.debug-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.debug-header button {
+    padding: 3px 8px;
+    font-family: inherit;
+    font-size: 10px;
+}
+
+#debugLog {
+    overflow: auto;
+    padding: 8px 12px 10px;
+    color: #00ff70;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.debug-line.success { color: #6cffad; }
+.debug-line.error { color: var(--red); }
+.debug-line.info { color: #00ff70; }
+
+/* Jemná nápoveda pri odpojených paneloch. */
+.workspace-window.is-floating::after {
+    content: "";
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    opacity: 0.55;
+    background:
+        linear-gradient(135deg, transparent 0 48%, #8da0aa 49% 55%, transparent 56% 66%, #8da0aa 67% 73%, transparent 74%);
+}
+
+@media (max-width: 1500px) {
+    .map-toolbar {
+        grid-template-columns: minmax(150px, auto) minmax(0, 1fr);
+    }
+
+    .map-actions button,
+    .camera-mode-button {
+        padding: 4px 6px;
+        font-size: 10px;
+    }
+
+    .flight-controls {
+        grid-template-columns: auto minmax(180px, 1fr);
+    }
+
+    .vario-legend {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 1120px) {
+    html, body { overflow: auto; }
+
+    #appShell {
+        --left-column: 1fr;
+        --right-column: 1fr;
+        --debug-row: 190px;
+        height: auto;
+        min-height: 100vh;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 68vh auto var(--debug-row);
+        grid-template-areas:
+            "map map"
+            "left right"
+            "debug debug";
+    }
+
+    #appShell.left-panel-floating,
+    #appShell.right-panel-floating {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .map-toolbar {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "title"
+            "actions"
+            "cameras";
+        align-items: start;
+    }
+
+    .map-actions,
+    .camera-toolbar {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 720px) {
+    #appShell {
+        grid-template-columns: 1fr;
+        grid-template-rows: 68vh auto auto var(--debug-row);
+        grid-template-areas:
+            "map"
+            "left"
+            "right"
+            "debug";
+        padding: 8px;
+        column-gap: 8px;
+        row-gap: 8px;
+    }
+
+    .workspace-window.is-floating {
+        position: static !important;
+        width: auto !important;
+        height: auto !important;
+        max-width: none;
+        max-height: none;
+        resize: none;
+    }
+
+    .map-toolbar {
+        padding-left: 9px;
+    }
+
+    .map-actions button {
+        font-size: 9px;
+    }
+
+    .map-panel {
+        grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .flight-controls {
+        grid-template-columns: 1fr;
+        gap: 7px;
+    }
+
+    .playback-buttons {
+        justify-content: center;
+    }
+
+    .playback-buttons button {
+        flex: 1;
+        max-width: 150px;
+    }
+
+    .vario-legend {
+        grid-column: auto;
+    }
+}
