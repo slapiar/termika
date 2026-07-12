@@ -445,3 +445,113 @@ V prvej etape zostane rozhodujúci ručný režim. Automatické zapínanie modul
 Prvotná analýza začne kruhovým pohľadom okolo zvoleného stredu. Používateľ bude počas vývoja ručne určovať, ktoré analytické vrstvy sa majú vykonať. Neskôr bude systém moduly zapínať automaticky podľa účelu analýzy, mierky, členitosti terénu, dostupných vstupných údajov a už vypočítaných výsledkov.
 
 Cieľom je vytvoriť nie jeden veľký skript, ale modulárny systém fyzikálnej mapy krajiny, ktorý možno rozširovať, testovať a optimalizovať bez narušenia ostatných častí TermikaXC.
+
+## 19. Vrstevnice ako základná geometrická a vizuálna vrstva
+
+Vrstevnice sa majú vytvárať ako samostatná analytická aj zobrazovacia vrstva nad výškovým modelom terénu. Nie sú dekoráciou ani iba kartografickou pomôckou. Predstavujú spojitú geometrickú kostru krajiny, ktorá umožní čítať nadväznosť svahov, hrebeňov, rebier, žľabov, dolín, stien, plošín, sediel, vrcholov a depresií.
+
+Farebné diagnostické odtiene samy osebe môžu pri rôznorodom satelitnom alebo mapovom podklade skresľovať vnímanie reliéfu. Preto musia mať vrstevnice pri zobrazovaní geometrie terénu prednosť ako stabilná kontrastná referencia. Farebné analytické vrstvy ich nesmú prekryť, opticky potlačiť ani znečitateľniť.
+
+### 19.1 Farebnosť a kontrast
+
+Vrstevnice sa majú zobrazovať tmavošedou farbou tak, aby boli čitateľné na svetlých aj farebných mapových podkladoch, ale aby zbytočne nekonkurovali analytickým farbám.
+
+Základné pravidlá:
+
+- bežné vrstevnice: tmavošedá, tenšia čiara,
+- hlavné vrstevnice: tmavošedá, hrubšia čiara,
+- hlavná vrstevnica každých 50 m,
+- hlavné vrstevnice majú podľa mierky niesť čitateľný údaj nadmorskej výšky,
+- farba a hrúbka sa môžu technicky prispôsobiť mierke a kontrastu podkladu, ale nesmú meniť význam vrstvy.
+
+Pracovná farba základnej vrstevnice:
+
+```text
+#404040
+```
+
+Hlavná vrstevnica môže používať rovnaký odtieň s väčšou hrúbkou a prípadne vyššou nepriehľadnosťou.
+
+### 19.2 Výškový interval
+
+Pracovný počiatočný interval:
+
+- bežná vrstevnica každých 10 m,
+- zvýraznená hlavná vrstevnica každých 50 m.
+
+Pri zmene mierky sa môže interval adaptívne meniť, napríklad 5/25 m pri detailnom pohľade alebo 20/100 m pri veľkom území. Zmena intervalu však nesmie meniť fyzický výškový model; mení iba hustotu zobrazovaných a spracúvaných vrstevníc pre danú mierku.
+
+### 19.3 Vrstevnice v 3D priestore
+
+Každá vrstevnica musí niesť svoju skutočnú nadmorskú výšku a byť vedená po 3D modeli terénu. Pri pohľade na prudký svah alebo skalnú stenu sa jednotlivé vrstevnice nesmú zlúčiť do jednej plošnej značky. Pri priblížení a pohľade zdola nahor musia zostať čitateľné ako samostatné výškové línie.
+
+Na miernom svahu budú vrstevnice v pôdoryse vzdialenejšie. Na prudkom svahu budú bližšie. Na kolmej alebo takmer kolmej stene sa môžu v pôdoryse takmer prekrývať, ale v 3D priestore zostanú oddelené nadmorskou výškou.
+
+### 19.4 Analytické použitie
+
+Vrstevnice sa nemajú iba vykresliť. Ich geometria sa má uchovať v dátovom modeli minimálne s údajmi:
+
+```js
+{
+    elevationM: 900,
+    points: [],
+    type: "INDEX_CONTOUR",
+    intervalM: 50,
+    dataOrigin: "ODVODENÉ Z MODELOVÉHO TERÉNU"
+}
+```
+
+Z vrstevníc a výškového modelu sa majú následne odvodzovať:
+
+- sklon v ľubovoľne zvolenom azimute,
+- smer najväčšieho spádu,
+- pozdĺžne a priečne profily,
+- zmena sklonu,
+- lokálne terénne zlomy,
+- hrany plošín a zrázov,
+- prudké a takmer kolmé steny,
+- osi dolín a žľabov,
+- hrebene, rebrá a sedlá,
+- lokálne maximá a minimá,
+- uzavreté vrcholy a depresie.
+
+Pracovný vzťah pre smerový uhol sklonu medzi dvoma výškovými bodmi:
+
+```text
+beta = arctan(delta_h / delta_s)
+```
+
+kde:
+
+- `delta_h` je rozdiel nadmorských výšok,
+- `delta_s` je vodorovná vzdialenosť v zvolenom smere.
+
+Vrstevnice teda tvoria spojnicu medzi výškovým modelom a smerovou morfologickou analýzou. Umožnia overovať, či farebná klasifikácia správne rozpoznala rovinu, svah, rebro, žľab, plošinu alebo stenu.
+
+### 19.5 Lokálne extrémy
+
+Vrstva vrstevníc má umožniť rozlíšiť a osobitne označiť:
+
+- najvyšší bod aktuálne analyzovanej oblasti,
+- najnižší bod aktuálne analyzovanej oblasti,
+- lokálne vrcholy,
+- lokálne minimá,
+- sedlá,
+- uzavreté depresie.
+
+Najvyšší alebo najnižší bod aktuálneho kruhového výrezu sa nesmie automaticky označiť za skutočný vrchol alebo dno terénneho celku. Ak morfológia pokračuje cez hranicu analýzy, ide iba o extrém v rámci momentálne dostupnej oblasti a analýza sa má v príslušnom smere rozšíriť.
+
+### 19.6 Záväzná zásada vizualizácie
+
+Pri analýze geometrie terénu platí:
+
+```text
+výškový model
+→ tmavošedé 3D vrstevnice
+→ spojitosti reliéfu
+→ smerové profily a uhly
+→ morfologická klasifikácia
+→ farebné analytické vrstvy
+```
+
+Farebné odtiene sú doplnkovým analytickým vyjadrením. Vrstevnice sú základným čitateľným rámcom geometrie krajiny a musia zostať viditeľné pri každej vrstve, pri ktorej pomáhajú vysvetliť tvar a nadväznosť reliéfu.
