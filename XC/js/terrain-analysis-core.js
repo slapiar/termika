@@ -6,10 +6,11 @@
 // mapu. Prvotná oblasť je kruhový pohľad okolo zvoleného stredu.
 
 window.TerrainAnalysisCore = {
-    VERSION: "2.6.0-alpha.2",
+    VERSION: "2.6.0-alpha.3",
 
     modules: new Map(),
     lastResult: null,
+    layerVisibility: new Map(),
 
     defaultOptions: {
         center: null,
@@ -40,6 +41,10 @@ window.TerrainAnalysisCore = {
             run: definition.run
         });
 
+        if (!this.layerVisibility.has(id)) {
+            this.layerVisibility.set(id, true);
+        }
+
         return this.modules.get(id);
     },
 
@@ -50,6 +55,41 @@ window.TerrainAnalysisCore = {
             description: module.description,
             requires: [...module.requires]
         }));
+    },
+
+    setLayerVisible: function (id, visible) {
+        const isVisible = Boolean(visible);
+        this.layerVisibility.set(id, isVisible);
+
+        if (id === "geometry" && window.TerrainAnalysis?.diagnosticCollection) {
+            window.TerrainAnalysis.diagnosticCollection.show = isVisible;
+        }
+
+        if (id === "contours") {
+            window.TerrainContours?.setVisible?.(isVisible);
+        }
+    },
+
+    isLayerVisible: function (id) {
+        return this.layerVisibility.get(id) !== false;
+    },
+
+    bindLayerControls: function () {
+        document.querySelectorAll('.module-toggle').forEach((input) => {
+            const id = String(input.value || "").trim();
+            if (!id) return;
+
+            this.layerVisibility.set(id, input.checked);
+
+            input.addEventListener("change", () => {
+                this.setLayerVisible(id, input.checked);
+
+                if (id === "contours") {
+                    const mapToggle = document.getElementById("contoursVisible");
+                    if (mapToggle) mapToggle.checked = input.checked;
+                }
+            });
+        });
     },
 
     analyze: async function (viewer, options = {}) {
@@ -190,3 +230,7 @@ window.TerrainAnalysisCore = {
         };
     }
 };
+
+document.addEventListener("DOMContentLoaded", () => {
+    window.TerrainAnalysisCore.bindLayerControls();
+});
