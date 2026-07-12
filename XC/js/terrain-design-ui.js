@@ -129,7 +129,7 @@
 
         const note = document.createElement("p");
         note.className = "legend-note";
-        note.textContent = "Farebné body už používajú paletu G01–G16. Aktuálny odtieň sa mení podľa vypočítanej sily geometrie, sklonu a intenzity zlomu. Výškové tieňovanie podľa relatívnej polohy v kopci, hrebeni, žľabe alebo doline sa zapne až po morfologickej vrstve.";
+        note.textContent = "Farebné body používajú paletu G01–G16 a zosilnený kontrast V2. Slabý geometrický prejav je svetlejší, silný prejav alebo zlom tmavší a sýtejší. Výškové tieňovanie podľa relatívnej polohy v kopci, hrebeni, žľabe alebo doline sa zapne až po morfologickej vrstve.";
         content.push(note);
 
         body.replaceChildren(...content);
@@ -169,6 +169,9 @@
             addRow("Farebná rodina", color.family + " · " + color.familyName);
             addRow("Základná farba", color.baseHex);
             addRow("Vykreslený odtieň", color.finalHex);
+            addRow("Svetlosť", Number(color.lightnessPercent).toFixed(1) + " %");
+            addRow("Sýtosť", Number(color.saturationPercent).toFixed(1) + " %");
+            addRow("Výsledný kontrast", Number(color.contrastRel).toFixed(2));
             addRow("Sila geometrie kRel", Number(color.kRel).toFixed(2));
             addRow("Relatívny sklon sRel", Number(color.sRel).toFixed(2));
             addRow("Intenzita zlomu bRel", Number(color.bRel).toFixed(2));
@@ -196,7 +199,7 @@
             const collection = original.call(this, viewer, result);
             if (typeof window.logStatus === "function") {
                 window.logStatus(
-                    "Terénny dizajn: aktívna paleta G01–G16; odtieň podľa sily geometrie, sklonu a zlomu.",
+                    "Terénny dizajn: aktívna paleta G01–G16; zosilnený kontrast V2 podľa geometrie, sklonu a zlomu.",
                     "success"
                 );
                 window.logStatus(
