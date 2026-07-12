@@ -4,20 +4,57 @@
 
 Prvá etapa v2.6 naďalej overuje iba geometriu skutočného Cesium terénu. Hotspot, slnečný model ani prúdenie sa zatiaľ nepočítajú.
 
-Od verzie `2.6.0-alpha.2` je nad existujúci geometrický výpočet vložené modulárne jadro. Doterajší výpočet sklonu, orientácie, zakrivenia a pracovnej morfologickej klasifikácie zostáva zachovaný ako prvý analytický modul.
+Od verzie `2.6.0-alpha.2` je nad existujúci geometrický výpočet vložené modulárne jadro. Doterajší výpočet sklonu, orientácie, zakrivenia a pracovnej klasifikácie zostáva zachovaný ako prvý analytický modul.
 
 Prvotná analyzovaná oblasť sa chápe ako kruhový pohľad okolo zvoleného stredu. Pravouhlá mriežka zostáva iba vnútorným vzorkovacím nástrojom; bunky mimo zvoleného polomeru sa nezaraďujú do výslednej diagnostickej mapy.
 
 Od pracovného kroku `20260712-07` je farebná geometrická vrstva klikateľná. Kliknutie na farebný bod otvorí samostatné diagnostické okno s číselnými metrikami, aktuálnym klasifikačným pravidlom a dôvodmi zaradenia. Kliknutie mimo farebného bodu naďalej vyberá nový stred analýzy.
 
-Tento krok nemení prahy klasifikácie ani farebnú paletu. Jeho účelom je sprístupniť výpočet na vizuálne overenie voči vrstevniciam a skutočnému 3D reliéfu.
+Nabehnutie kurzora nad farebný bod zobrazuje rýchly popis pracovného morfologického kandidáta, lokálnu geometrickú triedu a nadmorskú výšku.
+
+## Prvá vrstva terénneho dizajnu – lokálna geometria
+
+Od pracovného kroku po release `v2.6.7` sa lokálna geometria oddeľuje od pracovného morfologického kandidáta.
+
+Každá bunka dostáva samostatný objekt `geometry` s minimálne týmito údajmi:
+
+```js
+geometry = {
+    localClass: "KONVEXNÁ",
+    convexity: 0.83,
+    concavity: 0.04,
+    planarity: 0.11,
+    breakIntensity: 0.72,
+    wallness: 0.00,
+    confidence: 0.78,
+    method: "LOCAL_CURVATURE_V1",
+    family: null
+};
+```
+
+Pracovné lokálne triedy:
+
+- `ROVINNÁ`,
+- `KONVEXNÁ`,
+- `KONKÁVNA`,
+- `ZLOMOVÁ`,
+- `STENOVÁ`,
+- `PRECHODOVÁ`.
+
+Zásadné rozlíšenie:
+
+> Lokálne rovinná bunka nemusí byť vodorovná. Aj naklonený svah môže byť lokálne rovinný, ak je približne planárny a nemá výraznú krivosť. Označenie `SVAH` patrí do morfologickej roly širšieho terénneho celku, nie do lokálnej geometrie.
+
+Pôvodné označenia `REBRO_ALEBO_HRANA`, `ŽĽAB_ALEBO_ZBERNICA`, `SVAH`, `VYVÝŠENINA`, `DEPRESIA` a podobne zostávajú dočasnými morfologickými kandidátmi. Zatiaľ sa nemažú, pretože slúžia na porovnanie novej oddelenej vrstvy s doterajším správaním.
+
+Pracovné prahy a koeficienty lokálnej geometrie sú diagnostické. Budú sa ladiť až podľa porovnania s vrstevnicami, 3D reliéfom a číselnými metrikami na rozličných typoch terénu.
 
 ## Súbory
 
 - `XC/js/terrain-analysis-core.js` – modulárne jadro, register analytických vrstiev, kontrola závislostí, spoločný kontext a kruhová maska.
 - `XC/js/terrain-analysis.js` – existujúci výpočet výškovej mriežky, sklonu, orientácie, zakrivenia a pracovnej klasifikácie.
 - `XC/js/terrain-analysis-geometry.js` – adaptér, ktorý registruje existujúcu geometrickú analýzu ako modul `geometry`.
-- `XC/js/terrain-analysis-diagnostics.js` – vysvetliteľná diagnostika bunky; zobrazuje použité metriky, pracovné pravidlo a dôvody aktuálneho zaradenia bez zmeny fyzikálneho výpočtu.
+- `XC/js/terrain-analysis-diagnostics.js` – vysvetliteľná diagnostika bunky, hover popis a prvá oddelená klasifikácia lokálnej geometrie.
 - `XC/js/terrain-contours.js` – samostatná analytická a zobrazovacia vrstva tmavošedých 3D vrstevníc.
 - `XC/terrain-analysis-test.php` – samostatná testovacia stránka s ručným výberom analytických vrstiev, polomeru a rozostupu vzoriek, klikateľnou diagnostikou bodov a plávajúcimi oknami.
 - `XC/js/terrain-analysis-ui.js` – pripravené ovládanie pre neskoršie zapojenie do hlavnej aplikácie.
@@ -30,13 +67,13 @@ zvolený stred
 → výber zapnutých modulov
 → modul geometry
 → podkladová pravouhlá mriežka
-→ výpočet geometrie
+→ výpočet sklonu a krivostí
+→ lokálna geometria A
 → kruhová maska
 → spoločná vrstva layers.geometry
 → diagnostické zobrazenie v Cesium
-→ kliknutie na farebnú bunku
-→ terrain-analysis-diagnostics.js
-→ metriky + aktuálne pravidlo + dôvody klasifikácie
+→ hover: kandidát + lokálna geometria + výška
+→ klik: metriky + pravidlá + dôvody klasifikácie
 ```
 
 Vrstevnice zostávajú samostatnou vrstvou a slúžia ako geometrická referencia pri kontrole farebnej klasifikácie.
@@ -49,39 +86,27 @@ Vrstevnice zostávajú samostatnou vrstvou a slúžia ako geometrická referenci
 4. Nastaviť hrubý rozostup vzoriek.
 5. Ponechať zapnuté vrstvy `Geometria reliéfu` a `Vrstevnice`.
 6. Spustiť vybrané analýzy.
-7. Overiť, že farebné diagnostické body vytvárajú kruhovú oblasť a nie pôvodný štvorec.
-8. Kliknúť na farebný bod a overiť, že sa otvorí okno `Diagnostika geometrickej bunky` a stred analýzy sa pritom neposunie.
-9. Porovnať zobrazený typ a farbu s vrstevnicami, 3D reliéfom, sklonom, Laplaciánom, profilovou krivosťou a uvedenými dôvodmi klasifikácie.
-10. Kliknúť mimo farebných bodov na terén a overiť, že sa vyberie nový stred analýzy.
+7. Prechádzať kurzorom po farebných bodoch a porovnať pracovný morfologický kandidát s novou lokálnou triedou.
+8. Overiť najmä, že čistý naklonený svah môže byť lokálne `rovinný`, hoci jeho morfologický kandidát zostáva `svah`.
+9. Kliknúť na farebný bod a porovnať lokálnu triedu, intenzitu konvexnosti, konkávnosti, rovinnosti a zlomu s vrstevnicami a 3D reliéfom.
+10. Skontrolovať výrazné rebrá, žľaby, hrany, skalné steny, rovné svahy a prechodové oblasti.
 
 ## Aktuálne obmedzenia
 
-Doterajšia pracovná klasifikácia ešte mieša lokálnu geometriu s morfologickou rolou. Označenia ako `REBRO_ALEBO_HRANA` alebo `ŽĽAB_ALEBO_ZBERNICA` sú preto iba kandidátske triedy, nie konečné morfologické určenie.
+Morfologická rola sa ešte neurčuje zo širšieho okolia. Doterajšie označenia sú iba kandidátske triedy a nesmú sa považovať za konečný výsledok.
 
 Nasledujúce hodnoty sa zatiaľ nevypočítavajú a diagnostika ich zámerne ponecháva ako `null`:
 
 - morfologická rola,
 - farebná rodina G01 až G16,
 - relatívna výška v rámci terénneho celku,
-- relatívna hĺbka v rámci konkávneho celku,
-- intenzita zlomu alebo geometrického rozhrania.
+- relatívna hĺbka v rámci konkávneho celku.
 
-Aktuálne farby zostávajú dočasnou diagnostickou paletou. Nie sú ešte konečnou implementáciou šestnástich farebných rodín z `postupy/TerenDizajManual.md`.
+Aktuálne farby zostávajú dočasnou diagnostickou paletou. Nie sú ešte konečnou implementáciou šestnástich farebných rodín z `postupy/TerenDizajnManual.md`.
 
 ## Ďalší krok
 
-Nasleduje oddelenie dvoch vrstiev klasifikácie podľa `postupy/TerenDizajManual.md`:
-
-### A. Lokálna geometria
-
-- rovinná,
-- konvexná,
-- konkávna,
-- zlomová,
-- stenová,
-- prechodová.
-
-### B. Morfologická rola
+Nasleduje vrstva B – morfologická rola, odvodená zo širšieho okolia a zo spojitosti reliéfu:
 
 - vrchol,
 - hrebeň,
