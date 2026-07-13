@@ -4,20 +4,21 @@
 (function () {
     if (window.TermikaReleaseBadge) return;
 
-    const VERSION = "1.0.0";
-    const RELEASE_URL = "../RELEASE_VERSION";
+    const VERSION = "1.0.1";
+    const RELEASE_URL = "release-version.php";
+    const RELEASE_PATTERN = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
     let currentRelease = null;
 
     const normalizeRelease = function (value) {
-        return String(value || "")
-            .trim()
-            .replace(/^v/i, "")
-            .replace(/[^0-9A-Za-z._-]/g, "");
+        const normalized = String(value || "").trim().replace(/^v/i, "");
+        return RELEASE_PATTERN.test(normalized) ? normalized : null;
     };
 
     const applyRelease = function (release) {
         const normalized = normalizeRelease(release);
-        if (!normalized) return false;
+        if (!normalized) {
+            throw new Error("Neplatný formát release verzie.");
+        }
 
         currentRelease = normalized;
         const panelTitle = document.querySelector("#panel .window-title");
@@ -34,17 +35,23 @@
 
     const load = async function () {
         try {
-            const response = await fetch(RELEASE_URL, {
+            const response = await fetch(RELEASE_URL + "?t=" + Date.now(), {
                 cache: "no-store",
                 headers: { "Accept": "text/plain" }
             });
             if (!response.ok) {
                 throw new Error("HTTP " + response.status);
             }
+
+            const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+            if (contentType && !contentType.includes("text/plain")) {
+                throw new Error("Očakávaný text/plain, prijaté " + contentType + ".");
+            }
+
             const release = await response.text();
             return applyRelease(release);
         } catch (error) {
-            console.warn("TermikaXC: nepodarilo sa načítať RELEASE_VERSION.", error);
+            console.warn("TermikaXC: nepodarilo sa načítať platný RELEASE_VERSION.", error);
             return false;
         }
     };
@@ -54,6 +61,7 @@
         RELEASE_URL,
         load,
         applyRelease,
+        normalizeRelease,
         get release() { return currentRelease; }
     };
 
