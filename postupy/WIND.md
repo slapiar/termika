@@ -128,6 +128,68 @@ WIND pripravi pre bubliny:
 THERMAL_BUBBLES budu vykreslene ako diskretne castice stupania (nie dlhe prudnice),
 pricom horizontalny drift preberu z WIND pola a vertikalnu zlozku z thermal modelu.
 
+## Dynamicky model vetra z akceleracie castice
+
+Zakladny vietor z TEMP je iba okrajova podmienka. Vnutorna dynamika WIND sa ma pocitat
+z akceleracie vzduchovej castice a zmen energie, hmoty a hybnosti.
+
+Pracovny tvar:
+
+```text
+V_total(x,y,z,t) = V_bg(z,t) + dV_conv + dV_terrain + dV_surface + dV_shear
+```
+
+Kde:
+
+- `V_bg` je profilovy vietor z TEMP,
+- `dV_conv` je prispevok konvekcie a vztlaku,
+- `dV_terrain` je vedenie toku terenom (dolina, hrana, zlom),
+- `dV_surface` je vplyv povrchu (ladovec, sneh, voda, suchy teren),
+- `dV_shear` je zmena toku od strihu medzi vrstvami.
+
+### Rezim pod LCL (nenasytena castica)
+
+```text
+dw/dt = B - D - P
+B = g * (Tv_parcel - Tv_env) / Tv_env
+dT_parcel/dt = -Gamma_d * w + M_T
+```
+
+Kde `D` je odpor, `P` tlakova brzda a `M_T` mieasanie teploty s okolim.
+
+### Rezim nad LCL (nasytena castica)
+
+Od LCL sa prepina fyzika na nasytenu vetvu:
+
+```text
+dT_parcel/dt = -Gamma_m * w + (Lv/Cp) * C + M_T
+dqv/dt = -C + M_q
+dql/dt = C - R
+```
+
+Kde:
+
+- `C` je kondenzacia,
+- `R` je odtok kvapociek (precipitacny odber),
+- `M_q` je mieasanie vlhkosti.
+
+Vztlak sa pocita s virtualnou teplotou a zatazenim kondenzatom.
+
+### Dovod tejto formulacie
+
+Vietor nesmie byt iba prepisany z jedneho cisla smeru a rychlosti. Ma byt vysledkom
+lokalnej energetiky a dynamiky castice v case. Preto je prechod v LCL zavazny bod
+modelu, kde sa meni termodynamicky rezim a pravidla vyvoja prudenia.
+
+### Implementacna poznamka
+
+V1 zostava 2D mapa prudnic ako diagnosticka vrstva. Dalsie kroky:
+
+1. viac AGL hladin a medzi nimi strih (`du/dz`, `dv/dz`),
+2. turbulence-risk vrstva z gradientu stability a strihu,
+3. prepojenie na THERMAL_BUBBLES, kde horizontalny drift berie WIND a verticalna
+   zlozka ide z parceloveho modelu (dry/moist podla LCL).
+
 ## Test scenare
 
 1. Bezvetrie, homogenny povrch: kratke, riedke prudnice, slaba convergencia.

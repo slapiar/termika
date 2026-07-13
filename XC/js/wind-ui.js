@@ -17,6 +17,7 @@ window.WindUI = {
         spacingM: 120,
         baseSpeedMs: 4.5,
         baseDirDeg: 230,
+        useTempProfileWind: true,
         source: "ODVODENE"
     },
 
@@ -48,6 +49,16 @@ window.WindUI = {
         }
 
         const settings = { ...this.settings, ...options };
+        const profile = Array.isArray(settings.tempProfile)
+            ? settings.tempProfile
+            : (Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP)
+                ? window.PilotNetwork.liveAtmosferaTEMP
+                : null);
+
+        const sourceLabel = profile && profile.length
+            ? "ODVODENE_Z_TEMP"
+            : settings.source;
+
         const coolingZones = Array.isArray(settings.coolingZones)
             ? settings.coolingZones
             : this.buildDefaultCoolingZones(center);
@@ -59,7 +70,10 @@ window.WindUI = {
             spacingM: settings.spacingM,
             baseSpeedMs: settings.baseSpeedMs,
             baseDirDeg: settings.baseDirDeg,
-            source: settings.source,
+            tempProfile: profile,
+            surfaceAltM: Number.isFinite(Number(settings.surfaceAltM)) ? Number(settings.surfaceAltM) : null,
+            useTempProfileWind: settings.useTempProfileWind,
+            source: sourceLabel,
             coolingZones
         });
 
