@@ -65,8 +65,16 @@
         return window.TerrainDesign;
     })();
 
-    const terrainFocusUiReady = (async function () {
+    const terrainMeshSurfaceReady = (async function () {
         await terrainDesignReady;
+        if (!window.TerrainMeshSurface) {
+            await loadScript("js/terrain-mesh-surface.js");
+        }
+        return window.TerrainMeshSurface;
+    })();
+
+    const terrainFocusUiReady = (async function () {
+        await terrainMeshSurfaceReady;
         if (!window.TerrainAnalysisFocusUI) {
             await loadScript("js/terrain-analysis-focus-ui.js");
         }
@@ -81,11 +89,30 @@
         return window.TerrainCameraHUD;
     })();
 
+    const termikaReleaseBadgeReady = (async function () {
+        await terrainCameraHudReady;
+        if (!window.TermikaReleaseBadge) {
+            await loadScript("js/terrain-release-badge.js");
+        }
+        return window.TermikaReleaseBadge;
+    })();
+
+    const terrainBasemapVisibilityReady = (async function () {
+        await termikaReleaseBadgeReady;
+        if (!window.TerrainBasemapVisibility) {
+            await loadScript("js/terrain-basemap-visibility.js");
+        }
+        return window.TerrainBasemapVisibility;
+    })();
+
     window.TerrainMorphologyReady = terrainMorphologyReady;
     window.TerrainMeshReady = terrainMeshReady;
     window.TerrainDesignReady = terrainDesignReady;
+    window.TerrainMeshSurfaceReady = terrainMeshSurfaceReady;
     window.TerrainAnalysisFocusUIReady = terrainFocusUiReady;
     window.TerrainCameraHUDReady = terrainCameraHudReady;
+    window.TermikaReleaseBadgeReady = termikaReleaseBadgeReady;
+    window.TerrainBasemapVisibilityReady = terrainBasemapVisibilityReady;
 
     TerrainAnalysisCore.registerModule({
         id: "geometry",
@@ -97,8 +124,11 @@
             await terrainMorphologyReady;
             await terrainMeshReady;
             await terrainDesignReady;
+            await terrainMeshSurfaceReady;
             await terrainFocusUiReady;
             await terrainCameraHudReady;
+            await termikaReleaseBadgeReady;
+            await terrainBasemapVisibilityReady;
 
             const size = TerrainAnalysisCore.gridSizeForCircle(
                 context.config.radiusM,
@@ -127,8 +157,11 @@
                 terrainDesignVersion: window.TerrainDesign?.VERSION || null,
                 morphologyModuleVersion: window.TerrainMorphology?.VERSION || null,
                 meshModuleVersion: window.TerrainMesh?.VERSION || null,
+                meshSurfaceVersion: window.TerrainMeshSurface?.VERSION || null,
                 focusUiVersion: window.TerrainAnalysisFocusUI?.VERSION || null,
-                cameraHudVersion: window.TerrainCameraHUD?.VERSION || null
+                cameraHudVersion: window.TerrainCameraHUD?.VERSION || null,
+                releaseBadgeVersion: window.TermikaReleaseBadge?.VERSION || null,
+                basemapVisibilityVersion: window.TerrainBasemapVisibility?.VERSION || null
             };
 
             context.diagnostics.geometry = {
