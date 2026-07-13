@@ -73,10 +73,19 @@
         return window.TerrainAnalysisFocusUI;
     })();
 
+    const terrainCameraHudReady = (async function () {
+        await terrainFocusUiReady;
+        if (!window.TerrainCameraHUD) {
+            await loadScript("js/terrain-camera-hud.js");
+        }
+        return window.TerrainCameraHUD;
+    })();
+
     window.TerrainMorphologyReady = terrainMorphologyReady;
     window.TerrainMeshReady = terrainMeshReady;
     window.TerrainDesignReady = terrainDesignReady;
     window.TerrainAnalysisFocusUIReady = terrainFocusUiReady;
+    window.TerrainCameraHUDReady = terrainCameraHudReady;
 
     TerrainAnalysisCore.registerModule({
         id: "geometry",
@@ -89,6 +98,7 @@
             await terrainMeshReady;
             await terrainDesignReady;
             await terrainFocusUiReady;
+            await terrainCameraHudReady;
 
             const size = TerrainAnalysisCore.gridSizeForCircle(
                 context.config.radiusM,
@@ -117,7 +127,8 @@
                 terrainDesignVersion: window.TerrainDesign?.VERSION || null,
                 morphologyModuleVersion: window.TerrainMorphology?.VERSION || null,
                 meshModuleVersion: window.TerrainMesh?.VERSION || null,
-                focusUiVersion: window.TerrainAnalysisFocusUI?.VERSION || null
+                focusUiVersion: window.TerrainAnalysisFocusUI?.VERSION || null,
+                cameraHudVersion: window.TerrainCameraHUD?.VERSION || null
             };
 
             context.diagnostics.geometry = {
