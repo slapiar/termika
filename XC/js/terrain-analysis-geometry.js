@@ -9,6 +9,11 @@
         throw new Error("Najprv musí byť načítaný terrain-analysis.js.");
     }
 
+    const currentScriptSrc = document.currentScript?.src || "";
+    const versionSuffix = currentScriptSrc.includes("?")
+        ? currentScriptSrc.slice(currentScriptSrc.indexOf("?"))
+        : "";
+
     const loadScript = function (src) {
         return new Promise((resolve, reject) => {
             const existing = document.querySelector('script[data-termika-module="' + src + '"]');
@@ -21,10 +26,6 @@
                 return;
             }
 
-            const currentSrc = document.currentScript?.src || "";
-            const versionSuffix = currentSrc.includes("?")
-                ? currentSrc.slice(currentSrc.indexOf("?"))
-                : "";
             const script = document.createElement("script");
             script.src = src + versionSuffix;
             script.async = false;
@@ -40,7 +41,15 @@
         });
     };
 
+    const terrainMorphologyReady = (async function () {
+        if (!window.TerrainMorphology) {
+            await loadScript("js/terrain-morphology.js");
+        }
+        return window.TerrainMorphology;
+    })();
+
     const terrainDesignReady = (async function () {
+        await terrainMorphologyReady;
         if (!window.TerrainDesign) {
             await loadScript("js/terrain-design.js");
         }
@@ -48,6 +57,7 @@
         return window.TerrainDesign;
     })();
 
+    window.TerrainMorphologyReady = terrainMorphologyReady;
     window.TerrainDesignReady = terrainDesignReady;
 
     TerrainAnalysisCore.registerModule({
@@ -57,6 +67,7 @@
         requires: [],
 
         run: async function (context) {
+            await terrainMorphologyReady;
             await terrainDesignReady;
 
             const size = TerrainAnalysisCore.gridSizeForCircle(
@@ -83,7 +94,8 @@
                 sampledPoints: rawResult.source?.sampledPoints || 0,
                 totalSampledPoints: rawResult.source?.totalPoints || 0,
                 localGeometryMethod: TerrainAnalysis.LOCAL_GEOMETRY_VERSION || null,
-                terrainDesignVersion: window.TerrainDesign?.VERSION || null
+                terrainDesignVersion: window.TerrainDesign?.VERSION || null,
+                morphologyModuleVersion: window.TerrainMorphology?.VERSION || null
             };
 
             context.diagnostics.geometry = {
