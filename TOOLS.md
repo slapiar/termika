@@ -17,6 +17,7 @@ Príklady:
 - geometria reliéfu,
 - morfologická rola,
 - terénny mesh,
+- dominantná plošná klasifikácia meshu,
 - oslnenie,
 - energetická bilancia,
 - model prúdenia.
@@ -30,7 +31,9 @@ Nástroj pomáha používateľovi pracovať s 3D scénou, výsledkami a diagnost
 Príklady:
 
 - kamerový HUD,
+- zobrazenie aktuálnej release verzie,
 - opakovaný prepočet rovnakého fokusu,
+- prepínanie základnej mapy,
 - meranie vzdialenosti,
 - výškový profil,
 - rez terénom,
@@ -56,20 +59,29 @@ Nástroje majú byť postupne spravované samostatným registrom doplnkov, praco
 | ID nástroja | Názov | Stav | Oblasť použitia | Implementácia | Dokumentácia |
 |---|---|---|---|---|---|
 | `camera-hud` | Kamerový HUD | `OVERENÉ` | Testovacia 3D analýza terénu; pripravené na ďalšie pracoviská | `XC/js/terrain-camera-hud.js` | [`tools/HUD.md`](tools/HUD.md) |
+| `release-badge` | Zobrazenie aktuálnej release verzie | `ROZPRACOVANÉ` | Hlavička testovacej analýzy | `XC/js/terrain-release-badge.js` | [`tools/RELEASE.md`](tools/RELEASE.md) |
 | `focus-recompute` | Opakovaný prepočet aktuálneho fokusu | `AKTÍVNE` | Testovacia analýza terénu | `XC/js/terrain-analysis-focus-ui.js` | pripraví sa |
-| `mesh-viewer` | Diagnostické zobrazenie terénneho meshu | `ROZPRACOVANÉ` | Testovacia analýza terénu | `XC/js/terrain-mesh.js` | pripraví sa |
+| `mesh-viewer` | Diagnostické zobrazenie terénneho meshu | `ROZPRACOVANÉ` | Testovacia analýza terénu | `XC/js/terrain-mesh.js` | [`tools/MESH.md`](tools/MESH.md) |
+| `mesh-surface` | Dominantná alebo šedá plošná výplň meshu | `ROZPRACOVANÉ` | Testovacia analýza terénu | `XC/js/terrain-mesh-surface.js` | [`tools/MESH.md`](tools/MESH.md) |
+| `basemap-visibility` | Prepínač základnej mapy Cesium | `ROZPRACOVANÉ` | Testovacia 3D analýza terénu | `XC/js/terrain-basemap-visibility.js` | [`tools/BASEMAP.md`](tools/BASEMAP.md) |
 | `cell-diagnostics` | Diagnostika geometrickej bunky | `AKTÍVNE` | Testovacia analýza terénu | `XC/terrain-analysis-test.php`, `XC/js/terrain-design-ui.js`, ďalšie diagnostické moduly | pripraví sa |
 | `terrain-test-link` | Rýchly vstup na test terénu | `AKTÍVNE` | Hlavná stránka TermikaXC | `XC/js/terrain-test-link.js` | pripraví sa |
 
-## 4. Prvý referenčný nástroj
+## 4. Referenčné dokumenty nástrojov
 
-Prvým plne zdokumentovaným nástrojom je kamerový HUD:
+Prvým používateľsky overeným referenčným nástrojom je kamerový HUD:
 
 - používateľský popis: [`tools/HUD.md`](tools/HUD.md),
 - technický a vývojový kontext: [`postupy/TermikaXC-v2.6-opakovany-fokus-a-kamerovy-HUD.md`](postupy/TermikaXC-v2.6-opakovany-fokus-a-kamerovy-HUD.md),
 - implementácia: `XC/js/terrain-camera-hud.js`.
 
-Dokument `tools/HUD.md` je vzorom štruktúry pre ďalšie nástroje.
+Ďalšie úplné karty:
+
+- [`tools/MESH.md`](tools/MESH.md) – drôt, dominantná výplň a jednotná šedá,
+- [`tools/BASEMAP.md`](tools/BASEMAP.md) – vypnutie obrazovej mapy pri zachovaní 3D reliéfu,
+- [`tools/RELEASE.md`](tools/RELEASE.md) – zobrazenie verzie zo súboru `RELEASE_VERSION`.
+
+Dokument `tools/HUD.md` zostáva vzorom štruktúry pre ďalšie nástroje.
 
 ## 5. Povinná štruktúra dokumentácie nástroja
 
@@ -102,6 +114,8 @@ Odporúčané kapitoly:
 8. Používateľské nastavenia nástroja majú byť oddelené od fyzikálnych nastavení analytických modulov.
 9. Vizuálny doplnok má byť odpojiteľný bez zmeny výpočtov.
 10. Každý nástroj má mať zdokumentovaný spôsob korektného zrušenia udalostí, listenerov a vytvorených prvkov.
+11. Výpočtová topológia a jej vizualizácia majú zostať oddelené; plošný renderer nesmie meniť vrcholy, hrany ani fyzikálne trojuholníky meshu.
+12. Skrytie obrazovej mapy nesmie vypnúť 3D reliéf ani analytické vrstvy.
 
 ## 7. Cieľová podoba registra doplnkov
 
@@ -142,6 +156,7 @@ Register má neskôr zabezpečovať:
 - rez terénom,
 - zobrazenie normálových vektorov plôch meshu,
 - diagnostická lupa bunky, hrany a plochy,
+- topologická agregácia farebných oblastí meshu,
 - prepínanie meteorologických hladín,
 - zobrazenie smeru a rýchlosti vetra,
 - slnečný kompas,
@@ -153,5 +168,9 @@ Register má neskôr zabezpečovať:
 
 - [`CHANGELOG.md`](CHANGELOG.md)
 - [`tools/HUD.md`](tools/HUD.md)
+- [`tools/MESH.md`](tools/MESH.md)
+- [`tools/BASEMAP.md`](tools/BASEMAP.md)
+- [`tools/RELEASE.md`](tools/RELEASE.md)
 - [`postupy/TermikaXC-v2.6-opakovany-fokus-a-kamerovy-HUD.md`](postupy/TermikaXC-v2.6-opakovany-fokus-a-kamerovy-HUD.md)
 - [`postupy/TermikaXC-v2.6-terenny-mesh.md`](postupy/TermikaXC-v2.6-terenny-mesh.md)
+- [`postupy/TermikaXC-v2.6-terenny-mesh-M1.2-vypln.md`](postupy/TermikaXC-v2.6-terenny-mesh-M1.2-vypln.md)
