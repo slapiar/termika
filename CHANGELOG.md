@@ -8,6 +8,10 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 
 ### Pridané
 
+- Pridaná samostatná MVP kostra meteorologického prvku `WIND` bez integrácie do existujúcich stránok, aby nezasahovala do rozpracovaných commitov.
+  - nový modul `XC/js/wind-field.js` pre výpočet 2D veterného poľa pri zemi (AGL), odhad `tempDeltaK` a pracovnú convergenciu,
+  - nový modul `XC/js/wind-render.js` pre vykreslenie prúdnic so smerovými šípkami, farbou podľa teplotného kontrastu a hrúbkou podľa rýchlosti,
+  - nový modul `XC/js/wind-ui.js` pre bezpečné demo spustenie, čistenie vrstvy a diagnostické zhrnutie bunky.
 - Vrstva B1 – viacmierkové morfologické susedstvo nad lokálnou geometriou A.
   - tri mierky susedstva podľa aktuálneho rozostupu vzoriek,
   - osem smerových profilov,
