@@ -91,6 +91,14 @@
             }
             .terrain-design-color-row b{color:#8fa9b8;font-weight:400}
             .terrain-design-color-row span{color:#fff;font-variant-numeric:tabular-nums}
+            .terrain-design-color-strip{
+                grid-column:1 / -1;
+                height:20px;
+                margin:2px 0 6px;
+                border:1px solid rgba(255,255,255,.72);
+                border-radius:4px;
+                box-shadow:inset 0 0 0 1px rgba(0,0,0,.22),0 1px 4px rgba(0,0,0,.28)
+            }
             @media (max-width:760px){
                 #legend{width:auto;height:56vh}
             }
@@ -168,6 +176,15 @@
 
             addRow("Farebná rodina", color.family + " · " + color.familyName);
             addRow("Základná farba", color.baseHex);
+
+            const baseColorStrip = document.createElement("div");
+            baseColorStrip.className = "terrain-design-color-strip";
+            baseColorStrip.style.backgroundColor = color.baseHex;
+            baseColorStrip.title = "Základná farba " + color.baseHex;
+            baseColorStrip.setAttribute("role", "img");
+            baseColorStrip.setAttribute("aria-label", "Ukážka základnej farby " + color.baseHex);
+            rows.appendChild(baseColorStrip);
+
             addRow("Vykreslený odtieň", color.finalHex);
             addRow("Svetlosť", Number(color.lightnessPercent).toFixed(1) + " %");
             addRow("Sýtosť", Number(color.saturationPercent).toFixed(1) + " %");
