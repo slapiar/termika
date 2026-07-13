@@ -36,6 +36,13 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - stredový zameriavací kríž,
   - samostatné zapnutie a vypnutie v mapových vrstvách.
 
+### Overené používateľom
+
+- Kamerový HUD bol 13. 7. 2026 úspešne overený pri pohybe v reálnej 3D scéne.
+  - grafické stvárnenie bolo prijaté bez požiadavky na korekciu,
+  - svetlozelené pravítka, živé uhlové údaje, výška kamery a zameriavací prvok vytvárajú prirodzený letecký prístrojový dojem,
+  - základný grafický jazyk HUD-u je schválený pre budúce rozšírenie o meteorologické veličiny a vektory prúdenia.
+
 ### Technické rozhodnutia
 
 - Mesh nie je iba vizualizácia. Je spoločnou topologickou vrstvou pre budúcu energetickú bilanciu plôch a dynamické účinky geometrických rozhraní na prízemné prúdenie.
