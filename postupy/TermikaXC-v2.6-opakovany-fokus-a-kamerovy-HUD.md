@@ -66,6 +66,20 @@ HUD je priehľadná neinteraktívna vrstva priamo nad 3D scénou Cesium. Poskytu
 
 HUD sa dá samostatne zapnúť a vypnúť v ovládacom paneli.
 
+Používateľská a technická dokumentácia nástroja je vedená samostatne v:
+
+```text
+tools/HUD.md
+```
+
+Centrálny register nástrojov je:
+
+```text
+TOOLS.md
+```
+
+Tento dokument v `postupy/` zostáva záznamom vývojového kontextu, fyzikálnych hraníc a architektonických rozhodnutí.
+
 ### 3.2 Zobrazené veličiny
 
 HUD zobrazuje:
@@ -133,6 +147,8 @@ Tieto veličiny sa doplnia až po zavedení príslušných fyzikálnych modelov.
 
 ## 5. Súbory
 
+- `TOOLS.md` – centrálny register nástrojov TermikaXC.
+- `tools/HUD.md` – používateľská a technická karta kamerového HUD-u.
 - `XC/js/terrain-analysis-focus-ui.js` – opakovaný prepočet rovnakého fokusu a odhad hustoty vzorkovania.
 - `XC/js/terrain-camera-hud.js` – kamerový HUD a jeho prepínač.
 - `XC/js/terrain-analysis-geometry.js` – automatické načítanie pomocných UI modulov testovacej analýzy.
