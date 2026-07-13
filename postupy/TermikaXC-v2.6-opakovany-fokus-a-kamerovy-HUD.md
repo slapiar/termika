@@ -105,6 +105,18 @@ Aktuálna hodnota výšky kamery je kartografická výška z objektu kamery Cesi
 
 Hodnota AGL je odvodená od aktuálne načítanej výšky terénu pod polohou kamery. Ak Cesium výšku terénu v danom mieste ešte nemá k dispozícii, HUD zobrazí, že AGL nie je určené.
 
+### 3.5 Prvé používateľské overenie
+
+Dňa 13. 7. 2026 bol kamerový HUD prvýkrát vizuálne a používateľsky overený priamo pri pohybe v 3D teréne.
+
+Výsledok bol prijatý bez požiadavky na korekciu. Svetlozelené pravítka, pohyblivé uhlové údaje, výška kamery a stredový zameriavací prvok vytvorili prirodzený dojem leteckého prístrojového zobrazenia. Používateľ výsledok výstižne zhodnotil slovami:
+
+> „Ako v lietadle.“
+
+Tento výsledok potvrdzuje zvolenú grafickú logiku HUD-u ako vhodný základ pre neskoršie meteorologické vrstvy, smer vetra, polohu Slnka, výškové hladiny a vektory prúdenia.
+
+**Stav:** vizuálna koncepcia HUD-u je používateľsky schválená a môže sa ďalej rozširovať bez zmeny základného grafického jazyka.
+
 ## 4. Budúce rozšírenie
 
 Na rovnaký HUD možno neskôr pripojiť:
