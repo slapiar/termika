@@ -13,9 +13,10 @@
         throw new Error("Najprv musí byť načítaný terrain-mesh.js.");
     }
 
-    const VERSION = "2.6.0-m1.2-surface.1";
+    const VERSION = "2.6.0-m1.2-surface.2";
     const METHOD = "TERRAIN_MESH_SURFACE_M1_2";
     const FILL_METHOD = "ONE_RING_DOMINANT_FAMILY_V1";
+    const RENDER_METHOD = "COPLANAR_TRIANGLE_PRIMITIVE_V2";
     const GRAY_FILL_HEX = "#858B91";
     const DOMINANT_FILL_ALPHA = 0.82;
     const GRAY_FILL_ALPHA = 0.86;
@@ -26,6 +27,13 @@
     let visible = false;
     let mode = "dominant";
     let lastRenderOptions = {};
+    let lastRenderState = {
+        status: "idle",
+        renderedFaceCount: 0,
+        expectedFaceCount: 0,
+        mode,
+        error: null
+    };
 
     const keyOf = (row, col) => String(row) + ":" + String(col);
     const finite = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
@@ -145,6 +153,7 @@
             version: VERSION,
             method: METHOD,
             fillMethod: FILL_METHOD,
+            renderMethod: RENDER_METHOD,
             familyCounts,
             meanConfidence: mean(confidences),
             faceCount: mesh.faces.length,
@@ -162,32 +171,38 @@
         return Cesium.Color.fromCssColorString(hex).withAlpha(alpha);
     };
 
+    const getStatusElement = function () {
+        return document.getElementById("meshFillStatus");
+    };
+
+    const setUiStatus = function (text, state = "info") {
+        const element = getStatusElement();
+        if (!element) return;
+        element.textContent = text;
+        element.dataset.state = state;
+        element.style.color = state === "error"
+            ? "#ff8585"
+            : (state === "success" ? "#8cff9d" : "#8fa9b8");
+    };
+
+    const updateRenderState = function (patch) {
+        lastRenderState = { ...lastRenderState, ...patch };
+        return lastRenderState;
+    };
+
     const clear = function (viewer = activeViewer) {
         if (fillPrimitive && viewer?.scene?.primitives) {
             viewer.scene.primitives.remove(fillPrimitive);
         }
         fillPrimitive = null;
+        activeViewer?.scene?.requestRender?.();
     };
 
-    const render = function (viewer, mesh = lastMesh, options = {}) {
-        if (!viewer?.scene?.primitives) {
-            throw new Error("Nie je dostupný Cesium viewer pre plošnú výplň meshu.");
-        }
-        if (!mesh?.faces?.length || !mesh?.vertices?.length) {
-            clear(viewer);
-            return null;
-        }
-
-        activeViewer = viewer;
-        lastMesh = mesh;
-        lastRenderOptions = { ...options };
-        clear(viewer);
-
+    const createGeometryInstances = function (mesh, heightOffsetM, selectedMode) {
         const vertexMap = new Map(mesh.vertices.map((vertex) => [vertex.id, vertex]));
-        const heightOffsetM = finite(options.heightOffsetM, 5);
-        const selectedMode = options.mode === "gray" ? "gray" : "dominant";
+        const instances = [];
 
-        const instances = mesh.faces.map((face) => {
+        mesh.faces.forEach((face) => {
             const positions = face.vertexIds
                 .map((vertexId) => vertexMap.get(vertexId))
                 .filter(Boolean)
@@ -197,62 +212,150 @@
                     vertex.heightM + heightOffsetM
                 ));
 
-            if (positions.length !== 3) return null;
+            if (positions.length !== 3) return;
 
-            return new Cesium.GeometryInstance({
-                id: {
-                    type: "terrain-mesh-surface-face",
-                    face
-                },
-                geometry: new Cesium.PolygonGeometry({
-                    polygonHierarchy: new Cesium.PolygonHierarchy(positions),
-                    perPositionHeight: true,
-                    vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
-                }),
+            const description = Cesium.CoplanarPolygonGeometry.fromPositions({
+                positions,
+                vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT
+            });
+            const geometry = Cesium.CoplanarPolygonGeometry.createGeometry(description);
+            if (!geometry) return;
+
+            instances.push(new Cesium.GeometryInstance({
+                id: "terrain-mesh-surface:" + face.id,
+                geometry,
                 attributes: {
                     color: Cesium.ColorGeometryInstanceAttribute.fromColor(
                         colorForFace(face, selectedMode)
                     )
                 }
+            }));
+        });
+
+        return instances;
+    };
+
+    const render = function (viewer, mesh = lastMesh, options = {}) {
+        if (!viewer?.scene?.primitives) {
+            throw new Error("Nie je dostupný Cesium viewer pre plošnú výplň meshu.");
+        }
+        if (!mesh?.faces?.length || !mesh?.vertices?.length) {
+            clear(viewer);
+            setUiStatus("Výplň: chýba vypočítaný mesh.", "error");
+            updateRenderState({
+                status: "error",
+                renderedFaceCount: 0,
+                expectedFaceCount: mesh?.faces?.length || 0,
+                error: "MESH_NOT_AVAILABLE"
             });
-        }).filter(Boolean);
+            return null;
+        }
 
-        if (!instances.length) return null;
+        activeViewer = viewer;
+        lastMesh = mesh;
+        lastRenderOptions = { ...options };
+        clear(viewer);
 
-        fillPrimitive = viewer.scene.primitives.add(new Cesium.Primitive({
-            geometryInstances: instances,
-            appearance: new Cesium.PerInstanceColorAppearance({
-                flat: true,
-                translucent: true,
-                closed: false
-            }),
-            asynchronous: true,
-            allowPicking: false,
-            show: visible
-        }));
+        const heightOffsetM = finite(options.heightOffsetM, 5);
+        const selectedMode = options.mode === "gray" ? "gray" : "dominant";
 
-        return fillPrimitive;
+        try {
+            setUiStatus("Výplň: vytváram plochy…");
+            const instances = createGeometryInstances(mesh, heightOffsetM, selectedMode);
+
+            if (!instances.length) {
+                throw new Error("Nevznikla žiadna vykresliteľná trojuholníková plocha.");
+            }
+
+            fillPrimitive = viewer.scene.primitives.add(new Cesium.Primitive({
+                geometryInstances: instances,
+                appearance: new Cesium.PerInstanceColorAppearance({
+                    flat: true,
+                    translucent: true,
+                    closed: false
+                }),
+                asynchronous: false,
+                allowPicking: false,
+                releaseGeometryInstances: true,
+                show: visible
+            }));
+
+            updateRenderState({
+                status: "ready",
+                renderedFaceCount: instances.length,
+                expectedFaceCount: mesh.faces.length,
+                mode: selectedMode,
+                error: null
+            });
+
+            setUiStatus(
+                "Výplň: " + instances.length + " / " + mesh.faces.length +
+                " plôch · " + (selectedMode === "gray" ? "šedá" : "G01–G16"),
+                "success"
+            );
+            viewer.scene.requestRender?.();
+            return fillPrimitive;
+        } catch (error) {
+            clear(viewer);
+            updateRenderState({
+                status: "error",
+                renderedFaceCount: 0,
+                expectedFaceCount: mesh.faces.length,
+                mode: selectedMode,
+                error: error.message
+            });
+            setUiStatus("Výplň: chyba · " + error.message, "error");
+            if (typeof window.logStatus === "function") {
+                window.logStatus("Chyba plošnej výplne meshu: " + error.message, "error");
+            }
+            throw error;
+        }
     };
 
     const setVisible = function (value) {
         visible = Boolean(value);
+
         if (fillPrimitive) {
             fillPrimitive.show = visible;
-        } else if (visible && activeViewer && lastMesh) {
+            setUiStatus(
+                visible
+                    ? "Výplň: zobrazená · " + lastRenderState.renderedFaceCount + " plôch"
+                    : "Výplň: pripravená, ale skrytá.",
+                visible ? "success" : "info"
+            );
+            activeViewer?.scene?.requestRender?.();
+            return;
+        }
+
+        if (visible && activeViewer && lastMesh) {
             render(activeViewer, lastMesh, {
                 ...lastRenderOptions,
                 mode
             });
+            return;
+        }
+
+        if (visible) {
+            setUiStatus("Výplň: najprv spusti analýzu terénu.");
+        } else {
+            setUiStatus("Výplň: vypnutá.");
         }
     };
 
     const setMode = function (value) {
         mode = value === "gray" ? "gray" : "dominant";
+        updateRenderState({ mode });
+
         if (activeViewer && lastMesh && visible) {
             render(activeViewer, lastMesh, {
                 ...lastRenderOptions,
                 mode
             });
+        } else {
+            setUiStatus(
+                "Výplň: režim " + (mode === "gray" ? "jednotná šedá" : "dominantná G01–G16") +
+                " · čaká na zobrazenie."
+            );
         }
     };
 
@@ -275,6 +378,7 @@
         const winner = Array.from(counts.entries())
             .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "sk"))[0];
         if (!winner) return null;
+
         const palette = paletteEntry(winner[0]);
         return {
             family: winner[0],
@@ -320,7 +424,11 @@
             addDiagnosticRow(rows, "Aktuálny režim", mode === "gray"
                 ? "jednotná šedá"
                 : "dominantná G01–G16");
-            addDiagnosticRow(rows, "Metóda", FILL_METHOD);
+            addDiagnosticRow(rows, "Vykreslené plochy",
+                lastRenderState.renderedFaceCount + " / " + lastRenderState.expectedFaceCount);
+            addDiagnosticRow(rows, "Stav rendereru", lastRenderState.status);
+            addDiagnosticRow(rows, "Renderer", RENDER_METHOD);
+            addDiagnosticRow(rows, "Metóda farby", FILL_METHOD);
             addDiagnosticRow(rows, "Topologické zlúčenie", "zatiaľ nie · plochy sa spájajú vizuálne");
 
             card.append(heading, rows);
@@ -336,6 +444,7 @@
 
     const installStyles = function () {
         if (document.getElementById("terrain-mesh-surface-style")) return;
+
         const style = document.createElement("style");
         style.id = "terrain-mesh-surface-style";
         style.textContent = `
@@ -351,6 +460,13 @@
                 border-radius:4px;
                 background:#10212b;
                 color:#fff
+            }
+            .terrain-mesh-fill-status{
+                display:block;
+                margin:-1px 0 6px 24px;
+                color:#8fa9b8;
+                font-size:11px;
+                line-height:1.25
             }
         `;
         document.head.appendChild(style);
@@ -380,6 +496,7 @@
             const wireInput = document.getElementById("meshVisible");
             const anchorLabel = wireInput?.closest("label") ||
                 document.getElementById("contoursVisible")?.closest("label");
+
             if (anchorLabel) {
                 const label = document.createElement("label");
                 fillInput = document.createElement("input");
@@ -425,6 +542,14 @@
             mode = modeSelect.value === "gray" ? "gray" : "dominant";
         }
 
+        if (!getStatusElement() && modeSelect) {
+            const status = document.createElement("small");
+            status.id = "meshFillStatus";
+            status.className = "terrain-mesh-fill-status";
+            status.textContent = "Výplň: čaká na výpočet meshu.";
+            modeSelect.closest("label")?.insertAdjacentElement("afterend", status);
+        }
+
         if (moduleInput && !moduleInput.__terrainMeshSurfaceBound) {
             moduleInput.addEventListener("change", () => {
                 if (!moduleInput.checked) {
@@ -437,7 +562,10 @@
 
         const clearButton = document.getElementById("clearButton");
         if (clearButton && !clearButton.__terrainMeshSurfaceBound) {
-            clearButton.addEventListener("click", () => clear());
+            clearButton.addEventListener("click", () => {
+                clear();
+                setUiStatus("Výplň: výsledky boli skryté.");
+            });
             clearButton.__terrainMeshSurfaceBound = true;
         }
 
@@ -448,6 +576,7 @@
         VERSION,
         METHOD,
         FILL_METHOD,
+        RENDER_METHOD,
         assignDominantFill,
         render,
         clear,
@@ -456,7 +585,8 @@
         get visible() { return visible; },
         get mode() { return mode; },
         get primitive() { return fillPrimitive; },
-        get mesh() { return lastMesh; }
+        get mesh() { return lastMesh; },
+        get renderState() { return { ...lastRenderState }; }
     };
 
     TerrainAnalysisCore.registerModule({
@@ -468,6 +598,7 @@
         run: async function (context) {
             const geometryResult = context.layers.geometry;
             const mesh = context.layers.mesh;
+
             window.TerrainDesign?.prepareResult?.(geometryResult);
             const surfaceSummary = assignDominantFill(mesh);
 
@@ -482,19 +613,35 @@
                 mode
             };
 
-            if (visible) render(context.viewer, mesh, lastRenderOptions);
-            else clear(context.viewer);
+            if (visible) {
+                render(context.viewer, mesh, lastRenderOptions);
+            } else {
+                clear(context.viewer);
+                updateRenderState({
+                    status: "prepared",
+                    renderedFaceCount: 0,
+                    expectedFaceCount: mesh.faces.length,
+                    mode,
+                    error: null
+                });
+                setUiStatus(
+                    "Výplň: pripravených " + mesh.faces.length +
+                    " plôch · zapni zobrazenie."
+                );
+            }
 
             context.provenance.meshSurface = {
                 dataOrigin: "ODVODENÉ VÝPOČTOM",
                 method: METHOD,
                 version: VERSION,
-                fillMethod: FILL_METHOD
+                fillMethod: FILL_METHOD,
+                renderMethod: RENDER_METHOD
             };
             context.diagnostics.meshSurface = {
                 ...surfaceSummary,
                 visible,
-                mode
+                mode,
+                renderState: { ...lastRenderState }
             };
 
             if (typeof window.logStatus === "function") {
@@ -505,7 +652,8 @@
                 );
                 window.logStatus(
                     "Výplň je " + (visible ? "zobrazená" : "pripravená, ale skrytá") +
-                    "; režim: " + (mode === "gray" ? "jednotná šedá" : "dominantná G01–G16") + "."
+                    "; režim: " + (mode === "gray" ? "jednotná šedá" : "dominantná G01–G16") +
+                    "; renderer: " + RENDER_METHOD + "."
                 );
             }
 
