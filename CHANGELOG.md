@@ -65,6 +65,19 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - `tools/BASEMAP.md`,
   - `tools/RELEASE.md`.
 
+### Opravené
+
+- Zobrazenie release verzie po prvom používateľskom teste.
+  - pôvodné HTTP načítanie mohlo dostať HTML dokument a príliš benevolentná normalizácia ho zobrazila v hlavičke,
+  - nový endpoint `XC/release-version.php` číta `RELEASE_VERSION` priamo zo súborového systému,
+  - endpoint aj klient používajú prísnu validáciu verzie,
+  - HTML alebo iný neplatný obsah sa už nemôže zobraziť ako verzia.
+- Plošný renderer meshu M1.2 po prvom používateľskom teste.
+  - všeobecnú asynchrónnu `PolygonGeometry` nahradil synchronný renderer rovinných trojuholníkov `COPLANAR_TRIANGLE_PRIMITIVE_V2`,
+  - pribudla stavová diagnostika počtu pripravených a vykreslených plôch,
+  - chyba rendereru sa zobrazuje priamo v ovládacom paneli aj v stavovom výpise,
+  - diagnostika bodu uvádza stav rendereru a počet vykreslených plôch.
+
 ### Overené používateľom
 
 - Kamerový HUD bol 13. 7. 2026 úspešne overený pri pohybe v reálnej 3D scéne.
