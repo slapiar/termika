@@ -35,6 +35,10 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - orientačné AGL podľa aktuálne načítanej výšky terénu,
   - stredový zameriavací kríž,
   - samostatné zapnutie a vypnutie v mapových vrstvách.
+- Samostatný dokumentačný systém nástrojov.
+  - koreňový register `TOOLS.md`,
+  - adresár `tools/` pre dokumentáciu jednotlivých doplnkov,
+  - prvý referenčný dokument `tools/HUD.md` s opisom prvkov, ovládania, významu údajov, závislostí, verejného rozhrania a obmedzení.
 
 ### Overené používateľom
 
@@ -49,3 +53,4 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 - Morfologická rola B zostáva oddelená od lokálnej geometrie A.
 - Konečné `hRel`, `dRel`, výškové tieňovanie a morfologický význam hrán sa nesmú predstierať skôr, než ich vypočíta širšia morfologická analýza.
 - Kamerový HUD je iba vizualizácia stavu kamery. Nesmie meniť analytické výsledky ani zamieňať kartografickú výšku Cesium za overenú meteorologickú AMSL.
+- Používateľské nástroje sa dokumentujú oddelene od analytických postupov: `TOOLS.md` je centrálny register, `tools/*.md` sú používateľské a technické karty nástrojov a `postupy/` zachytávajú vývojové rozhodnutia.
