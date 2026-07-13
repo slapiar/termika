@@ -48,8 +48,16 @@
         return window.TerrainMorphology;
     })();
 
-    const terrainDesignReady = (async function () {
+    const terrainMeshReady = (async function () {
         await terrainMorphologyReady;
+        if (!window.TerrainMesh) {
+            await loadScript("js/terrain-mesh.js");
+        }
+        return window.TerrainMesh;
+    })();
+
+    const terrainDesignReady = (async function () {
+        await terrainMeshReady;
         if (!window.TerrainDesign) {
             await loadScript("js/terrain-design.js");
         }
@@ -58,6 +66,7 @@
     })();
 
     window.TerrainMorphologyReady = terrainMorphologyReady;
+    window.TerrainMeshReady = terrainMeshReady;
     window.TerrainDesignReady = terrainDesignReady;
 
     TerrainAnalysisCore.registerModule({
@@ -68,6 +77,7 @@
 
         run: async function (context) {
             await terrainMorphologyReady;
+            await terrainMeshReady;
             await terrainDesignReady;
 
             const size = TerrainAnalysisCore.gridSizeForCircle(
@@ -95,7 +105,8 @@
                 totalSampledPoints: rawResult.source?.totalPoints || 0,
                 localGeometryMethod: TerrainAnalysis.LOCAL_GEOMETRY_VERSION || null,
                 terrainDesignVersion: window.TerrainDesign?.VERSION || null,
-                morphologyModuleVersion: window.TerrainMorphology?.VERSION || null
+                morphologyModuleVersion: window.TerrainMorphology?.VERSION || null,
+                meshModuleVersion: window.TerrainMesh?.VERSION || null
             };
 
             context.diagnostics.geometry = {
