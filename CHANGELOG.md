@@ -40,6 +40,7 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - `XC/js/wind-render.js` podporuje farebné režimy `tempDeltaK`, `speed`, `convergence`,
   - podpora tém pre tmavé a svetlé pozadie,
   - voliteľná animácia smeru toku cez pohyblivý marker po prúdnici,
+  - základná farba prúdnice je `#70E8FF`, aby bola veterná vrstva čitateľnejšia na tmavom podklade,
   - `XC/terrain-analysis-test.php` dopĺňa prepínače farebnosti, prepínač animácie a prepínač intenzity animácie (`nízka/stredná/vysoká/auto`),
   - režim `auto` prepína profil intenzity podľa meraného FPS a pri zmene profilu vykoná re-render bez potreby nového výpočtu poľa,
   - vo WIND paneli je živý indikátor `FPS | AUTO profil`.

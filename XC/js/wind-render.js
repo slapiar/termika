@@ -7,6 +7,8 @@ window.WindRender = {
 
     dataSourceName: "WIND_STREAMLINES",
 
+    baseStreamlineColor: "#70E8FF",
+
     defaultStyle: {
         seedEvery: 4,
         maxSteps: 45,
@@ -283,7 +285,7 @@ window.WindRender = {
 
     colorForTempDelta: function (deltaK, alpha, theme = "dark") {
         const d = Number(deltaK) || 0;
-        const neutral = theme === "light" ? "#4F5D75" : "#B0BEC5";
+        const neutral = this.baseStreamlineColor;
 
         if (d <= -2) return Cesium.Color.fromCssColorString("#1E88E5").withAlpha(alpha);
         if (d >= 2) return Cesium.Color.fromCssColorString("#FFB300").withAlpha(alpha);
@@ -293,7 +295,7 @@ window.WindRender = {
     colorForSpeed: function (speedMs, alpha, theme = "dark") {
         const s = Math.max(0, Math.min(12, Number(speedMs) || 0));
         const t = s / 12;
-        const start = theme === "light" ? [44, 123, 182] : [96, 165, 250];
+        const start = theme === "light" ? [112, 232, 255] : [112, 232, 255];
         const end = theme === "light" ? [214, 40, 40] : [255, 107, 107];
         const r = Math.round(start[0] + (end[0] - start[0]) * t);
         const g = Math.round(start[1] + (end[1] - start[1]) * t);
