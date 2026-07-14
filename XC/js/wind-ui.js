@@ -18,6 +18,10 @@ window.WindUI = {
         baseSpeedMs: 4.5,
         baseDirDeg: 230,
         useTempProfileWind: true,
+        colorMode: "tempDeltaK",
+        colorTheme: "dark",
+        animationEnabled: false,
+        activeEffects: null,
         source: "ODVODENE"
     },
 
@@ -72,6 +76,8 @@ window.WindUI = {
             baseDirDeg: settings.baseDirDeg,
             tempProfile: profile,
             surfaceAltM: Number.isFinite(Number(settings.surfaceAltM)) ? Number(settings.surfaceAltM) : null,
+            terrainGeometry: settings.terrainGeometry,
+            activeEffects: settings.activeEffects,
             useTempProfileWind: settings.useTempProfileWind,
             source: sourceLabel,
             coolingZones
@@ -80,7 +86,10 @@ window.WindUI = {
         const stats = await window.WindRender.renderField(viewer, field, {
             seedEvery: settings.seedEvery,
             maxSteps: settings.maxSteps,
-            stepMeters: settings.stepMeters
+            stepMeters: settings.stepMeters,
+            colorMode: settings.colorMode,
+            colorTheme: settings.colorTheme,
+            animationEnabled: settings.animationEnabled
         });
 
         this.state.lastField = field;

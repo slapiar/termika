@@ -17,6 +17,8 @@ window.WindField = {
         tempProfile: null,
         surfaceAltM: null,
         useTempProfileWind: true,
+        terrainGeometry: null,
+        activeEffects: null,
         tempDeltaKBase: 0,
         coolingZones: [],
         source: "ODVODENE"
@@ -26,12 +28,26 @@ window.WindField = {
         const cfg = this.normalizeOptions(options);
         const grid = this.buildGrid(cfg.center, cfg.radiusM, cfg.spacingM);
         const cells = this.computeCells(grid, cfg);
-        const withMetrics = this.computeConvergence(cells, grid);
+        const withBaseConvergence = this.computeConvergence(cells, grid);
+
+        const effectsResult = this.applyEffects({
+            cells: withBaseConvergence,
+            center: cfg.center,
+            radiusM: cfg.radiusM,
+            spacingM: cfg.spacingM,
+            level: { agl_m: cfg.aglM }
+        }, {
+            terrainGeometry: cfg.terrainGeometry,
+            activeEffects: cfg.activeEffects
+        });
+
+        const withMetrics = this.computeConvergence(effectsResult.cells, grid);
 
         const result = {
             createdAt: new Date().toISOString(),
             source: cfg.source,
             level: { agl_m: cfg.aglM },
+            surfaceAltM: Number.isFinite(cfg.surfaceAltM) ? cfg.surfaceAltM : null,
             center: cfg.center,
             radiusM: cfg.radiusM,
             spacingM: cfg.spacingM,
@@ -47,7 +63,8 @@ window.WindField = {
                 sampledDewpointC: cfg.profileWind?.Td_c ?? null
             },
             diagnostics: {
-                note: "WIND MVP field generated. Cooling zones and convergence are model estimates."
+                note: "WIND MVP field generated. Cooling zones, terrain steering and convergence are model estimates.",
+                effectsApplied: effectsResult.applied
             }
         };
 
@@ -76,6 +93,12 @@ window.WindField = {
         cfg.baseDirDeg = this.wrapDegrees(cfg.baseDirDeg);
         cfg.surfaceAltM = Number.isFinite(Number(cfg.surfaceAltM)) ? Number(cfg.surfaceAltM) : null;
         cfg.useTempProfileWind = cfg.useTempProfileWind !== false;
+        cfg.terrainGeometry = cfg.terrainGeometry && Array.isArray(cfg.terrainGeometry.cells)
+            ? cfg.terrainGeometry
+            : null;
+        cfg.activeEffects = Array.isArray(cfg.activeEffects)
+            ? cfg.activeEffects.map((id) => String(id).trim()).filter(Boolean)
+            : null;
         cfg.tempProfile = Array.isArray(cfg.tempProfile)
             ? cfg.tempProfile
             : (Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP)
@@ -255,6 +278,8 @@ window.WindField = {
                     eastM,
                     northM,
                     agl_m: cfg.aglM,
+                    surface_alt_msl: Number.isFinite(cfg.surfaceAltM) ? cfg.surfaceAltM : null,
+                    height_msl: Number.isFinite(cfg.surfaceAltM) ? cfg.surfaceAltM + cfg.aglM : null,
                     u_ms: u,
                     v_ms: v,
                     speed_ms: speedMs,
@@ -316,6 +341,14 @@ window.WindField = {
             driftVMs: driftV,
             confidence
         };
+    },
+
+    applyEffects: function (field, context) {
+        if (!window.WindEffectsCore?.applyAll) {
+            return { applied: [], cells: field.cells };
+        }
+
+        return window.WindEffectsCore.applyAll(field, context || {});
     },
 
     computeConvergence: function (cells, grid) {

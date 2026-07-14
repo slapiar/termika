@@ -25,6 +25,9 @@ $assetVersion = '20260712-07';
     <script src="js/terrain-analysis-geometry.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-contours.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-field.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/wind-effects-core.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/wind-effect-terrain.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/wind-effect-surface.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-render.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-ui.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <style>
@@ -112,12 +115,26 @@ $assetVersion = '20260712-07';
 
         <fieldset>
             <legend>WIND vrstva (MVP)</legend>
-            <label><input id="windEnabled" type="checkbox"> Zobraziť veterné prúdnice</label>
+            <label><input id="windEnabled" type="checkbox" checked> Zobraziť veterné prúdnice</label>
             <label>Výška nad terénom <input id="windAglInput" type="number" min="20" max="5000" step="10" value="300"> m AGL</label>
             <label>Rozostup vetra <input id="windSpacingInput" type="number" min="30" max="1200" step="10" value="120"> m</label>
             <label>Základná rýchlosť <input id="windSpeedInput" type="number" min="0" max="40" step="0.1" value="4.5"> m/s</label>
             <label>Smer toku <input id="windDirInput" type="number" min="0" max="359" step="1" value="230"> °</label>
             <label><input id="windUseTempProfile" type="checkbox" checked> Použiť vietor z TEMP profilu (ak je dostupný)</label>
+            <label>Farebnosť vetra
+                <select id="windColorMode">
+                    <option value="tempDeltaK" selected>Teplotný kontrast</option>
+                    <option value="speed">Rýchlosť vetra</option>
+                    <option value="convergence">Konvergencia/divergencia</option>
+                </select>
+            </label>
+            <label>Téma farieb
+                <select id="windColorTheme">
+                    <option value="dark" selected>Tmavé pozadie</option>
+                    <option value="light">Svetlé pozadie</option>
+                </select>
+            </label>
+            <label><input id="windAnimate" type="checkbox"> Animovať smer toku</label>
         </fieldset>
 
         <button id="analyzeButton" type="button">Spustiť vybrané analýzy</button>
@@ -172,6 +189,9 @@ $assetVersion = '20260712-07';
     const windSpeedInput = document.getElementById('windSpeedInput');
     const windDirInput = document.getElementById('windDirInput');
     const windUseTempProfile = document.getElementById('windUseTempProfile');
+    const windColorMode = document.getElementById('windColorMode');
+    const windColorTheme = document.getElementById('windColorTheme');
+    const windAnimate = document.getElementById('windAnimate');
     const cellDiagnostics = document.getElementById('cellDiagnostics');
     const cellDiagnosticsBody = document.getElementById('cellDiagnosticsBody');
     let selectedCenter = { lat: 46.43, lon: 11.85 };
@@ -285,6 +305,9 @@ $assetVersion = '20260712-07';
             baseSpeedMs: Number(windSpeedInput.value),
             baseDirDeg: Number(windDirInput.value),
             useTempProfileWind: windUseTempProfile.checked,
+            colorMode: windColorMode.value,
+            colorTheme: windColorTheme.value,
+            animationEnabled: windAnimate.checked,
             source: 'ODVODENE'
         });
     }
@@ -363,8 +386,8 @@ $assetVersion = '20260712-07';
         }
     }
 
-    async function runWindLayer(center, radiusM) {
-        if (!window.WindUI || !window.WindRender || !window.WindField) {
+    async function runWindLayer(center, radiusM, geometry) {
+        if (!window.WindUI || !window.WindRender || !window.WindField || !window.WindEffectsCore) {
             throw new Error('WIND moduly nie sú načítané.');
         }
 
@@ -381,6 +404,11 @@ $assetVersion = '20260712-07';
             baseSpeedMs: Number(windSpeedInput.value),
             baseDirDeg: Number(windDirInput.value),
             useTempProfileWind: windUseTempProfile.checked,
+            terrainGeometry: geometry,
+            activeEffects: ['terrain-steering', 'surface-thermal'],
+            colorMode: windColorMode.value,
+            colorTheme: windColorTheme.value,
+            animationEnabled: windAnimate.checked,
             surfaceAltM,
             seedEvery: 3,
             maxSteps: 42,
@@ -399,6 +427,14 @@ $assetVersion = '20260712-07';
             ', režim ' + mode + ', ' + sampled + '.',
             'success'
         );
+        const effects = windResult.field.diagnostics?.effectsApplied || [];
+        if (effects.length) {
+            logStatus('WIND efekty: ' + effects.join(', ') + '.');
+        }
+
+        if ((Number(windResult.stats.rendered) || 0) < 1) {
+            logStatus('WIND: nebola vykreslená žiadna prúdnica. Skontroluj rýchlosť vetra alebo zvýš hustotu výpočtu.', 'error');
+        }
     }
 
     document.getElementById('analyzeButton').addEventListener('click', async () => {
@@ -451,7 +487,7 @@ $assetVersion = '20260712-07';
                 logStatus('Kliknutím na ľubovoľný farebný bod otvoríš jeho číselnú diagnostiku a dôvody klasifikácie.');
             }
 
-            await runWindLayer(selectedCenter, Number(radiusInput.value));
+            await runWindLayer(selectedCenter, Number(radiusInput.value), geometry || null);
         } catch (error) {
             logStatus('Chyba: ' + error.message, 'error');
         } finally {
