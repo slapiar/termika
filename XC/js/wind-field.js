@@ -48,6 +48,9 @@ window.WindField = {
             source: cfg.source,
             level: { agl_m: cfg.aglM },
             surfaceAltM: Number.isFinite(cfg.surfaceAltM) ? cfg.surfaceAltM : null,
+            terrainGeometry: cfg.terrainGeometry,
+            tempLevels: cfg.tempLevels,
+            profileWind: cfg.profileWind,
             center: cfg.center,
             radiusM: cfg.radiusM,
             spacingM: cfg.spacingM,
@@ -204,6 +207,188 @@ window.WindField = {
         }
 
         return null;
+    },
+
+    findTempBracket: function (levels, targetAltMsl) {
+        if (!Array.isArray(levels) || levels.length < 2 || !Number.isFinite(Number(targetAltMsl))) {
+            return null;
+        }
+
+        const target = Number(targetAltMsl);
+        const low = levels[0];
+        const high = levels[levels.length - 1];
+        if (target < low.z_m || target > high.z_m) {
+            return null;
+        }
+
+        for (let i = 0; i < levels.length - 1; i += 1) {
+            const a = levels[i];
+            const b = levels[i + 1];
+            if (target < a.z_m || target > b.z_m) continue;
+
+            const t = (target - a.z_m) / Math.max(1e-6, (b.z_m - a.z_m));
+            return { low: a, high: b, t };
+        }
+
+        return null;
+    },
+
+    terrainNormalFromCell: function (terrainCell) {
+        const slopeDeg = Number(terrainCell?.slopeDeg);
+        const aspectDeg = Number(terrainCell?.aspectDeg);
+        if (!Number.isFinite(slopeDeg) || !Number.isFinite(aspectDeg)) {
+            return { e: 0, n: 0, u: 1 };
+        }
+
+        const slopeRad = (Math.max(0, slopeDeg) * Math.PI) / 180;
+        const aspectRad = (aspectDeg * Math.PI) / 180;
+        const tanSlope = Math.tan(slopeRad);
+        const dzdx = -tanSlope * Math.sin(aspectRad);
+        const dzdy = -tanSlope * Math.cos(aspectRad);
+        const len = Math.hypot(-dzdx, -dzdy, 1);
+        return {
+            e: -dzdx / len,
+            n: -dzdy / len,
+            u: 1 / len
+        };
+    },
+
+    stabilityFromBracket: function (bracket) {
+        if (!bracket?.low || !bracket?.high) return 0.5;
+
+        const dz = Math.max(1, Number(bracket.high.z_m) - Number(bracket.low.z_m));
+        const tempDelta = Number(bracket.high.T_c) - Number(bracket.low.T_c);
+        const lapseKPerKm = (tempDelta / dz) * 1000;
+        return this.clamp01((lapseKPerKm + 8) / 14);
+    },
+
+    projectVectorToTerrain: function (vector, normal) {
+        const dot = vector.e * normal.e + vector.n * normal.n + vector.u * normal.u;
+        if (dot >= 0) {
+            return { e: vector.e, n: vector.n, u: vector.u, penetrationRemoved: 0 };
+        }
+
+        return {
+            e: vector.e - dot * normal.e,
+            n: vector.n - dot * normal.n,
+            u: vector.u - dot * normal.u,
+            penetrationRemoved: Math.abs(dot)
+        };
+    },
+
+    terrainAtPoint: function (field, lat, lon) {
+        const terrainCell = this.nearestTerrainGeometryCell(field?.terrainGeometry, lat, lon);
+        const terrainHeightMsl = Number.isFinite(Number(terrainCell?.heightM))
+            ? Number(terrainCell.heightM)
+            : (Number.isFinite(Number(field?.surfaceAltM)) ? Number(field.surfaceAltM) : null);
+        return { terrainCell, terrainHeightMsl };
+    },
+
+    sampleWindVector3D: function (fieldOrLat, latOrLon, lonOrHeight, heightOrPrev, previousState = null) {
+        let field = fieldOrLat;
+        let lat = latOrLon;
+        let lon = lonOrHeight;
+        let heightMsl = heightOrPrev;
+        let prevState = previousState;
+
+        if (typeof fieldOrLat === "number") {
+            prevState = heightOrPrev || null;
+            heightMsl = lonOrHeight;
+            lon = latOrLon;
+            lat = fieldOrLat;
+            field = this.lastField || null;
+        }
+
+        const levels = Array.isArray(field?.tempLevels) ? field.tempLevels : [];
+        if (levels.length < 2) {
+            return { valid: false, reason: "VALIDITY_END" };
+        }
+
+        const baseHeight = Number.isFinite(Number(heightMsl))
+            ? Number(heightMsl)
+            : (Number.isFinite(Number(field?.surfaceAltM)) ? Number(field.surfaceAltM) + Number(field?.level?.agl_m || 0) : null);
+        if (!Number.isFinite(baseHeight)) {
+            return { valid: false, reason: "NUMERICAL_FAILURE" };
+        }
+
+        const bracket = this.findTempBracket(levels, baseHeight);
+        if (!bracket) {
+            return { valid: false, reason: "VALIDITY_END" };
+        }
+
+        const low = bracket.low;
+        const high = bracket.high;
+        const t = bracket.t;
+        const dirA = (low.w_dir_deg * Math.PI) / 180;
+        const dirB = (high.w_dir_deg * Math.PI) / 180;
+        const spdA = low.w_speed_kts * 0.514444;
+        const spdB = high.w_speed_kts * 0.514444;
+        const uA = -Math.sin(dirA) * spdA;
+        const vA = -Math.cos(dirA) * spdA;
+        const uB = -Math.sin(dirB) * spdB;
+        const vB = -Math.cos(dirB) * spdB;
+
+        const u = uA + (uB - uA) * t;
+        const v = vA + (vB - vA) * t;
+        const atmospheric = {
+            p_hpa: Number.isFinite(low.p_hpa) && Number.isFinite(high.p_hpa)
+                ? low.p_hpa + (high.p_hpa - low.p_hpa) * t
+                : null,
+            T_c: Number.isFinite(low.T_c) && Number.isFinite(high.T_c)
+                ? low.T_c + (high.T_c - low.T_c) * t
+                : null,
+            Td_c: Number.isFinite(low.Td_c) && Number.isFinite(high.Td_c)
+                ? low.Td_c + (high.Td_c - low.Td_c) * t
+                : null
+        };
+
+        const terrain = this.terrainAtPoint(field, lat, lon);
+        const terrainNormal = this.terrainNormalFromCell(terrain.terrainCell);
+        const clearanceAgl = Number.isFinite(terrain.terrainHeightMsl)
+            ? Math.max(0, baseHeight - terrain.terrainHeightMsl)
+            : Number(field?.level?.agl_m) || 0;
+        const terrainWeight = this.clamp01(1 - clearanceAgl / 480);
+        const projected = this.projectVectorToTerrain({ e: u, n: v, u: 0 }, terrainNormal);
+        const stability = this.stabilityFromBracket(bracket);
+        const verticalPersistence = Math.max(0.42, Math.min(0.95, 0.9 - 0.28 * stability));
+        const carriedVertical = Number.isFinite(Number(prevState?.vertical_momentum_ms))
+            ? Number(prevState.vertical_momentum_ms) * verticalPersistence
+            : 0;
+        const liftFromSlope = Math.max(0, projected.u) * terrainWeight;
+        const wMs = projected.u * terrainWeight + carriedVertical + liftFromSlope;
+        const speedMs = Math.hypot(projected.e, projected.n, wMs);
+        const dirDeg = this.wrapDegrees((Math.atan2(projected.e, projected.n) * 180) / Math.PI);
+        const flowState = clearanceAgl < 8 && wMs <= 0.02
+            ? "SEPARATED"
+            : (terrainWeight > 0.3 && wMs > 0.08 ? "REATTACHING" : "ATTACHED");
+
+        return {
+            valid: true,
+            lat,
+            lon,
+            height_msl: baseHeight,
+            u_ms: projected.e,
+            v_ms: projected.n,
+            w_ms: wMs,
+            speed_ms: speedMs,
+            dir_deg: dirDeg,
+            temp_air_c: atmospheric.T_c,
+            dewpoint_c: atmospheric.Td_c,
+            pressure_hpa: atmospheric.p_hpa,
+            source_temp_lower_index: low.idx,
+            source_temp_upper_index: high.idx,
+            terrain_height_msl: terrain.terrainHeightMsl,
+            clearance_agl: clearanceAgl,
+            terrain_normal_east: terrainNormal.e,
+            terrain_normal_north: terrainNormal.n,
+            terrain_normal_up: terrainNormal.u,
+            terrain_weight: terrainWeight,
+            stability_index: stability,
+            vertical_momentum_ms: wMs,
+            flow_state: flowState,
+            termination_reason: null,
+            source: field?.source || "ODVODENE"
+        };
     },
 
     levelToWindSample: function (level, targetAltMsl) {

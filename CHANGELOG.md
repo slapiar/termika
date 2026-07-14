@@ -33,14 +33,18 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - každá bunka má lokálnu `terrain_height_msl`, `clearance_agl`, `height_msl` a základné `w_ms`,
   - TEMP profil sa vzorkuje po bunkách podľa lokálnej cieľovej výšky (nie jednou globálnou hladinou),
   - pre každú bunku sa evidujú indexy použitých TEMP hladín (`source_temp_lower_index`, `source_temp_upper_index`).
+  - priestorový samplovací krok `sampleWindVector3D(lat, lon, heightMsl)` interpoluje `u`, `v` a termodynamické veličiny medzi skutočnými susednými TEMP hladinami a nespolieha sa na pevné AGL prírastky,
+  - 3D integrátor v testovacej stránke prechádza po dráhe znovu podľa aktuálnej polohy a aktuálnej MSL výšky, nie podľa jednej horizontálne najbližšej bunky.
   - `XC/js/wind-effect-terrain.js` prešiel na 3D interakciu s terénom: výpočet normály zo sklonu/aspektu, nepenetrujúca projekcia vektora pri `V·n < 0` a aktualizácia `w_ms` podľa terénneho vplyvu a clearance.
   - `XC/js/wind-effect-terrain.js` dopĺňa pracovné flow stavy `ATTACHED | SEPARATING | SEPARATED | REATTACHING` z kombinácie lokálnej 3D interakcie a blízkosti hrán meshu (`breakStrength`, `dihedralDeg`).
   - `XC/js/wind-render.js` pripája `flow_state` do vlastností vykreslených prúdnic a začína etapový 3D integrátor dráhy s kolíznou kontrolou proti terénu (adaptívne skracovanie `dt`, odmietnutie kroku pri riziku preniknutia pod povrch).
 - Rozšírený render vetra s riadením vizuálneho jazyka a voliteľnou animáciou.
   - `XC/js/wind-render.js` podporuje farebné režimy `tempDeltaK`, `speed`, `convergence`,
   - podpora tém pre tmavé a svetlé pozadie,
-  - voliteľná animácia smeru toku cez pohyblivý marker po prúdnici,
+  - voliteľná animácia smeru toku cez súvislý prúd pohyblivých úsečiek a šípok po prúdnici,
   - základná farba prúdnice je `#70E8FF`, aby bola veterná vrstva čitateľnejšia na tmavom podklade,
+  - animované úsečky sú tmavšie než základná čiara a ich dĺžka aj rozostup sa viažu na rýchlosť vetra,
+  - hrebeň a závetrie majú vlastné profilovanie výšky, dĺžky a počtu animovaných segmentov, aby tok pôsobil plastickejšie pri prechode cez terénnu hranu,
   - `XC/terrain-analysis-test.php` dopĺňa prepínače farebnosti, prepínač animácie a prepínač intenzity animácie (`nízka/stredná/vysoká/auto`),
   - režim `auto` prepína profil intenzity podľa meraného FPS a pri zmene profilu vykoná re-render bez potreby nového výpočtu poľa,
   - vo WIND paneli je živý indikátor `FPS | AUTO profil`.
