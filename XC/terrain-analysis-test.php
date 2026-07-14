@@ -134,7 +134,7 @@ $assetVersion = '20260712-07';
                     <option value="light">Svetlé pozadie</option>
                 </select>
             </label>
-            <label><input id="windAnimate" type="checkbox"> Animovať smer toku</label>
+            <label><input id="windAnimate" type="checkbox" checked> Animovať smer toku</label>
         </fieldset>
 
         <button id="analyzeButton" type="button">Spustiť vybrané analýzy</button>

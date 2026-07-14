@@ -19,7 +19,8 @@ window.WindRender = {
         colorMode: "tempDeltaK",
         colorTheme: "dark",
         animationEnabled: false,
-        animationMarkerSize: 5
+        animationTrailSeconds: 2.0,
+        animationSamples: 6
     },
 
     clear: function (viewer) {
@@ -109,7 +110,7 @@ window.WindRender = {
             }
 
             if (cfg.animationEnabled) {
-                this.addAnimatedMarker(ds, positions, speedMs, color, cfg);
+                this.addAnimatedVectorSegment(ds, positions, speedMs, color, width, cfg, field.radiusM);
             }
 
             rendered += 1;
@@ -226,7 +227,7 @@ window.WindRender = {
         return minW + (maxW - minW) * t;
     },
 
-    addAnimatedMarker: function (dataSource, positions, speedMs, color, cfg) {
+    addAnimatedVectorSegment: function (dataSource, positions, speedMs, color, width, cfg, focusRadiusM) {
         if (!Array.isArray(positions) || positions.length < 2) return;
 
         const lengths = this.polylineLengths(positions);
@@ -235,19 +236,42 @@ window.WindRender = {
 
         const startTime = Cesium.JulianDate.now();
         const speed = Math.max(0.5, Number(speedMs) || 0.5);
-        const duration = Math.max(2, Math.min(18, totalLength / (speed * 6)));
+        const trailSeconds = Math.max(0.6, Math.min(6, Number(cfg.animationTrailSeconds) || 2));
+        const segmentLengthM = Math.max(15, Math.min(totalLength * 0.35, speed * trailSeconds));
+        const focusScale = Math.max(0.7, Math.min(2.4, (Number(focusRadiusM) || 1200) / 1200));
+        const advectionSpeedMps = speed * focusScale;
+        const sampleCount = Math.max(3, Math.min(12, Number(cfg.animationSamples) || 6));
+
+        const arrowMaterial = Cesium.PolylineArrowMaterialProperty
+            ? new Cesium.PolylineArrowMaterialProperty(color)
+            : color;
 
         dataSource.entities.add({
-            position: new Cesium.CallbackProperty((time) => {
-                const elapsed = Math.abs(Cesium.JulianDate.secondsDifference(time, startTime));
-                const t = (elapsed % duration) / duration;
-                return this.samplePolylinePosition(positions, lengths.cumulative, totalLength, t);
-            }, false),
-            point: {
-                pixelSize: Math.max(3, Number(cfg.animationMarkerSize) || 5),
-                color,
-                outlineColor: Cesium.Color.BLACK.withAlpha(0.4),
-                outlineWidth: 1
+            polyline: {
+                positions: new Cesium.CallbackProperty((time) => {
+                    const elapsed = Math.abs(Cesium.JulianDate.secondsDifference(time, startTime));
+                    const headDistance = (elapsed * advectionSpeedMps) % totalLength;
+                    const tailDistance = Math.max(0, headDistance - segmentLengthM);
+                    return this.samplePolylineWindow(
+                        positions,
+                        lengths.cumulative,
+                        totalLength,
+                        tailDistance,
+                        headDistance,
+                        sampleCount
+                    );
+                }, false),
+                width: Math.max(1.5, width + 0.6),
+                material: arrowMaterial,
+                clampToGround: false
+            },
+            properties: {
+                type: "WIND_ANIMATED_VECTOR",
+                speed_ms: speed,
+                trail_seconds: trailSeconds,
+                segment_length_m: segmentLengthM,
+                advection_speed_mps: advectionSpeedMps,
+                focus_scale: focusScale
             }
         });
     },
@@ -263,8 +287,24 @@ window.WindRender = {
         return { cumulative, total };
     },
 
-    samplePolylinePosition: function (positions, cumulative, totalLength, t) {
-        const target = Math.max(0, Math.min(totalLength, totalLength * t));
+    samplePolylineWindow: function (positions, cumulative, totalLength, fromDistance, toDistance, sampleCount) {
+        if (toDistance <= fromDistance) {
+            const p = this.samplePolylinePositionAtDistance(positions, cumulative, totalLength, toDistance);
+            return [p, p];
+        }
+
+        const out = [];
+        const span = toDistance - fromDistance;
+        for (let i = 0; i < sampleCount; i += 1) {
+            const t = i / Math.max(1, sampleCount - 1);
+            const d = fromDistance + span * t;
+            out.push(this.samplePolylinePositionAtDistance(positions, cumulative, totalLength, d));
+        }
+        return out;
+    },
+
+    samplePolylinePositionAtDistance: function (positions, cumulative, totalLength, distanceM) {
+        const target = Math.max(0, Math.min(totalLength, distanceM));
         for (let i = 1; i < cumulative.length; i += 1) {
             if (target > cumulative[i]) continue;
 
@@ -275,5 +315,10 @@ window.WindRender = {
             return Cesium.Cartesian3.lerp(positions[i - 1], positions[i], localT, new Cesium.Cartesian3());
         }
         return positions[positions.length - 1];
+    },
+
+    samplePolylinePosition: function (positions, cumulative, totalLength, t) {
+        const target = Math.max(0, Math.min(totalLength, totalLength * t));
+        return this.samplePolylinePositionAtDistance(positions, cumulative, totalLength, target);
     }
 };

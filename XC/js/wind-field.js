@@ -3,7 +3,7 @@
 // This module is standalone and does not mutate existing terrain modules.
 
 window.WindField = {
-    VERSION: "2.6.9-wind-mvp.1",
+    VERSION: "2.6.12-wind-3d-stage1",
 
     lastField: null,
 
@@ -104,6 +104,7 @@ window.WindField = {
             : (Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP)
                 ? window.PilotNetwork.liveAtmosferaTEMP
                 : null);
+        cfg.tempLevels = this.parseTempLevels(cfg.tempProfile);
         cfg.profileWind = this.resolveProfileWind(cfg);
         cfg.tempDeltaKBase = Number(cfg.tempDeltaKBase) || 0;
         cfg.coolingZones = Array.isArray(cfg.coolingZones) ? cfg.coolingZones : [];
@@ -111,18 +112,19 @@ window.WindField = {
         return cfg;
     },
 
-    resolveProfileWind: function (cfg) {
-        if (!cfg.useTempProfileWind || !Array.isArray(cfg.tempProfile) || cfg.tempProfile.length < 2) {
-            return null;
+    parseTempLevels: function (profile) {
+        if (!Array.isArray(profile) || profile.length < 2) {
+            return [];
         }
 
-        const levels = cfg.tempProfile
+        return profile
             .filter((row) =>
                 Number.isFinite(Number(row.z_m)) &&
                 Number.isFinite(Number(row.w_dir_deg)) &&
                 Number.isFinite(Number(row.w_speed_kts))
             )
-            .map((row) => ({
+            .map((row, idx) => ({
+                idx,
                 z_m: Number(row.z_m),
                 p_hpa: Number(row.p_hpa),
                 T_c: Number(row.T_c),
@@ -131,29 +133,40 @@ window.WindField = {
                 w_speed_kts: Number(row.w_speed_kts)
             }))
             .sort((a, b) => a.z_m - b.z_m);
+    },
 
-        if (levels.length < 2) return null;
+    resolveProfileWind: function (cfg) {
+        if (!cfg.useTempProfileWind || !Array.isArray(cfg.tempLevels) || cfg.tempLevels.length < 2) {
+            return null;
+        }
+
+        const levels = cfg.tempLevels;
 
         const surfaceAlt = Number.isFinite(cfg.surfaceAltM)
             ? cfg.surfaceAltM
             : Number(levels[0].z_m);
         const targetAltMsl = surfaceAlt + cfg.aglM;
+        return this.sampleWindAtAltitude(levels, targetAltMsl);
+    },
 
+    sampleWindAtAltitude: function (levels, targetAltMsl) {
+        if (!Array.isArray(levels) || levels.length < 2 || !Number.isFinite(Number(targetAltMsl))) {
+            return null;
+        }
+
+        const target = Number(targetAltMsl);
         const low = levels[0];
         const high = levels[levels.length - 1];
-        if (targetAltMsl <= low.z_m) {
-            return this.levelToWindSample(low, targetAltMsl);
-        }
-        if (targetAltMsl >= high.z_m) {
-            return this.levelToWindSample(high, targetAltMsl);
+        if (target < low.z_m || target > high.z_m) {
+            return null;
         }
 
         for (let i = 0; i < levels.length - 1; i += 1) {
             const a = levels[i];
             const b = levels[i + 1];
-            if (targetAltMsl < a.z_m || targetAltMsl > b.z_m) continue;
+            if (target < a.z_m || target > b.z_m) continue;
 
-            const t = (targetAltMsl - a.z_m) / Math.max(1e-6, (b.z_m - a.z_m));
+            const t = (target - a.z_m) / Math.max(1e-6, (b.z_m - a.z_m));
             const dirA = (a.w_dir_deg * Math.PI) / 180;
             const dirB = (b.w_dir_deg * Math.PI) / 180;
             const spdA = a.w_speed_kts * 0.514444;
@@ -170,8 +183,8 @@ window.WindField = {
             const dirToDeg = this.wrapDegrees((Math.atan2(u, v) * 180) / Math.PI);
 
             return {
-                targetAltMsl,
-                z_m: targetAltMsl,
+                targetAltMsl: target,
+                z_m: target,
                 p_hpa: Number.isFinite(a.p_hpa) && Number.isFinite(b.p_hpa)
                     ? a.p_hpa + (b.p_hpa - a.p_hpa) * t
                     : null,
@@ -184,7 +197,9 @@ window.WindField = {
                 u_ms: u,
                 v_ms: v,
                 speed_ms: speedMs,
-                dir_deg: dirToDeg
+                dir_deg: dirToDeg,
+                source_temp_lower_index: a.idx,
+                source_temp_upper_index: b.idx
             };
         }
 
@@ -261,13 +276,31 @@ window.WindField = {
 
                 const lat = grid.center.lat + northM / grid.metersPerDegLat;
                 const lon = grid.center.lon + eastM / grid.metersPerDegLon;
+                const terrainCell = this.nearestTerrainGeometryCell(cfg.terrainGeometry, lat, lon);
+                const terrainHeightMsl = Number.isFinite(Number(terrainCell?.heightM))
+                    ? Number(terrainCell.heightM)
+                    : (Number.isFinite(cfg.surfaceAltM) ? cfg.surfaceAltM : null);
+
+                const targetAltMsl = Number.isFinite(terrainHeightMsl)
+                    ? terrainHeightMsl + cfg.aglM
+                    : (Number.isFinite(cfg.profileWind?.targetAltMsl) ? Number(cfg.profileWind.targetAltMsl) : null);
+
+                const profileSample = cfg.useTempProfileWind
+                    ? this.sampleWindAtAltitude(cfg.tempLevels, targetAltMsl)
+                    : null;
 
                 const cooling = this.coolingAtPoint(lat, lon, cfg.coolingZones);
                 const speedScale = Math.max(0.15, 1 - 0.2 * Math.min(1, Math.abs(cooling.deltaK) / 4));
-                const u = baseU * speedScale + cooling.driftUMs;
-                const v = baseV * speedScale + cooling.driftVMs;
+                const ambientU = Number.isFinite(profileSample?.u_ms) ? profileSample.u_ms : baseU;
+                const ambientV = Number.isFinite(profileSample?.v_ms) ? profileSample.v_ms : baseV;
+                const u = ambientU * speedScale + cooling.driftUMs;
+                const v = ambientV * speedScale + cooling.driftVMs;
                 const speedMs = Math.hypot(u, v);
                 const dirDeg = this.wrapDegrees((Math.atan2(u, v) * 180) / Math.PI);
+                const heightMsl = Number.isFinite(targetAltMsl) ? targetAltMsl : null;
+                const clearanceAgl = Number.isFinite(heightMsl) && Number.isFinite(terrainHeightMsl)
+                    ? Math.max(0, heightMsl - terrainHeightMsl)
+                    : cfg.aglM;
 
                 cells.push({
                     id: "w-" + row + "-" + col,
@@ -278,24 +311,55 @@ window.WindField = {
                     eastM,
                     northM,
                     agl_m: cfg.aglM,
-                    surface_alt_msl: Number.isFinite(cfg.surfaceAltM) ? cfg.surfaceAltM : null,
-                    height_msl: Number.isFinite(cfg.surfaceAltM) ? cfg.surfaceAltM + cfg.aglM : null,
+                    terrain_height_msl: terrainHeightMsl,
+                    clearance_agl: clearanceAgl,
+                    surface_alt_msl: terrainHeightMsl,
+                    height_msl: heightMsl,
                     u_ms: u,
                     v_ms: v,
+                    w_ms: 0,
                     speed_ms: speedMs,
                     dir_deg: dirDeg,
-                    temp_air_c: baseTempC,
-                    dewpoint_c: baseTdC,
+                    temp_air_c: Number.isFinite(profileSample?.T_c) ? profileSample.T_c : baseTempC,
+                    dewpoint_c: Number.isFinite(profileSample?.Td_c) ? profileSample.Td_c : baseTdC,
+                    pressure_hpa: Number.isFinite(profileSample?.p_hpa) ? profileSample.p_hpa : null,
                     tempDeltaK: cfg.tempDeltaKBase + cooling.deltaK,
                     convergence: 0,
                     shear: 0,
                     confidence: cooling.confidence,
-                    source: cfg.source
+                    source: cfg.source,
+                    source_temp_lower_index: Number.isFinite(profileSample?.source_temp_lower_index)
+                        ? profileSample.source_temp_lower_index
+                        : null,
+                    source_temp_upper_index: Number.isFinite(profileSample?.source_temp_upper_index)
+                        ? profileSample.source_temp_upper_index
+                        : null
                 });
             }
         }
 
         return cells;
+    },
+
+    nearestTerrainGeometryCell: function (terrainGeometry, lat, lon) {
+        const cells = terrainGeometry?.cells;
+        if (!Array.isArray(cells) || !cells.length) return null;
+
+        let best = null;
+        let bestD = Number.POSITIVE_INFINITY;
+
+        for (let i = 0; i < cells.length; i += 1) {
+            const c = cells[i];
+            const dLat = Number(c.lat) - lat;
+            const dLon = Number(c.lon) - lon;
+            const d = dLat * dLat + dLon * dLon;
+            if (d < bestD) {
+                bestD = d;
+                best = c;
+            }
+        }
+
+        return best;
     },
 
     coolingAtPoint: function (lat, lon, zones) {

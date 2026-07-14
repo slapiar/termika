@@ -28,6 +28,11 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - nový efekt `XC/js/wind-effect-terrain.js` (terrain steering zo sklonu, orientácie svahu a krivosti),
   - nový efekt `XC/js/wind-effect-surface.js` (povrchovo-teplotný kontrast + indikátor triggeru bubliny),
   - `XC/js/wind-field.js` aplikuje efekty modulárne a po nich prepočítava konvergenciu.
+- Začiatok prechodu WIND na 3D dátový model podľa postupu `postupy/WIND-terenne-interakcie-vektorova-algebra-v1.md`.
+  - `XC/js/wind-field.js` už nepoužíva iba jednu spoločnú výšku `surfaceAltM` pre celé pole,
+  - každá bunka má lokálnu `terrain_height_msl`, `clearance_agl`, `height_msl` a základné `w_ms`,
+  - TEMP profil sa vzorkuje po bunkách podľa lokálnej cieľovej výšky (nie jednou globálnou hladinou),
+  - pre každú bunku sa evidujú indexy použitých TEMP hladín (`source_temp_lower_index`, `source_temp_upper_index`).
 - Rozšírený render vetra s riadením vizuálneho jazyka a voliteľnou animáciou.
   - `XC/js/wind-render.js` podporuje farebné režimy `tempDeltaK`, `speed`, `convergence`,
   - podpora tém pre tmavé a svetlé pozadie,
