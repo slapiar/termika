@@ -24,6 +24,9 @@ $assetVersion = '20260712-07';
     <script src="js/terrain-analysis-core.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-analysis-geometry.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-contours.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/wind-field.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/wind-render.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/wind-ui.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <style>
         :root{color-scheme:dark}
         html,body,#cesiumContainer{width:100%;height:100%;margin:0;overflow:hidden;background:#071018}
@@ -107,6 +110,16 @@ $assetVersion = '20260712-07';
             <label><input id="contoursVisible" type="checkbox" checked> Zobraziť tmavošedé vrstevnice</label>
         </fieldset>
 
+        <fieldset>
+            <legend>WIND vrstva (MVP)</legend>
+            <label><input id="windEnabled" type="checkbox"> Zobraziť veterné prúdnice</label>
+            <label>Výška nad terénom <input id="windAglInput" type="number" min="20" max="5000" step="10" value="300"> m AGL</label>
+            <label>Rozostup vetra <input id="windSpacingInput" type="number" min="30" max="1200" step="10" value="120"> m</label>
+            <label>Základná rýchlosť <input id="windSpeedInput" type="number" min="0" max="40" step="0.1" value="4.5"> m/s</label>
+            <label>Smer toku <input id="windDirInput" type="number" min="0" max="359" step="1" value="230"> °</label>
+            <label><input id="windUseTempProfile" type="checkbox" checked> Použiť vietor z TEMP profilu (ak je dostupný)</label>
+        </fieldset>
+
         <button id="analyzeButton" type="button">Spustiť vybrané analýzy</button>
         <button id="clearButton" type="button">Skryť výsledky</button>
         <div id="status"></div>
@@ -153,6 +166,12 @@ $assetVersion = '20260712-07';
     const centerText = document.getElementById('centerText');
     const radiusInput = document.getElementById('radiusInput');
     const contoursVisible = document.getElementById('contoursVisible');
+    const windEnabled = document.getElementById('windEnabled');
+    const windAglInput = document.getElementById('windAglInput');
+    const windSpacingInput = document.getElementById('windSpacingInput');
+    const windSpeedInput = document.getElementById('windSpeedInput');
+    const windDirInput = document.getElementById('windDirInput');
+    const windUseTempProfile = document.getElementById('windUseTempProfile');
     const cellDiagnostics = document.getElementById('cellDiagnostics');
     const cellDiagnosticsBody = document.getElementById('cellDiagnosticsBody');
     let selectedCenter = { lat: 46.43, lon: 11.85 };
@@ -259,6 +278,17 @@ $assetVersion = '20260712-07';
         destination: Cesium.Cartesian3.fromDegrees(selectedCenter.lon, selectedCenter.lat, 9000)
     });
 
+    if (window.WindUI) {
+        window.WindUI.init({
+            aglM: Number(windAglInput.value),
+            spacingM: Number(windSpacingInput.value),
+            baseSpeedMs: Number(windSpeedInput.value),
+            baseDirDeg: Number(windDirInput.value),
+            useTempProfileWind: windUseTempProfile.checked,
+            source: 'ODVODENE'
+        });
+    }
+
     const analysisAim = viewer.entities.add({
         id: 'terrain-analysis-aim',
         position: new Cesium.CallbackProperty(() => Cesium.Cartesian3.fromDegrees(previewCenter.lon, previewCenter.lat), false),
@@ -322,6 +352,55 @@ $assetVersion = '20260712-07';
         TerrainContours.setVisible(contoursVisible.checked);
     });
 
+    async function resolveSurfaceAltitudeM(center) {
+        try {
+            const cart = Cesium.Cartographic.fromDegrees(center.lon, center.lat);
+            const sampled = await Cesium.sampleTerrainMostDetailed(viewer.terrainProvider, [cart]);
+            const h = sampled?.[0]?.height;
+            return Number.isFinite(h) ? Number(h) : null;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    async function runWindLayer(center, radiusM) {
+        if (!window.WindUI || !window.WindRender || !window.WindField) {
+            throw new Error('WIND moduly nie sú načítané.');
+        }
+
+        if (!windEnabled.checked) {
+            window.WindUI?.clear?.(viewer);
+            return;
+        }
+
+        const surfaceAltM = await resolveSurfaceAltitudeM(center);
+        const windResult = await window.WindUI.runDemo(viewer, center, {
+            aglM: Number(windAglInput.value),
+            radiusM,
+            spacingM: Number(windSpacingInput.value),
+            baseSpeedMs: Number(windSpeedInput.value),
+            baseDirDeg: Number(windDirInput.value),
+            useTempProfileWind: windUseTempProfile.checked,
+            surfaceAltM,
+            seedEvery: 3,
+            maxSteps: 42,
+            stepMeters: 90
+        });
+
+        const weather = windResult.field.weatherTracking || {};
+        const mode = weather.mode || 'FALLBACK_BASE_VECTOR';
+        const sampled = Number.isFinite(Number(weather.sampledLevelZ_m))
+            ? 'z=' + Number(weather.sampledLevelZ_m).toFixed(0) + ' m'
+            : 'bez validnej hladiny';
+
+        logStatus(
+            'WIND: vykreslených prúdnic ' + windResult.stats.rendered +
+            ' / seedov ' + windResult.stats.streamlines +
+            ', režim ' + mode + ', ' + sampled + '.',
+            'success'
+        );
+    }
+
     document.getElementById('analyzeButton').addEventListener('click', async () => {
         const button = document.getElementById('analyzeButton');
         const enabledModules = Array.from(document.querySelectorAll('.module-toggle:checked'))
@@ -371,6 +450,8 @@ $assetVersion = '20260712-07';
                 );
                 logStatus('Kliknutím na ľubovoľný farebný bod otvoríš jeho číselnú diagnostiku a dôvody klasifikácie.');
             }
+
+            await runWindLayer(selectedCenter, Number(radiusInput.value));
         } catch (error) {
             logStatus('Chyba: ' + error.message, 'error');
         } finally {
@@ -381,6 +462,7 @@ $assetVersion = '20260712-07';
     document.getElementById('clearButton').addEventListener('click', () => {
         TerrainAnalysis.skryDiagnostiku(viewer);
         TerrainContours.clear(viewer);
+        window.WindUI?.clear?.(viewer);
         cellDiagnostics.hidden = true;
         logStatus('Výsledné mapové vrstvy boli skryté.');
     });
