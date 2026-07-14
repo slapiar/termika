@@ -89,6 +89,7 @@ window.WindRender = {
                     type: "WIND_STREAMLINE",
                     speed_ms: speedMs,
                     dir_deg: line.dirDeg,
+                    vertical_ms: line.verticalMs,
                     tempDeltaK: line.tempDeltaK,
                     convergence: line.convergence,
                     flow_state: line.flowState,
@@ -116,6 +117,7 @@ window.WindRender = {
                         type: "WIND_ARROW_TIP",
                         speed_ms: speedMs,
                         dir_deg: line.dirDeg,
+                        vertical_ms: line.verticalMs,
                         tempDeltaK: line.tempDeltaK,
                         flow_state: line.flowState
                     }
@@ -234,6 +236,7 @@ window.WindRender = {
                     points,
                     speedMs: lastSample?.speed_ms,
                     dirDeg: lastSample?.dir_deg,
+                    verticalMs: lastSample?.w_ms,
                     tempDeltaK: lastSample?.tempDeltaK,
                     convergence: lastSample?.convergence,
                     heightMsl: Number.isFinite(Number(lastSample?.height_msl)) ? Number(lastSample.height_msl) : state.height_msl,
@@ -363,6 +366,13 @@ window.WindRender = {
         return Cesium.Color.fromCssColorString("#90A4AE").withAlpha(alpha);
     },
 
+    colorForVerticalMotion: function (verticalMs, alpha) {
+        const w = Math.max(-3, Math.min(3, Number(verticalMs) || 0));
+        if (w > 0.05) return Cesium.Color.fromCssColorString("#FF9AA2").withAlpha(alpha);
+        if (w < -0.05) return Cesium.Color.fromCssColorString("#8FD3FF").withAlpha(alpha);
+        return Cesium.Color.fromCssColorString("#C8D6DF").withAlpha(alpha);
+    },
+
     resolveLineColor: function (line, cfg) {
         const mode = String(cfg.colorMode || "tempDeltaK");
         const theme = String(cfg.colorTheme || "dark");
@@ -373,6 +383,9 @@ window.WindRender = {
         }
         if (mode === "convergence") {
             return this.colorForConvergence(line.convergence, alpha);
+        }
+        if (mode === "verticalMotion") {
+            return this.colorForVerticalMotion(line.verticalMs, alpha);
         }
         return this.colorForTempDelta(line.tempDeltaK, alpha, theme);
     },

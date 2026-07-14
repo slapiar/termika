@@ -144,6 +144,7 @@ $assetVersion = '20260712-07';
                     <option value="tempDeltaK" selected>Teplotný kontrast</option>
                     <option value="speed">Rýchlosť vetra</option>
                     <option value="convergence">Konvergencia/divergencia</option>
+                    <option value="verticalMotion">Vertikálny pohyb (stúpanie/klesanie)</option>
                 </select>
             </label>
             <label>Téma farieb
