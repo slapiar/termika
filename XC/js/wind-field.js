@@ -441,6 +441,12 @@ window.WindField = {
         return n;
     },
 
+    clamp01: function (value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return 0;
+        return Math.max(0, Math.min(1, n));
+    },
+
     wrapDegrees: function (value) {
         const v = Number(value);
         if (!Number.isFinite(v)) return 0;

@@ -30,6 +30,13 @@ $jsPriority = [
     'glider-core.js',
     'pilot-network.js',
     'cesium-render.js',
+    'wind-effects-core.js',
+    'wind-effect-terrain.js',
+    'wind-effect-surface.js',
+    'wind-temp-loader.js',
+    'wind-field.js',
+    'wind-render.js',
+    'wind-ui.js',
     'terrain-analysis.js',
     'workspace-ui.js',
 ];
@@ -231,6 +238,78 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             }, 120);
         }
 
+        async function renderWindLayer(reason = "") {
+            if (!viewer || viewer.isDestroyed()) return;
+            if (!window.WindUI || !window.WindField || !window.WindRender || !window.WindTempLoader) {
+                logStatus("WIND vrstva nie je dostupná (moduly sa nenačítali).", "error");
+                return;
+            }
+
+            const points = Array.isArray(window.PilotNetwork?.letoveBody) ? window.PilotNetwork.letoveBody : [];
+            if (!points.length) {
+                logStatus("WIND vrstva: chýbajú letové body pre výpočet.", "error");
+                return;
+            }
+
+            const idxRaw = Number(window.PilotNetwork?.currentIndex);
+            const idx = Number.isFinite(idxRaw)
+                ? Math.max(0, Math.min(points.length - 1, Math.round(idxRaw)))
+                : 0;
+            const point = points[idx] || points[0];
+            const center = { lat: Number(point.lat), lon: Number(point.lon) };
+            if (!Number.isFinite(center.lat) || !Number.isFinite(center.lon)) {
+                logStatus("WIND vrstva: neplatný stred výpočtu.", "error");
+                return;
+            }
+
+            window.WindUI.init({
+                aglM: 260,
+                radiusM: 1200,
+                spacingM: 120,
+                baseSpeedMs: 4.5,
+                baseDirDeg: 230,
+                useTempProfileWind: true,
+                tempSourceMode: "auto",
+                tempSourceUrl: "XCtrack/temp.json",
+                colorMode: "tempDeltaK",
+                colorTheme: "dark",
+                animationEnabled: false,
+                source: "ODVODENE"
+            });
+
+            try {
+                const windResult = await window.WindUI.runDemo(viewer, center, {
+                    tempProfile: Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP)
+                        ? window.PilotNetwork.liveAtmosferaTEMP
+                        : null,
+                    seedEvery: 3,
+                    maxSteps: 42,
+                    stepMeters: 90,
+                    radiusM: 1200,
+                    spacingM: 120,
+                    useTempProfileWind: true,
+                    animationEnabled: false
+                });
+
+                const rendered = Number(windResult?.stats?.rendered) || 0;
+                const seeds = Number(windResult?.stats?.streamlines) || 0;
+                if (rendered > 0) {
+                    logStatus(
+                        "WIND: vykreslených prúdnic " + rendered + " / seedov " + seeds +
+                        (reason ? " (" + reason + ")" : ""),
+                        "success"
+                    );
+                } else {
+                    logStatus(
+                        "WIND: nevznikli žiadne prúdnice" + (reason ? " (" + reason + ")" : "") + ".",
+                        "error"
+                    );
+                }
+            } catch (error) {
+                logStatus("WIND vrstvu sa nepodarilo vykresliť: " + error.message, "error");
+            }
+        }
+
         function setCameraModeUi(mode) {
             document.querySelectorAll(".camera-mode-button").forEach((button) => {
                 button.classList.toggle("is-active", button.dataset.cameraMode === mode);
@@ -314,6 +393,7 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
 
             try {
                 await PilotNetwork.nacitajLokalnyIgcSubor(file, viewer, bioChart);
+                await renderWindLayer("lokálny IGC");
             } catch (error) {
                 logStatus("Lokálny IGC súbor sa nepodarilo načítať: " + error.message, "error");
             } finally {
@@ -338,6 +418,7 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             try {
                 await PilotNetwork.nacitajLokalnyTempSubor(file);
                 window.SkewTRender?.toggle(true);
+                await renderWindLayer("lokálny TEMP");
             } catch (error) {
                 logStatus("TEMP súbor sa nepodarilo načítať: " + error.message, "error");
                 setMapState("CHYBA TEMP", "error");
@@ -458,6 +539,7 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                     viewer,
                     bioChart
                 );
+                await renderWindLayer("štart");
             } catch (error) {
                 logStatus("Spracovanie letových dát zlyhalo: " + error.message, "error");
                 setMapState("CHYBA IGC", "error");
