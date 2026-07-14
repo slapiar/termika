@@ -140,8 +140,10 @@ $assetVersion = '20260712-07';
                     <option value="low">Nízka</option>
                     <option value="medium" selected>Stredná</option>
                     <option value="high">Vysoká</option>
+                    <option value="auto">Auto (podľa FPS)</option>
                 </select>
             </label>
+            <div id="windFpsIndicator" style="margin-top:4px;color:#8fa9b8;font-size:12px;">FPS: -- | AUTO profil: --</div>
         </fieldset>
 
         <button id="analyzeButton" type="button">Spustiť vybrané analýzy</button>
@@ -200,11 +202,24 @@ $assetVersion = '20260712-07';
     const windColorTheme = document.getElementById('windColorTheme');
     const windAnimate = document.getElementById('windAnimate');
     const windAnimationIntensity = document.getElementById('windAnimationIntensity');
+    const windFpsIndicator = document.getElementById('windFpsIndicator');
     const cellDiagnostics = document.getElementById('cellDiagnostics');
     const cellDiagnosticsBody = document.getElementById('cellDiagnosticsBody');
     let selectedCenter = { lat: 46.43, lon: 11.85 };
     let previewCenter = { ...selectedCenter };
     let highestWindowZ = 20;
+    let windFpsEstimate = 60;
+    let windAutoActiveProfile = 'medium';
+    let windAutoRerenderBusy = false;
+
+    function refreshWindFpsIndicator() {
+        if (!windFpsIndicator) return;
+        const fpsText = Number.isFinite(windFpsEstimate) ? windFpsEstimate.toFixed(0) : '--';
+        const autoText = String(windAnimationIntensity.value) === 'auto'
+            ? windAutoActiveProfile
+            : 'manual';
+        windFpsIndicator.textContent = 'FPS: ' + fpsText + ' | AUTO profil: ' + autoText;
+    }
 
     function logStatus(text, type = 'info') {
         const line = document.createElement('div');
@@ -301,6 +316,22 @@ $assetVersion = '20260712-07';
         selectionIndicator: false,
         geocoder: false
     });
+
+    let fpsFrameCounter = 0;
+    let fpsLastTs = performance.now();
+    viewer.scene.postRender.addEventListener(() => {
+        fpsFrameCounter += 1;
+        const now = performance.now();
+        const dt = now - fpsLastTs;
+        if (dt < 900) return;
+        windFpsEstimate = Math.max(1, (fpsFrameCounter * 1000) / dt);
+        fpsFrameCounter = 0;
+        fpsLastTs = now;
+        refreshWindFpsIndicator();
+    });
+
+    windAnimationIntensity.addEventListener('change', refreshWindFpsIndicator);
+    refreshWindFpsIndicator();
 
     viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(selectedCenter.lon, selectedCenter.lat, 9000)
@@ -428,7 +459,17 @@ $assetVersion = '20260712-07';
                 animationSamples: 8
             }
         };
-        const animationCfg = animationProfiles[windAnimationIntensity.value] || animationProfiles.medium;
+        const resolveAutoProfile = function () {
+            if (windFpsEstimate >= 48) return 'high';
+            if (windFpsEstimate >= 30) return 'medium';
+            return 'low';
+        };
+
+        const requestedIntensity = String(windAnimationIntensity.value || 'medium');
+        const activeIntensity = requestedIntensity === 'auto' ? resolveAutoProfile() : requestedIntensity;
+        windAutoActiveProfile = activeIntensity;
+        const animationCfg = animationProfiles[activeIntensity] || animationProfiles.medium;
+        refreshWindFpsIndicator();
 
         const windResult = await window.WindUI.runDemo(viewer, center, {
             aglM: Number(windAglInput.value),
@@ -470,10 +511,68 @@ $assetVersion = '20260712-07';
             logStatus('WIND efekty: ' + effects.join(', ') + '.');
         }
 
+        if (requestedIntensity === 'auto') {
+            logStatus('WIND animácia AUTO: profil ' + activeIntensity + ', FPS ~ ' + windFpsEstimate.toFixed(0) + '.');
+        }
+
         if ((Number(windResult.stats.rendered) || 0) < 1) {
             logStatus('WIND: nebola vykreslená žiadna prúdnica. Skontroluj rýchlosť vetra alebo zvýš hustotu výpočtu.', 'error');
         }
     }
+
+    setInterval(async () => {
+        if (!windEnabled.checked) return;
+        if (String(windAnimationIntensity.value) !== 'auto') return;
+        if (!window.WindUI?.state?.lastField || !window.WindRender?.renderField) return;
+        if (windAutoRerenderBusy) return;
+
+        const nextProfile = windFpsEstimate >= 48 ? 'high' : (windFpsEstimate >= 30 ? 'medium' : 'low');
+        if (nextProfile === windAutoActiveProfile) return;
+
+        const animationProfiles = {
+            low: {
+                animationSpeedFactor: 3.5,
+                animationTrailSeconds: 1.4,
+                animationMinSegmentM: 45,
+                animationMaxSegmentM: 220,
+                animationSamples: 4
+            },
+            medium: {
+                animationSpeedFactor: 8,
+                animationTrailSeconds: 2.0,
+                animationMinSegmentM: 80,
+                animationMaxSegmentM: 420,
+                animationSamples: 6
+            },
+            high: {
+                animationSpeedFactor: 13,
+                animationTrailSeconds: 2.8,
+                animationMinSegmentM: 110,
+                animationMaxSegmentM: 600,
+                animationSamples: 8
+            }
+        };
+
+        windAutoRerenderBusy = true;
+        try {
+            windAutoActiveProfile = nextProfile;
+            await window.WindRender.renderField(viewer, window.WindUI.state.lastField, {
+                seedEvery: 3,
+                maxSteps: 42,
+                stepMeters: 90,
+                colorMode: windColorMode.value,
+                colorTheme: windColorTheme.value,
+                animationEnabled: windAnimate.checked,
+                ...animationProfiles[nextProfile]
+            });
+            refreshWindFpsIndicator();
+            logStatus('WIND animácia AUTO: prepínam profil na ' + nextProfile + ' (FPS ~ ' + windFpsEstimate.toFixed(0) + ').');
+        } catch (_) {
+            // Silent: auto re-render is best-effort and must not block manual workflow.
+        } finally {
+            windAutoRerenderBusy = false;
+        }
+    }, 2500);
 
     document.getElementById('analyzeButton').addEventListener('click', async () => {
         const button = document.getElementById('analyzeButton');

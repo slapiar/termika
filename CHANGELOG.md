@@ -40,7 +40,9 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - `XC/js/wind-render.js` podporuje farebné režimy `tempDeltaK`, `speed`, `convergence`,
   - podpora tém pre tmavé a svetlé pozadie,
   - voliteľná animácia smeru toku cez pohyblivý marker po prúdnici,
-  - `XC/terrain-analysis-test.php` dopĺňa prepínače farebnosti, prepínač animácie a prepínač intenzity animácie (nízka/stredná/vysoká).
+  - `XC/terrain-analysis-test.php` dopĺňa prepínače farebnosti, prepínač animácie a prepínač intenzity animácie (`nízka/stredná/vysoká/auto`),
+  - režim `auto` prepína profil intenzity podľa meraného FPS a pri zmene profilu vykoná re-render bez potreby nového výpočtu poľa,
+  - vo WIND paneli je živý indikátor `FPS | AUTO profil`.
 - Pridaná samostatná MVP kostra meteorologického prvku `WIND` bez integrácie do existujúcich stránok, aby nezasahovala do rozpracovaných commitov.
   - nový modul `XC/js/wind-field.js` pre výpočet 2D veterného poľa pri zemi (AGL), odhad `tempDeltaK` a pracovnú convergenciu,
   - nový modul `XC/js/wind-render.js` pre vykreslenie prúdnic so smerovými šípkami, farbou podľa teplotného kontrastu a hrúbkou podľa rýchlosti,
