@@ -23,7 +23,10 @@ window.WindRender = {
         colorTheme: "dark",
         animationEnabled: false,
         animationTrailSeconds: 2.0,
-        animationSamples: 6
+        animationSamples: 6,
+        animationSpeedFactor: 8,
+        animationMinSegmentM: 80,
+        animationMaxSegmentM: 420
     },
 
     clear: function (viewer) {
@@ -335,9 +338,12 @@ window.WindRender = {
         const startTime = Cesium.JulianDate.now();
         const speed = Math.max(0.5, Number(speedMs) || 0.5);
         const trailSeconds = Math.max(0.6, Math.min(6, Number(cfg.animationTrailSeconds) || 2));
-        const segmentLengthM = Math.max(15, Math.min(totalLength * 0.35, speed * trailSeconds));
+        const minSegment = Math.max(20, Number(cfg.animationMinSegmentM) || 80);
+        const maxSegment = Math.max(minSegment, Number(cfg.animationMaxSegmentM) || 420);
+        const segmentLengthM = Math.max(minSegment, Math.min(maxSegment, Math.min(totalLength * 0.45, speed * trailSeconds * 16)));
         const focusScale = Math.max(0.7, Math.min(2.4, (Number(focusRadiusM) || 1200) / 1200));
-        const advectionSpeedMps = speed * focusScale;
+        const visualSpeedFactor = Math.max(1, Math.min(18, Number(cfg.animationSpeedFactor) || 8));
+        const advectionSpeedMps = speed * focusScale * visualSpeedFactor;
         const sampleCount = Math.max(3, Math.min(12, Number(cfg.animationSamples) || 6));
 
         const arrowMaterial = Cesium.PolylineArrowMaterialProperty
@@ -359,7 +365,7 @@ window.WindRender = {
                         sampleCount
                     );
                 }, false),
-                width: Math.max(1.5, width + 0.6),
+                width: Math.max(2.4, width + 1.4),
                 material: arrowMaterial,
                 clampToGround: false
             },
