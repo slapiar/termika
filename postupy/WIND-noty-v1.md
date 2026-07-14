@@ -1,83 +1,279 @@
 # WIND noty v1 (naviazanie na meteo-core)
 
-## Co uz vieme pouzit z meteo-core
+## Čo už vieme použiť z meteo-core
 
-Meteo jadro uz poskytuje data a funkcie, ktore sa daju okamzite pouzit pre vietor:
+Meteo jadro už poskytuje dáta a funkcie, ktoré sa dajú okamžite použiť pre vietor:
 
-- tlakova, teplotna a vlhkostna struktura TEMP profilu (`p_hpa`, `z_m`, `T_c`, `Td_c`),
-- vietor po hladinach (`w_dir_deg`, `w_speed_kts`),
+- tlaková, teplotná a vlhkostná štruktúra TEMP profilu (`p_hpa`, `z_m`, `T_c`, `Td_c`),
+- vietor po hladinách (`w_dir_deg`, `w_speed_kts`),
 - LCL (`vypocitajLclDetail`, `vypocitajLclZProfily`),
-- draha castice (`vypocitajDrahuCastice`),
-- 3D drift komina (`vypocitaj3DDriftKomina`) s prepnutim KOMIN/BUBLINY.
+- dráha častice (`vypocitajDrahuCastice`),
+- 3D drift komína (`vypocitaj3DDriftKomina`) s prepnutím KOMÍN/BUBLINY.
 
-## Co meteo-core zatial nedava priamo
+## Čo meteo-core zatiaľ nedáva priamo
 
-- horizontalne pole vetra nad mapou (2D grid),
+- horizontálne pole vetra nad mapou,
 - mapu teploty povrchu,
-- mapu podkladov (ladovec/sneh/voda/vegetacia),
-- priame pole convergencie/divergencie v priestore.
+- mapu podkladov (ľadovec/sneh/voda/vegetácia),
+- priame pole konvergencie/divergencie v priestore.
 
-Preto WIND v1 sklada pole z:
+Preto WIND v1 skladá pole z:
 
-- vertikalneho TEMP profilu (smer + rychlost vo vyske),
-- lokalnej mriezky analyzovanej oblasti,
-- odhadu ochladzovacich zon (pracovne),
-- vypoctu convergencie z pola u,v.
+- vertikálneho TEMP profilu (smer + rýchlosť vo výške),
+- lokálnej mriežky analyzovanej oblasti,
+- terénneho modelu Cesium,
+- výpočtu konvergencie z poľa `u, v`.
 
-## Noty pre vietor (specifikacia)
+## Základné metodické pravidlo
 
-### Nota 1 - vstupna hladina vetra
+Letové hladiny, meteorologické hodnoty ani terénne vlastnosti sa nesmú hádať, dopĺňať placeholdermi ani nahrádzať vymyslenými fallback údajmi.
 
-- cielova vyska: `targetAltMsl = surfaceAltM + aglM`,
-- z TEMP profilu interpolovat `u_ms`, `v_ms`, `T_c`, `Td_c` na tejto vyske,
-- ak profil chyba: fallback na `baseDirDeg`, `baseSpeedMs`.
+Každá výška, vrstva a fyzikálna vlastnosť musí vzniknúť:
 
-### Nota 2 - prevod smeru vetra
+- z reálne načítaného TEMP,
+- z reálnej výšky a geometrie terénu Cesium,
+- alebo z jednoznačne označeného výpočtu odvodeného z týchto zdrojov.
 
-- `w_dir_deg` je meteorologicky smer "odkial fuka",
-- pre advekciu do mapy pouzit:
+Interpolácia je prípustná iba medzi platnými reálnymi bodmi TEMP. Hodnota mimo meraného rozsahu sa nesmie bez označenia vydávať za reálny údaj.
+
+Každý odvodený výsledok musí niesť pôvod údajov, čas platnosti, verziu modelu a mieru dôveryhodnosti.
+
+## Noty pre vietor (špecifikácia)
+
+### Nota 1 – výška a atmosférická vrstva
+
+- reálna výška terénu sa získa z Cesium,
+- výška bodu nad terénom sa počíta ako `heightAGL = tempHeightMSL - surfaceAltM`,
+- atmosférické vrstvy sa nevytvárajú vopred pevnými ukážkovými AGL hladinami,
+- hranice vrstiev vznikajú výpočtom zo zmien reálneho TEMP profilu, napríklad zo zmeny teplotného gradientu, inverzie, vlhkosti, smeru alebo rýchlosti vetra a strihu,
+- cieľová výška pre lokálny výpočet sa vždy musí viazať na reálnu výšku terénu a platný rozsah TEMP.
+
+### Nota 2 – prevod smeru vetra
+
+- `w_dir_deg` je meteorologický smer „odkiaľ fúka“,
+- pre advekciu do mapy použiť:
   - `u = -sin(dir) * speed`,
   - `v = -cos(dir) * speed`.
 
-### Nota 3 - terenna korekcia (v1 pracovna)
+### Nota 3 – terénna korekcia
 
-- ochladzovacie zony menia:
-  - `tempDeltaK`,
-  - lokalny drift (`driftU`, `driftV`),
-  - lokalnu istotu (`confidence`).
+Terénna korekcia nesmie byť založená na demonštračných zónach. Musí vychádzať z reálnej geometrie terénu a neskôr aj z reálnych vlastností povrchu.
 
-### Nota 4 - convergencia/divergencia
+Požadované odvodené veličiny:
 
-- z mriezky u,v pocitat divergence:
+- sklon a orientácia svahu,
+- lokálna normála povrchu,
+- zakrivenie terénu,
+- hrebene, sedlá, údolia a závetrné oblasti,
+- zrýchlenie prúdu,
+- odklon prúdenia,
+- stlačenie alebo rozšírenie prúdu,
+- zmena vertikálnej zložky.
+
+### Nota 4 – konvergencia/divergencia
+
+- z poľa `u, v` počítať divergenciu:
   - `div = du/dx + dv/dy`,
-  - `convergence = -div`.
+  - `convergence = -div`,
+- neskôr rozšíriť na plný 3D priestor podľa vypočítaných atmosférických vrstiev.
 
-### Nota 5 - vizualna notacia
+### Nota 5 – vizuálna notácia
 
-- prudnice idu po integrovanom poli,
-- sipka na konci prudnice ukazuje smer toku,
-- farba: podla `tempDeltaK`,
-- hrubka: podla `speed_ms`.
+- prúdnice idú po integrovanom poli,
+- šípka na konci prúdnice ukazuje smer toku,
+- farba sa môže viazať na zvolenú fyzikálnu veličinu,
+- hrúbka sa môže viazať na `speed_ms`,
+- vizualizácia je iba mapová vrstva nad spoločným priestorovým modelom; nie je zdrojom fyzikálnych údajov.
 
-### Nota 6 - diagnostika bunky
+### Nota 6 – diagnostika bodu
 
-Minimalne polia pre klik:
+Minimálne polia pre klik:
 
-- `speed_ms`, `dir_deg`, `u_ms`, `v_ms`,
-- `temp_air_c`, `dewpoint_c`, `tempDeltaK`,
-- `convergence`, `confidence`,
-- `source`, `weatherTracking.mode`.
+- `speed_ms`, `dir_deg`, `u_ms`, `v_ms`, neskôr `w_ms`,
+- `temp_air_c`, `dewpoint_c`, `pressure_hpa`,
+- `convergence`, `divergence`, `shear`,
+- `terrain_alt_msl`, `height_agl_m`,
+- `confidence`,
+- `source_temp_hash`, `terrain_version`, `model_version`,
+- čas výpočtu a čas platnosti údajov.
 
-## Stav implementacie po tomto kroku
+## Spoločný priestorový model
 
-- WIND vie citat TEMP profil a vyhodnotit vietor pre hladinu AGL,
-- WIND vie oznacit, ci bezal z TEMP alebo fallbacku,
-- zatial je to jedna hladina (2D), nie plny 3D stack.
+TermikaXC nebude ukladať obrázkové mapové dlaždice ako fyzikálny základ. Základom je spoločný vektorový/drôtený model priestoru v metodike kompatibilnej s Cesium.
 
-## Dalsie kroky (bez kolizie s Joyee)
+Treba rozlišovať:
 
-1. Prepojit `surfaceAltM` na realnu vysku stredu analyzy z Cesium.
-2. Rozsirit na 2-3 AGL hladiny (napr. 30 m, 150 m, 400 m).
-3. Pridat shear notu medzi hladinami.
-4. Napojit trigger pre buduce `THERMAL_BUBBLES`:
-   - podmienka: kladna convergencia + vyrazny teplotny kontrast + priazniva vztlakova rezervna nota.
+1. **Geometriu** – vrcholy reálneho terénu a neskôr aj priestoru.
+2. **Topológiu** – väzby vrcholov do spojitých plôch a objemov.
+3. **Fyzikálne vrstvy** – vietor, teplota, tlak, vlhkosť, strih, konvergencia a ďalšie odvodené vlastnosti.
+4. **Čas** – platnosť jednotlivých meteorologických stavov.
+5. **Pôvod a verziu** – TEMP, zdroj terénu, verzia výpočtového modelu, presnosť a dôveryhodnosť.
+
+Každý vypočítaný bod sa zachová. Optimalizácia nesmie znamenať vynechávanie bodov ani znižovanie presnosti.
+
+Zároveň každý bod nemusí byť samostatným SQL riadkom. Presné polia vrcholov, väzieb a fyzikálnych vlastností sa môžu ukladať ako kompaktné binárne bloky, pričom databáza vedie ich priestorovú identitu, rozsah, verziu, väzby, pôvod a integritu.
+
+Presnejšie lokálne mapovanie sa vnorí do existujúceho modelu ako presnejší priestorový segment. Hrubší model ostáva zachovaný a presnejší model ho v danom rozsahu doplní alebo nahradí bez straty spoločnej súradnicovej orientácie.
+
+## Decentralizovaná výpočtová a dátová architektúra
+
+Decentralizácia je súčasťou základnej architektúry TermikaXC, nie neskorší doplnok.
+
+Princíp:
+
+> Zariadenia účastníkov počítajú a uchovávajú lokálne údaje. Spoločná databanka vedie katalóg, overuje, synchronizuje, zálohuje a zachováva spoločnú pamäť letového priestoru.
+
+S rastúcim počtom účastníkov má rásť aj dostupná výpočtová kapacita, počet už vypočítaných priestorov a počet distribuovaných kópií údajov. Nový používateľ preto nemá zvyšovať iba záťaž centrálneho servera; má zároveň priniesť ďalší výpočtový a dátový zdroj.
+
+### Úloha zariadenia účastníka
+
+Zariadenie môže v používateľom povolených limitoch:
+
+- vypočítavať nové priestory,
+- spresňovať existujúci mesh,
+- uchovávať lokálne používané oblasti,
+- uchovávať údaje, ktoré samo vypočítalo,
+- overovať výsledky iných účastníkov,
+- synchronizovať hotové výsledky do spoločnej databanky,
+- poskytovať vybrané dátové bloky ostatným účastníkom.
+
+### Úloha spoločnej databanky
+
+Spoločná databanka:
+
+- vedie globálny katalóg priestorov a verzií,
+- uchováva identitu každého modelu a výsledku,
+- kontroluje hash, pôvod, čas platnosti a verziu výpočtu,
+- zálohuje výsledky tak, aby sa nestratili po odpojení používateľského zariadenia,
+- rozhoduje, ktoré údaje už existujú a ktoré treba dopočítať,
+- zabezpečuje kontinuitu spoločnej mapy.
+
+Centrálna databanka nemá byť hlavným výpočtovým motorom. Je spoločnou pamäťou, katalógom, zálohou a autoritou integrity.
+
+### Identita výpočtu
+
+Každý výpočet musí byť jednoznačne určený minimálne kombináciou:
+
+- priestorového rozsahu,
+- súradnicového systému,
+- verzie a rozlíšenia mesh,
+- hash TEMP datasetu,
+- času platnosti TEMP,
+- verzie fyzikálneho modelu,
+- použitej presnosti,
+- zdroja údajov,
+- hash výsledku.
+
+Rovnaký výpočet s rovnakým výsledným hashom sa nemá ukladať opakovane ako nový obsah.
+
+## Oddelenie pracovného a letového režimu
+
+Bezpečnosť a plynulosť letového režimu majú absolútnu prioritu.
+
+Ak aplikácia počas letu prestane reagovať z dôvodu výpočtu, synchronizácie alebo nedostatku pamäte, systém nesplnil svoj účel.
+
+### Pracovný režim
+
+Môže:
+
+- počítať nové priestory,
+- používať viac CPU/GPU,
+- sťahovať a odosielať veľké dátové objemy,
+- spresňovať mesh,
+- vykonávať údržbu lokálnych údajov,
+- synchronizovať so spoločnou databankou.
+
+### Letový režim
+
+Musí:
+
+- zastaviť všetky nepovinné výpočty,
+- zastaviť alebo odložiť veľké synchronizácie,
+- uzamknúť pripravený letový priestor,
+- chrániť minimálnu rezervu RAM a disku,
+- fungovať bez internetového pripojenia,
+- používať pripravené údaje a iba bezpečné lokálne operácie,
+- zachovať polohu, terén, mapu, letové údaje a bezpečnostné funkcie aj pri núdzovom obmedzení ostatných vrstiev.
+
+Pred letom sa pripraví letový balík obsahujúci minimálne:
+
+- plánovanú trasu,
+- bezpečný priestor okolo trasy,
+- potrebný rozsah výšok,
+- terénny mesh,
+- aktuálny TEMP,
+- vypočítané fyzikálne vrstvy,
+- záložnú menej náročnú reprezentáciu pre núdzový režim,
+- potrebné mapové podklady.
+
+Aplikácia musí jednoznačne oznámiť, či je letový priestor úplne pripravený a použiteľný offline.
+
+## Monitorovanie zdrojov zariadenia
+
+Stav výpočtových a úložných zdrojov musí byť stále viditeľnou súčasťou pracovného prostredia.
+
+Minimálne zobrazovať:
+
+- dostupnú a použitú RAM,
+- povinnú bezpečnostnú rezervu RAM,
+- dostupný a použitý diskový priestor TermikaXC,
+- veľkosť aktuálneho priestoru,
+- veľkosť pripraveného letového balíka,
+- objem údajov čakajúcich na synchronizáciu,
+- zaťaženie CPU/GPU,
+- počet aktívnych výpočtových vlákien,
+- stav pripravenosti na let.
+
+Pri výbere nového priestoru aplikácia vopred vypočíta odhad:
+
+- potrebného diskového priestoru,
+- potrebnej pracovnej RAM,
+- očakávanej výpočtovej záťaže,
+- schopnosti konkrétneho zariadenia úlohu bezpečne vykonať.
+
+Používateľ musí vedieť, na aký rozsah a presnosť jeho zariadenie stačí a kedy už potrebuje rozšíriť disk, pamäť alebo použiť výkonnejšie zariadenie.
+
+### Ochranné režimy zdrojov
+
+Pracovne zaviesť minimálne tieto stupne:
+
+- **zelený** – dostatočná rezerva, povolené všetky funkcie,
+- **žltý** – obmedziť cudzie výpočty a nepovinnú synchronizáciu,
+- **oranžový** – ponechať iba aktuálny a bezprostredne potrebný letový priestor,
+- **červený** – zastaviť nové fyzikálne výpočty a synchronizáciu; zachovať iba letové a bezpečnostné jadro.
+
+Pri ochrane pamäte sa nesmie meniť presnosť uložených údajov. Môže sa znížiť iba množstvo údajov súčasne držaných v RAM alebo hustota ich vizualizácie.
+
+## Licenčný princíp spoluúčasti
+
+Jednou z podmienok používania spoločnej výpočtovej siete môže byť transparentný súhlas používateľa, že aplikácia v ním zvolených limitoch využije voľnú výpočtovú kapacitu, pracovnú pamäť, diskový priestor a dátové pripojenie na tvorbu, uchovávanie, overovanie a synchronizáciu spoločného modelu letového priestoru.
+
+Používateľ musí mať možnosť určiť minimálne:
+
+- maximálne využitie CPU/GPU,
+- maximálne využitie RAM,
+- maximálny diskový priestor pre spoločnú sieť,
+- výpočty iba pri externom napájaní,
+- synchronizáciu iba cez povolený typ siete,
+- úplné vypnutie nepovinnej výpočtovej a synchronizačnej činnosti počas letu.
+
+## Stav implementácie po tomto kroku
+
+- WIND vie čítať TEMP profil a vyhodnotiť vietor pre jednu pracovnú hladinu,
+- súčasná implementácia je stále MVP a používa jednu 2D hladinu,
+- `surfaceAltM` ešte treba priamo previazať na reálnu výšku terénu Cesium,
+- súčasné demonštračné fallbacky a demo ochladzovacie zóny nesmú prejsť do fyzikálneho produkčného modelu,
+- decentralizovaná dátová vrstva, lokálne úložisko, synchronizácia a monitor zdrojov zatiaľ nie sú implementované.
+
+## Ďalšie kroky
+
+1. Prepojiť `surfaceAltM` na reálnu výšku terénu z Cesium pre každý vypočítaný bod.
+2. Odstrániť z produkčnej vetvy meteorologické placeholdery, demo fallback vektory a demo ochladzovacie zóny.
+3. Zaviesť identitu a hash normalizovaného TEMP datasetu.
+4. Navrhnúť dátový formát spoločného vektorového/drôteného modelu kompatibilného s metodikou Cesium.
+5. Oddeliť statickú geometriu a topológiu od časovo meniacich sa fyzikálnych vrstiev.
+6. Navrhnúť lokálne binárne úložisko a spoločný serverový katalóg.
+7. Presunúť náročné výpočty mimo hlavného vlákna aplikácie.
+8. Zaviesť monitor RAM, disku, CPU/GPU a bezpečnostných rezerv.
+9. Definovať pracovný režim, prípravu letového balíka a nedotknuteľný letový režim.
+10. Až potom rozšíriť WIND z jednej pracovnej hladiny na vrstvy vypočítané z reálneho TEMP a pridať 3D strih, zrýchlenie, stlačenie, odklon a konvergenciu podľa reliéfu.
