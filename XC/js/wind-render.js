@@ -12,6 +12,9 @@ window.WindRender = {
         maxSteps: 45,
         stepMeters: 90,
         minSpeedMs: 0.2,
+        minHorizontalSpeedMs: 0.15,
+        minClearanceM: 6,
+        maxCollisionRetries: 5,
         lineWidthMin: 1,
         lineWidthMax: 4,
         alpha: 0.9,
@@ -80,7 +83,9 @@ window.WindRender = {
                     speed_ms: speedMs,
                     dir_deg: line.dirDeg,
                     tempDeltaK: line.tempDeltaK,
-                    convergence: line.convergence
+                    convergence: line.convergence,
+                    flow_state: line.flowState,
+                    termination_reason: line.terminationReason
                 }
             });
 
@@ -104,7 +109,8 @@ window.WindRender = {
                         type: "WIND_ARROW_TIP",
                         speed_ms: speedMs,
                         dir_deg: line.dirDeg,
-                        tempDeltaK: line.tempDeltaK
+                        tempDeltaK: line.tempDeltaK,
+                        flow_state: line.flowState
                     }
                 });
             }
@@ -140,29 +146,72 @@ window.WindRender = {
             }
 
             const points = [];
-            let lat = seed.lat;
-            let lon = seed.lon;
+            let lat = Number(seed.lat);
+            let lon = Number(seed.lon);
+            let heightMsl = Number.isFinite(Number(seed.height_msl))
+                ? Number(seed.height_msl)
+                : (Number.isFinite(Number(seed.terrain_height_msl)) ? Number(seed.terrain_height_msl) + (Number(seed.agl_m) || 0) : null);
             let lastCell = seed;
+            let terminationReason = "MAX_STEPS";
+            const flowStates = [];
 
             for (let i = 0; i < maxSteps; i += 1) {
                 const cell = window.WindField.nearestCell(field, lat, lon);
-                if (!cell) break;
-                if ((Number(cell.speed_ms) || 0) < style.minSpeedMs) break;
+                if (!cell) {
+                    terminationReason = "NUMERICAL_FAILURE";
+                    break;
+                }
+                if ((Number(cell.speed_ms) || 0) < style.minSpeedMs) {
+                    terminationReason = "PHYSICAL_STAGNATION";
+                    break;
+                }
 
-                points.push({ lat, lon, heightM: field.level?.agl_m || 0 });
-                const heightMsl = Number.isFinite(Number(cell.height_msl)) ? Number(cell.height_msl) : null;
-                points[points.length - 1].heightMsl = heightMsl;
+                const terrainHere = Number.isFinite(Number(cell.terrain_height_msl))
+                    ? Number(cell.terrain_height_msl)
+                    : (Number.isFinite(Number(seed.terrain_height_msl)) ? Number(seed.terrain_height_msl) : null);
 
-                const speed = Math.max(0.01, Number(cell.speed_ms) || 0.01);
-                const dt = stepMeters / speed;
+                if (!Number.isFinite(heightMsl) && Number.isFinite(terrainHere)) {
+                    heightMsl = terrainHere + Math.max(Number(style.minClearanceM) || 6, Number(cell.clearance_agl) || 0);
+                }
 
-                lat += (cell.v_ms * dt) / metersPerDegLat;
-                lon += (cell.u_ms * dt) / metersPerDegLon;
-                lastCell = cell;
+                points.push({
+                    lat,
+                    lon,
+                    heightM: Number.isFinite(Number(cell.clearance_agl)) ? Number(cell.clearance_agl) : (field.level?.agl_m || 0),
+                    heightMsl,
+                    flow_state: cell.flow_state || "ATTACHED"
+                });
+                flowStates.push(cell.flow_state || "ATTACHED");
+
+                const stepResult = this.integrateStep3D(field, cell, {
+                    lat,
+                    lon,
+                    heightMsl
+                }, {
+                    stepMeters,
+                    minHorizontalSpeedMs: style.minHorizontalSpeedMs,
+                    minClearanceM: style.minClearanceM,
+                    maxCollisionRetries: style.maxCollisionRetries,
+                    metersPerDegLat,
+                    metersPerDegLon
+                });
+
+                if (!stepResult.accepted) {
+                    terminationReason = stepResult.reason;
+                    break;
+                }
+
+                lat = stepResult.lat;
+                lon = stepResult.lon;
+                heightMsl = stepResult.heightMsl;
+                lastCell = stepResult.cell || cell;
 
                 const dNorth = (lat - field.center.lat) * metersPerDegLat;
                 const dEast = (lon - field.center.lon) * metersPerDegLon;
-                if (Math.hypot(dNorth, dEast) > field.radiusM) break;
+                if (Math.hypot(dNorth, dEast) > field.radiusM) {
+                    terminationReason = "FOCUS_EXIT";
+                    break;
+                }
             }
 
             if (points.length >= 2) {
@@ -172,12 +221,61 @@ window.WindRender = {
                     dirDeg: lastCell.dir_deg,
                     tempDeltaK: lastCell.tempDeltaK,
                     convergence: lastCell.convergence,
-                    heightMsl: Number.isFinite(Number(lastCell.height_msl)) ? Number(lastCell.height_msl) : null
+                    heightMsl: Number.isFinite(Number(lastCell.height_msl)) ? Number(lastCell.height_msl) : heightMsl,
+                    flowState: this.resolveDominantFlowState(flowStates),
+                    terminationReason
                 });
             }
         });
 
         return lines;
+    },
+
+    integrateStep3D: function (field, cell, state, cfg) {
+        const u = Number(cell.u_ms) || 0;
+        const v = Number(cell.v_ms) || 0;
+        const w = Number(cell.w_ms) || 0;
+        const hSpeed = Math.max(Number(cfg.minHorizontalSpeedMs) || 0.15, Math.hypot(u, v));
+
+        let dt = Math.max(0.05, Number(cfg.stepMeters) / hSpeed);
+        const minClearance = Math.max(0, Number(cfg.minClearanceM) || 6);
+        const retries = Math.max(1, Number(cfg.maxCollisionRetries) || 5);
+
+        for (let attempt = 0; attempt < retries; attempt += 1) {
+            const latTrial = state.lat + (v * dt) / cfg.metersPerDegLat;
+            const lonTrial = state.lon + (u * dt) / cfg.metersPerDegLon;
+            const zTrial = (Number.isFinite(Number(state.heightMsl)) ? Number(state.heightMsl) : Number(cell.height_msl) || 0) + w * dt;
+
+            const trialCell = window.WindField.nearestCell(field, latTrial, lonTrial);
+            const terrainTrial = Number.isFinite(Number(trialCell?.terrain_height_msl))
+                ? Number(trialCell.terrain_height_msl)
+                : Number(cell.terrain_height_msl);
+
+            if (Number.isFinite(terrainTrial) && zTrial <= terrainTrial + minClearance) {
+                dt *= 0.5;
+                continue;
+            }
+
+            return {
+                accepted: true,
+                lat: latTrial,
+                lon: lonTrial,
+                heightMsl: zTrial,
+                cell: trialCell || cell,
+                dt
+            };
+        }
+
+        return { accepted: false, reason: "NUMERICAL_FAILURE" };
+    },
+
+    resolveDominantFlowState: function (states) {
+        if (!Array.isArray(states) || !states.length) return "ATTACHED";
+
+        if (states.includes("SEPARATED")) return "SEPARATED";
+        if (states.includes("SEPARATING")) return "SEPARATING";
+        if (states.includes("REATTACHING")) return "REATTACHING";
+        return "ATTACHED";
     },
 
     colorForTempDelta: function (deltaK, alpha, theme = "dark") {
@@ -271,7 +369,8 @@ window.WindRender = {
                 trail_seconds: trailSeconds,
                 segment_length_m: segmentLengthM,
                 advection_speed_mps: advectionSpeedMps,
-                focus_scale: focusScale
+                focus_scale: focusScale,
+                flow_state: "ANIMATED"
             }
         });
     },

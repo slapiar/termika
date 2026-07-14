@@ -33,6 +33,9 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - každá bunka má lokálnu `terrain_height_msl`, `clearance_agl`, `height_msl` a základné `w_ms`,
   - TEMP profil sa vzorkuje po bunkách podľa lokálnej cieľovej výšky (nie jednou globálnou hladinou),
   - pre každú bunku sa evidujú indexy použitých TEMP hladín (`source_temp_lower_index`, `source_temp_upper_index`).
+  - `XC/js/wind-effect-terrain.js` prešiel na 3D interakciu s terénom: výpočet normály zo sklonu/aspektu, nepenetrujúca projekcia vektora pri `V·n < 0` a aktualizácia `w_ms` podľa terénneho vplyvu a clearance.
+  - `XC/js/wind-effect-terrain.js` dopĺňa pracovné flow stavy `ATTACHED | SEPARATING | SEPARATED | REATTACHING` z kombinácie lokálnej 3D interakcie a blízkosti hrán meshu (`breakStrength`, `dihedralDeg`).
+  - `XC/js/wind-render.js` pripája `flow_state` do vlastností vykreslených prúdnic a začína etapový 3D integrátor dráhy s kolíznou kontrolou proti terénu (adaptívne skracovanie `dt`, odmietnutie kroku pri riziku preniknutia pod povrch).
 - Rozšírený render vetra s riadením vizuálneho jazyka a voliteľnou animáciou.
   - `XC/js/wind-render.js` podporuje farebné režimy `tempDeltaK`, `speed`, `convergence`,
   - podpora tém pre tmavé a svetlé pozadie,

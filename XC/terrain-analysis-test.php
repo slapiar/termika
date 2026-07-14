@@ -420,11 +420,15 @@ $assetVersion = '20260712-07';
         const sampled = Number.isFinite(Number(weather.sampledLevelZ_m))
             ? 'z=' + Number(weather.sampledLevelZ_m).toFixed(0) + ' m'
             : 'bez validnej hladiny';
+        const flowStates = Array.isArray(windResult.field.cells)
+            ? Array.from(new Set(windResult.field.cells.map((c) => c.flow_state).filter(Boolean)))
+            : [];
 
         logStatus(
             'WIND: vykreslených prúdnic ' + windResult.stats.rendered +
             ' / seedov ' + windResult.stats.streamlines +
-            ', režim ' + mode + ', ' + sampled + '.',
+            ', režim ' + mode + ', ' + sampled +
+            (flowStates.length ? ', flow_state: ' + flowStates.join('/') : '') + '.',
             'success'
         );
         const effects = windResult.field.diagnostics?.effectsApplied || [];
