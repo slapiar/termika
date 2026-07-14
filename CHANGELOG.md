@@ -102,6 +102,10 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 
 ### Opravené
 
+- Viditeľnosť animácie vetra v testovacej stránke.
+  - `XC/js/wind-render.js` používa pre animovaný vektor reálny čas (`performance.now`) namiesto závislosti na scénickom čase,
+  - `XC/terrain-analysis-test.php` explicitne zapína `viewer.clock.shouldAnimate = true`,
+  - animovaný segment sa preto hýbe aj v konfiguráciách, kde bol Cesium clock predtým prakticky statický.
 - Zobrazenie release verzie po prvom používateľskom teste.
   - pôvodné HTTP načítanie mohlo dostať HTML dokument a príliš benevolentná normalizácia ho zobrazila v hlavičke,
   - nový endpoint `XC/release-version.php` číta `RELEASE_VERSION` priamo zo súborového systému,

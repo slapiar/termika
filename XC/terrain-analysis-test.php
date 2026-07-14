@@ -316,6 +316,7 @@ $assetVersion = '20260712-07';
         selectionIndicator: false,
         geocoder: false
     });
+    viewer.clock.shouldAnimate = true;
 
     let fpsFrameCounter = 0;
     let fpsLastTs = performance.now();

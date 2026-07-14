@@ -335,7 +335,9 @@ window.WindRender = {
         const totalLength = lengths.total;
         if (!(totalLength > 1)) return;
 
-        const startTime = Cesium.JulianDate.now();
+        const startMs = (typeof performance !== "undefined" && performance.now)
+            ? performance.now()
+            : Date.now();
         const speed = Math.max(0.5, Number(speedMs) || 0.5);
         const trailSeconds = Math.max(0.6, Math.min(6, Number(cfg.animationTrailSeconds) || 2));
         const minSegment = Math.max(20, Number(cfg.animationMinSegmentM) || 80);
@@ -352,8 +354,11 @@ window.WindRender = {
 
         dataSource.entities.add({
             polyline: {
-                positions: new Cesium.CallbackProperty((time) => {
-                    const elapsed = Math.abs(Cesium.JulianDate.secondsDifference(time, startTime));
+                positions: new Cesium.CallbackProperty(() => {
+                    const nowMs = (typeof performance !== "undefined" && performance.now)
+                        ? performance.now()
+                        : Date.now();
+                    const elapsed = Math.max(0, (nowMs - startMs) / 1000);
                     const headDistance = (elapsed * advectionSpeedMps) % totalLength;
                     const tailDistance = Math.max(0, headDistance - segmentLengthM);
                     return this.samplePolylineWindow(
