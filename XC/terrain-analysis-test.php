@@ -111,6 +111,7 @@ $assetVersion = '20260712-07';
 
         <fieldset>
             <legend>Mapové vrstvy</legend>
+            <label><input id="geometryVisible" type="checkbox" checked> Zobraziť geometriu reliéfu</label>
             <label><input id="contoursVisible" type="checkbox" checked> Zobraziť tmavošedé vrstevnice</label>
         </fieldset>
 
@@ -204,6 +205,7 @@ $assetVersion = '20260712-07';
     const statusEl = document.getElementById('status');
     const centerText = document.getElementById('centerText');
     const radiusInput = document.getElementById('radiusInput');
+    const geometryVisible = document.getElementById('geometryVisible');
     const contoursVisible = document.getElementById('contoursVisible');
     const windEnabled = document.getElementById('windEnabled');
     const windTempSourceMode = document.getElementById('windTempSourceMode');
@@ -247,6 +249,40 @@ $assetVersion = '20260712-07';
         statusEl.scrollTop = statusEl.scrollHeight;
     }
     window.logStatus = logStatus;
+
+    function logTempSummaryFirst() {
+        const mode = String(windTempSourceMode?.value || 'auto');
+        const sourceUrl = String(windTempSourceUrl?.value || '').trim();
+        const cachedLevels = Array.isArray(window.WindUI?.state?.lastField?.tempLevels)
+            ? window.WindUI.state.lastField.tempLevels
+            : [];
+
+        if (cachedLevels.length >= 2) {
+            const sorted = cachedLevels
+                .filter((lvl) => Number.isFinite(Number(lvl.z_m)))
+                .sort((a, b) => Number(a.z_m) - Number(b.z_m));
+
+            if (sorted.length >= 2) {
+                const low = sorted[0];
+                const high = sorted[sorted.length - 1];
+                logStatus(
+                    'TEMP profil (cache): ' + sorted.length +
+                    ' hladín, z=' + Math.round(Number(low.z_m) || 0) +
+                    ' až ' + Math.round(Number(high.z_m) || 0) +
+                    ' m, režim „' + mode + '".',
+                    'info'
+                );
+                return;
+            }
+        }
+
+        logStatus(
+            'TEMP profil: režim „' + mode +
+            '”, zdroj „' + (sourceUrl || 'nezadaný') +
+            '”. Profil sa načíta pred výpočtom WIND vrstvy.',
+            'info'
+        );
+    }
 
     function formatNumber(value, digits = 2, suffix = '') {
         const number = Number(value);
@@ -437,6 +473,10 @@ $assetVersion = '20260712-07';
         logStatus('Vybraný nový stred kruhovej analýzy.');
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
+    geometryVisible.addEventListener('change', () => {
+        TerrainAnalysisCore.setLayerVisible('geometry', geometryVisible.checked);
+    });
+
     contoursVisible.addEventListener('change', () => {
         TerrainContours.setVisible(contoursVisible.checked);
     });
@@ -617,6 +657,7 @@ $assetVersion = '20260712-07';
 
         button.disabled = true;
         statusEl.replaceChildren();
+        logTempSummaryFirst();
         logStatus('Spúšťam moduly: ' + enabledModules.join(', ') + '.');
 
         try {
@@ -628,7 +669,10 @@ $assetVersion = '20260712-07';
             });
 
             const geometry = result.layers.geometry;
-            if (geometry) TerrainAnalysis.zobrazDiagnostiku(viewer, geometry);
+            if (geometry) {
+                TerrainAnalysis.zobrazDiagnostiku(viewer, geometry);
+                TerrainAnalysisCore.setLayerVisible('geometry', geometryVisible.checked);
+            }
 
             if (result.layers.contours) {
                 TerrainContours.setVisible(contoursVisible.checked);
