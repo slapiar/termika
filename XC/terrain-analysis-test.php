@@ -596,7 +596,7 @@ $assetVersion = '20260712-07';
             stationIndexUrl: stationIndexUrl.value,
             stationProfileUrlTemplate: stationProfileUrlTemplate.value,
             terrainGeometry: geometry,
-            activeEffects: ['terrain-steering', 'surface-thermal'],
+            activeEffects: ['terrain-steering'],
             colorMode: windColorMode.value,
             colorTheme: windColorTheme.value,
             animationEnabled: windAnimate.checked,

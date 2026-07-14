@@ -268,12 +268,10 @@ window.WindRender = {
         const baseDt = Math.max(0.05, Number(cfg.stepMeters) / hSpeed);
         let dt = baseDt * terrainPenalty * turnPenalty;
         dt = Math.min(dt, maxStepDtS);
-        const prevW = Number(state.w_ms) || 0;
-
         for (let attempt = 0; attempt < retries; attempt += 1) {
             const latTrial = state.lat + (currentVector.v * dt) / cfg.metersPerDegLat;
             const lonTrial = state.lon + (currentVector.u * dt) / cfg.metersPerDegLon;
-            const wTrialRaw = currentVector.w + prevW * Math.max(0.55, 0.9 - 0.18 * (sample.stability_index || 0));
+            const wTrialRaw = currentVector.w;
             const maxVerticalMs = Number.isFinite(Number(field?.model?.maxVerticalMs))
                 ? Number(field.model.maxVerticalMs)
                 : 4.0;

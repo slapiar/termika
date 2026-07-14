@@ -108,6 +108,9 @@ window.WindField = {
             ? null
             : (Number.isFinite(Number(cfg.surfaceAltM)) ? Number(cfg.surfaceAltM) : null);
         cfg.useTempProfileWind = cfg.useTempProfileWind !== false;
+        if (!cfg.useTempProfileWind) {
+            throw new Error("WindField.createField: režim bez TEMP profilu je vypnutý. Umelé prúdenie nie je povolené.");
+        }
         cfg.maxVerticalMs = this.clampNumber(cfg.maxVerticalMs, 0.2, 20, "maxVerticalMs");
         cfg.maxVerticalRatio = this.clampNumber(cfg.maxVerticalRatio, 0.05, 1.2, "maxVerticalRatio");
         cfg.terrainGeometry = cfg.terrainGeometry && Array.isArray(cfg.terrainGeometry.cells)
@@ -414,12 +417,7 @@ window.WindField = {
         const terrainWeight = this.clamp01(1 - clearanceAgl / 480);
         const projected = this.projectVectorToTerrain({ e: u, n: v, u: 0 }, terrainNormal);
         const stability = this.stabilityFromBracket(bracket);
-        const verticalPersistence = Math.max(0.42, Math.min(0.95, 0.9 - 0.28 * stability));
-        const carriedVertical = Number.isFinite(Number(prevState?.vertical_momentum_ms))
-            ? Number(prevState.vertical_momentum_ms) * verticalPersistence
-            : 0;
-        const liftFromSlope = Math.max(0, projected.u) * terrainWeight;
-        const wRaw = projected.u * terrainWeight + carriedVertical + liftFromSlope;
+        const wRaw = projected.u;
         const hWind = Math.hypot(projected.e, projected.n);
         const maxVerticalMs = Number.isFinite(Number(field?.model?.maxVerticalMs))
             ? Number(field.model.maxVerticalMs)
@@ -521,13 +519,6 @@ window.WindField = {
 
     computeCells: function (grid, cfg) {
         const cells = [];
-        const toRad = Math.PI / 180;
-        const dirTo = this.wrapDegrees(cfg.baseDirDeg);
-        const dirRad = dirTo * toRad;
-        const fallbackU = Math.sin(dirRad) * cfg.baseSpeedMs;
-        const fallbackV = Math.cos(dirRad) * cfg.baseSpeedMs;
-        const baseU = Number.isFinite(cfg.profileWind?.u_ms) ? cfg.profileWind.u_ms : fallbackU;
-        const baseV = Number.isFinite(cfg.profileWind?.v_ms) ? cfg.profileWind.v_ms : fallbackV;
         const baseTempC = Number.isFinite(cfg.profileWind?.T_c) ? cfg.profileWind.T_c : null;
         const baseTdC = Number.isFinite(cfg.profileWind?.Td_c) ? cfg.profileWind.Td_c : null;
 
@@ -549,21 +540,9 @@ window.WindField = {
                     ? terrainHeightMsl + cfg.aglM
                     : (Number.isFinite(cfg.profileWind?.targetAltMsl) ? Number(cfg.profileWind.targetAltMsl) : null);
 
-                const profileSample = cfg.useTempProfileWind
-                    ? this.sampleWindAtAltitude(cfg.tempLevels, targetAltMsl)
-                    : null;
-
-                const cooling = this.coolingAtPoint(lat, lon, cfg.coolingZones);
-                const speedScale = Math.max(0.15, 1 - 0.2 * Math.min(1, Math.abs(cooling.deltaK) / 4));
-                const allowFallback = !cfg.useTempProfileWind || cfg.allowFallbackBaseVector;
-                const ambientU = Number.isFinite(profileSample?.u_ms)
-                    ? profileSample.u_ms
-                    : (allowFallback ? baseU : 0);
-                const ambientV = Number.isFinite(profileSample?.v_ms)
-                    ? profileSample.v_ms
-                    : (allowFallback ? baseV : 0);
-                const u = ambientU * speedScale + cooling.driftUMs;
-                const v = ambientV * speedScale + cooling.driftVMs;
+                const profileSample = this.sampleWindAtAltitude(cfg.tempLevels, targetAltMsl);
+                const u = Number.isFinite(profileSample?.u_ms) ? Number(profileSample.u_ms) : 0;
+                const v = Number.isFinite(profileSample?.v_ms) ? Number(profileSample.v_ms) : 0;
                 const speedMs = Math.hypot(u, v);
                 const dirDeg = this.wrapDegrees((Math.atan2(u, v) * 180) / Math.PI);
                 const heightMsl = Number.isFinite(targetAltMsl) ? targetAltMsl : null;
@@ -592,10 +571,10 @@ window.WindField = {
                     temp_air_c: Number.isFinite(profileSample?.T_c) ? profileSample.T_c : baseTempC,
                     dewpoint_c: Number.isFinite(profileSample?.Td_c) ? profileSample.Td_c : baseTdC,
                     pressure_hpa: Number.isFinite(profileSample?.p_hpa) ? profileSample.p_hpa : null,
-                    tempDeltaK: cfg.tempDeltaKBase + cooling.deltaK,
+                    tempDeltaK: Number(cfg.tempDeltaKBase) || 0,
                     convergence: 0,
                     shear: 0,
-                    confidence: cooling.confidence,
+                    confidence: 0.8,
                     source: cfg.source,
                     source_temp_lower_index: Number.isFinite(profileSample?.source_temp_lower_index)
                         ? profileSample.source_temp_lower_index
@@ -629,51 +608,6 @@ window.WindField = {
         }
 
         return best;
-    },
-
-    coolingAtPoint: function (lat, lon, zones) {
-        let deltaK = 0;
-        let driftU = 0;
-        let driftV = 0;
-        let confidence = 0.6;
-
-        zones.forEach((zone) => {
-            const zLat = Number(zone.lat);
-            const zLon = Number(zone.lon);
-            const radiusM = Math.max(50, Number(zone.radiusM) || 300);
-            const strengthK = Number(zone.strengthK);
-            const steerDeg = Number(zone.steerDeg);
-            const steerMs = Number(zone.steerMs);
-
-            if (!Number.isFinite(zLat) || !Number.isFinite(zLon) || !Number.isFinite(strengthK)) {
-                return;
-            }
-
-            const mPerDegLat = 111320;
-            const mPerDegLon = 111320 * Math.cos((lat * Math.PI) / 180);
-            const dNorth = (lat - zLat) * mPerDegLat;
-            const dEast = (lon - zLon) * mPerDegLon;
-            const d = Math.hypot(dNorth, dEast);
-            if (d > radiusM) return;
-
-            const w = 1 - d / radiusM;
-            deltaK += strengthK * w;
-
-            if (Number.isFinite(steerDeg) && Number.isFinite(steerMs)) {
-                const r = (this.wrapDegrees(steerDeg) * Math.PI) / 180;
-                driftU += Math.sin(r) * steerMs * w;
-                driftV += Math.cos(r) * steerMs * w;
-            }
-
-            confidence = Math.min(0.95, confidence + 0.1 * w);
-        });
-
-        return {
-            deltaK,
-            driftUMs: driftU,
-            driftVMs: driftV,
-            confidence
-        };
     },
 
     applyEffects: function (field, context) {

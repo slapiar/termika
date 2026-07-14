@@ -31,7 +31,7 @@ window.WindUI = {
         colorMode: "tempDeltaK",
         colorTheme: "dark",
         animationEnabled: false,
-        activeEffects: null,
+        activeEffects: ["terrain-steering"],
         source: "ODVODENE"
     },
 

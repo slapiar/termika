@@ -140,18 +140,10 @@
 
                 const slopeDeg = Number(terrain.slopeDeg) || 0;
                 const aspectDeg = Number(terrain.aspectDeg);
-                const curvature = Number(terrain.curvature) || 0;
-                const spacingM = Number(terrain.spacingM) || Number(field.spacingM) || 100;
-                const curvatureScaled = curvature * spacingM * spacingM;
                 const normal = computeSurfaceNormal(slopeDeg, aspectDeg);
                 const clearanceAgl = Number.isFinite(Number(cell.clearance_agl))
                     ? Number(cell.clearance_agl)
                     : Math.max(1, Number(cell.agl_m) || 1);
-
-                // Vplyv terénu je silnejší pri malom clearance a väčšom sklone.
-                const slopeFactor = clamp((slopeDeg - 3) / 40, 0, 1);
-                const proximityFactor = clamp(1 - clearanceAgl / 450, 0, 1);
-                const terrainWeight = clamp(0.2 + 0.7 * slopeFactor * (0.25 + 0.75 * proximityFactor), 0, 0.95);
 
                 const v0 = {
                     e: Number(cell.u_ms) || 0,
@@ -172,34 +164,21 @@
                     penetrationRemoved = Math.abs(dot);
                 }
 
-                cell.u_ms = v0.e * (1 - terrainWeight) + vt.e * terrainWeight;
-                cell.v_ms = v0.n * (1 - terrainWeight) + vt.n * terrainWeight;
-                cell.w_ms = v0.u * (1 - terrainWeight) + vt.u * terrainWeight;
-
-                // Konkavne tvary tok jemne brzdia, konvexne tvary jemne urychluju.
-                const speedScale = 1 + clamp(-curvatureScaled / 10, -0.18, 0.18);
-                cell.u_ms *= speedScale;
-                cell.v_ms *= speedScale;
-                cell.w_ms *= Math.max(0.85, speedScale);
+                cell.u_ms = vt.e;
+                cell.v_ms = vt.n;
+                cell.w_ms = vt.u;
                 cell.speed_ms = Math.hypot(cell.u_ms, cell.v_ms, cell.w_ms);
                 cell.dir_deg = ((Math.atan2(cell.u_ms, cell.v_ms) * 180) / Math.PI + 360) % 360;
 
                 const flowState = classifyFlowState({
                     breakStrength: nearestEdge?.breakStrength,
                     penetrationRemoved,
-                    terrainWeight,
+                    terrainWeight: 0,
                     wMs: cell.w_ms,
                     clearanceAgl
                 });
                 cell.flow_state = flowState;
-
-                if (flowState === "SEPARATED") {
-                    cell.confidence = clamp((Number(cell.confidence) || 0.6) - 0.2, 0.2, 0.99);
-                } else if (flowState === "SEPARATING") {
-                    cell.confidence = clamp((Number(cell.confidence) || 0.6) - 0.1, 0.2, 0.99);
-                } else {
-                    cell.confidence = clamp((Number(cell.confidence) || 0.6) + 0.06, 0, 0.99);
-                }
+                cell.confidence = clamp(Number(cell.confidence) || 0.8, 0.2, 0.99);
 
                 cell.terrainInfluence = {
                     slope_deg: slopeDeg,
@@ -207,7 +186,7 @@
                     normal_east: normal.e,
                     normal_north: normal.n,
                     normal_up: normal.u,
-                    terrain_weight: terrainWeight,
+                    terrain_weight: 0,
                     clearance_agl: clearanceAgl,
                     penetration_removed: penetrationRemoved,
                     nearest_edge_break_strength: Number(nearestEdge?.breakStrength) || 0,
@@ -215,8 +194,8 @@
                         ? Number(nearestEdge.dihedralDeg)
                         : null,
                     nearest_edge_boundary: Boolean(nearestEdge?.boundary),
-                    curvature_scaled: curvatureScaled,
-                    speed_scale: speedScale
+                    curvature_scaled: null,
+                    speed_scale: 1
                 };
             });
         }
