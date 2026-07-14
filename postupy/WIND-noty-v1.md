@@ -270,10 +270,51 @@ Používateľ musí mať možnosť určiť minimálne:
 1. Prepojiť `surfaceAltM` na reálnu výšku terénu z Cesium pre každý vypočítaný bod.
 2. Odstrániť z produkčnej vetvy meteorologické placeholdery, demo fallback vektory a demo ochladzovacie zóny.
 3. Zaviesť identitu a hash normalizovaného TEMP datasetu.
-4. Navrhnúť dátový formát spoločného vektorového/drôteného modelu kompatibilného s metodikou Cesium.
-5. Oddeliť statickú geometriu a topológiu od časovo meniacich sa fyzikálnych vrstiev.
-6. Navrhnúť lokálne binárne úložisko a spoločný serverový katalóg.
-7. Presunúť náročné výpočty mimo hlavného vlákna aplikácie.
-8. Zaviesť monitor RAM, disku, CPU/GPU a bezpečnostných rezerv.
-9. Definovať pracovný režim, prípravu letového balíka a nedotknuteľný letový režim.
-10. Až potom rozšíriť WIND z jednej pracovnej hladiny na vrstvy vypočítané z reálneho TEMP a pridať 3D strih, zrýchlenie, stlačenie, odklon a konvergenciu podľa reliéfu.
+4. Zaviesť architektúru **Fokus-first** ako primárnu jednotku ukladania namiesto pravidelnej dlaždicovej mriežky.
+5. Definovať manifest fokusu a binárny formát fyzikálnych vrstiev ako autoritatívny dátový základ.
+6. Zaviesť verziovanie vrstiev vo fokuse (nová vrstva alebo nový fokus pri novom výpočte).
+7. Doriešiť pravidlá prekryvu fokusov: prednosť má časovo platnejší a novší výpočet.
+8. Zaviesť predpočítanú render cache pre pohybové vrstvy (WebM) viazanú na konkrétnu verziu vrstvy.
+9. Presunúť náročné výpočty mimo hlavného vlákna aplikácie.
+10. Zaviesť monitor RAM, disku, CPU/GPU a bezpečnostných rezerv.
+11. Definovať pracovný režim, prípravu letového balíka a nedotknuteľný letový režim.
+12. Doplniť IGC pipeline na postupné načítanie a plynulé spájanie fokusov pred pilotom.
+
+## Architektúrne rozhodnutie: Fokus-first + binárny základ + render cache
+
+### Záver
+
+TermikaXC používa **fokusy** ako primárnu priestorovú jednotku. Cesium ostáva nositeľ geolokalizácie a terénu. Autoritatívne fyzikálne údaje sa ukladajú binárne vo vnútri fokusu. Predpočítané animácie sa ukladajú ako render cache viazaná na konkrétnu verziu vrstvy.
+
+### Metodika
+
+1. **Cesium = Zem a geolokácia.**
+  - Neukladá sa mapa ako fyzikálny základ, ukladá sa rozsah a poloha fokusu.
+
+2. **Fokus má jedinečné ID a manifest.**
+  - Manifest obsahuje vstupy, výsledky, vrstvy, čas vzniku, čas platnosti, autora, verziu modelu a hash.
+
+3. **Binárne vrstvy sú autoritatívny zdroj pravdy.**
+  - Vietor, teplota, tlak, vlhkosť, strih, divergencia/konvergencia a confidence sa ukladajú ako binárne polia.
+  - Každá vrstva nesie pôvod, verziu výpočtu, čas a integritný hash.
+
+4. **WebM je prezentačná cache, nie fyzikálny originál.**
+  - WebM urýchľuje prehrávanie dynamiky bez opakovaného výpočtu.
+  - Diagnostika bodu, audit a ďalšie odvodenia sa vždy opierajú o binárne autoritatívne dáta, nie o pixelový výstup.
+
+5. **Nový výpočet = nová verzia vrstvy alebo nový fokus.**
+  - Pri prekryve sa použije platnejší a novší výpočet podľa pravidiel manifestu.
+
+6. **IGC trasa riadi streamovanie fokusov.**
+  - Pri lete sa fokusy načítajú dopredu po trase a plynulo sa spájajú.
+  - Letový režim používa pripravené dáta a zastavuje nepovinné výpočty.
+
+7. **Správa dát je súborová s centrálnym katalógom identity.**
+  - Fokus adresár obsahuje manifest, binárne bloky a render cache.
+  - Katalóg rieši dostupnosť, hash, verzie, platnosť, deduplikáciu identických blokov a synchronizáciu.
+
+### Praktické pravidlo pre úložisko
+
+- Prioritne šetriť priestor kompresiou a deduplikáciou binárnych blokov vo vnútri fokusov.
+- WebM držať ako voliteľnú cache s retenčnou politikou, aby neprebral väčšinu disku.
+- Pri nedostatku miesta sa najprv redukuje alebo zahadzuje render cache, nie autoritatívne binárne vrstvy.

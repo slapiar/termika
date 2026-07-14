@@ -1,0 +1,49 @@
+{
+  "schema_version": "wind-focus-manifest.v1",
+  "focus_id": "focus-zapad-nt-20260714-1200",
+  "created_at": "2026-07-14T12:00:00Z",
+  "valid_from": "2026-07-14T12:00:00Z",
+  "valid_to": "2026-07-14T15:00:00Z",
+  "spatial": {
+    "crs": "EPSG:4979",
+    "bbox": [17.95, 48.84, 120.0, 18.35, 49.12, 2800.0],
+    "focus_resolution_m": 80.0
+  },
+  "provenance": {
+    "author": "termikaxc-local",
+    "source_temp_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "terrain_version": "cesium-world-terrain-2026-07",
+    "calc_host_id": "node-sk-01"
+  },
+  "model": {
+    "model_version": "wind-core-v1.0.0",
+    "precision_mode": "float16",
+    "code_commit": "local-dev"
+  },
+  "inputs": {
+    "temp_path": "inputs/temp.normalized.bin",
+    "terrain_ref_path": "inputs/terrain.ref.json"
+  },
+  "layers": [
+    {
+      "layer_id": "wind_uv.agl-600m.v1",
+      "kind": "wind_uv",
+      "vertical_level": {
+        "type": "agl_m",
+        "value": 600.0
+      },
+      "valid_from": "2026-07-14T12:00:00Z",
+      "valid_to": "2026-07-14T13:00:00Z",
+      "field_path": "fields/wind_uv.layer-L06.valid-20260714T120000Z.v1.bin",
+      "field_hash_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "encoding": {
+        "format": "txwf-bin.v1",
+        "compression": "zstd"
+      },
+      "render_cache": {
+        "webm_path": "render-cache/wind.layer-L06.valid-20260714T120000Z.v1.webm",
+        "source_field_hash_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  ]
+}

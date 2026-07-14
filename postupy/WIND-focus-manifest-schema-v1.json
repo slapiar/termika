@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://termikaxc.local/schema/wind-focus-manifest-v1.json",
+  "title": "TermikaXC Wind Focus Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "focus_id",
+    "created_at",
+    "valid_from",
+    "valid_to",
+    "spatial",
+    "provenance",
+    "model",
+    "inputs",
+    "layers"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "wind-focus-manifest.v1"
+    },
+    "focus_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:-]{6,128}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_to": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "spatial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["crs", "bbox"],
+      "properties": {
+        "crs": {
+          "type": "string",
+          "minLength": 2
+        },
+        "bbox": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 6,
+          "items": { "type": "number" },
+          "description": "[minLon, minLat, minAltM, maxLon, maxLat, maxAltM]"
+        },
+        "focus_resolution_m": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["author", "source_temp_hash", "terrain_version"],
+      "properties": {
+        "author": { "type": "string", "minLength": 1 },
+        "source_temp_hash": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        },
+        "terrain_version": { "type": "string", "minLength": 1 },
+        "calc_host_id": { "type": "string" }
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_version", "precision_mode"],
+      "properties": {
+        "model_version": { "type": "string", "minLength": 1 },
+        "precision_mode": {
+          "type": "string",
+          "enum": ["float32", "float16", "int16-scaled"]
+        },
+        "code_commit": { "type": "string" }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["temp_path", "terrain_ref_path"],
+      "properties": {
+        "temp_path": { "type": "string", "minLength": 1 },
+        "terrain_ref_path": { "type": "string", "minLength": 1 }
+      }
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "layer_id",
+          "kind",
+          "vertical_level",
+          "valid_from",
+          "valid_to",
+          "field_path",
+          "field_hash_sha256",
+          "encoding"
+        ],
+        "properties": {
+          "layer_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._:-]{3,128}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["wind_uv", "thermo", "derived", "confidence"]
+          },
+          "vertical_level": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "value"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["agl_m", "msl_m", "pressure_hpa", "model_layer"]
+              },
+              "value": { "type": "number" }
+            }
+          },
+          "valid_from": { "type": "string", "format": "date-time" },
+          "valid_to": { "type": "string", "format": "date-time" },
+          "field_path": { "type": "string", "minLength": 1 },
+          "field_hash_sha256": {
+            "type": "string",
+            "pattern": "^[A-Fa-f0-9]{64}$"
+          },
+          "encoding": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["format", "compression"],
+            "properties": {
+              "format": {
+                "type": "string",
+                "enum": ["txwf-bin.v1"]
+              },
+              "compression": {
+                "type": "string",
+                "enum": ["none", "gzip", "zstd"]
+              }
+            }
+          },
+          "render_cache": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["webm_path", "source_field_hash_sha256"],
+            "properties": {
+              "webm_path": { "type": "string", "minLength": 1 },
+              "source_field_hash_sha256": {
+                "type": "string",
+                "pattern": "^[A-Fa-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
