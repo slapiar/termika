@@ -362,6 +362,7 @@ $assetVersion = '20260712-07';
             spacingM: Number(windSpacingInput.value),
             baseSpeedMs: Number(windSpeedInput.value),
             baseDirDeg: Number(windDirInput.value),
+            allowFallbackBaseVector: false,
             useTempProfileWind: windUseTempProfile.checked,
             tempSourceMode: windTempSourceMode.value,
             tempSourceUrl: windTempSourceUrl.value,
@@ -371,6 +372,8 @@ $assetVersion = '20260712-07';
             colorMode: windColorMode.value,
             colorTheme: windColorTheme.value,
             animationEnabled: windAnimate.checked,
+            maxVerticalMs: 4.0,
+            maxVerticalRatio: 0.35,
             source: 'ODVODENE'
         });
     }
@@ -501,6 +504,7 @@ $assetVersion = '20260712-07';
             spacingM: Number(windSpacingInput.value),
             baseSpeedMs: Number(windSpeedInput.value),
             baseDirDeg: Number(windDirInput.value),
+            allowFallbackBaseVector: false,
             useTempProfileWind: windUseTempProfile.checked,
             tempSourceMode: windTempSourceMode.value,
             tempSourceUrl: windTempSourceUrl.value,
@@ -512,6 +516,9 @@ $assetVersion = '20260712-07';
             colorMode: windColorMode.value,
             colorTheme: windColorTheme.value,
             animationEnabled: windAnimate.checked,
+            maxVerticalMs: 4.0,
+            maxVerticalRatio: 0.35,
+            coolingZones: [],
             ...animationCfg,
             surfaceAltM,
             seedEvery: 3,

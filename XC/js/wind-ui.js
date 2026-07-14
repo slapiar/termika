@@ -3,7 +3,7 @@
 // No automatic integration with existing pages; call init() manually when needed.
 
 window.WindUI = {
-    VERSION: "2.6.9-wind-mvp.1",
+    VERSION: "2.6.14-wind-physics-align.1",
 
     state: {
         enabled: false,
@@ -17,6 +17,7 @@ window.WindUI = {
         spacingM: 120,
         baseSpeedMs: 4.5,
         baseDirDeg: 230,
+        allowFallbackBaseVector: false,
         useTempProfileWind: true,
         tempSourceMode: "auto",
         tempSourceUrl: "XCtrack/temp.json",
@@ -36,22 +37,6 @@ window.WindUI = {
         this.settings = { ...this.defaultSettings, ...options };
         this.state.enabled = true;
         return this.settings;
-    },
-
-    buildDefaultCoolingZones: function (center) {
-        if (!center) return [];
-
-        return [
-            {
-                id: "cooling-glacier-demo",
-                lat: center.lat + 0.004,
-                lon: center.lon - 0.003,
-                radiusM: 450,
-                strengthK: -2.4,
-                steerDeg: 195,
-                steerMs: 0.7
-            }
-        ];
     },
 
     extractTempProfilePayload: function (payload) {
@@ -116,7 +101,7 @@ window.WindUI = {
 
         const coolingZones = Array.isArray(settings.coolingZones)
             ? settings.coolingZones
-            : this.buildDefaultCoolingZones(center);
+            : [];
 
         const field = window.WindField.createField({
             center,
@@ -125,11 +110,16 @@ window.WindUI = {
             spacingM: settings.spacingM,
             baseSpeedMs: settings.baseSpeedMs,
             baseDirDeg: settings.baseDirDeg,
+            allowFallbackBaseVector: settings.allowFallbackBaseVector === true,
             tempProfile: profile,
-            surfaceAltM: Number.isFinite(Number(settings.surfaceAltM)) ? Number(settings.surfaceAltM) : null,
+            surfaceAltM: (settings.surfaceAltM === null || settings.surfaceAltM === undefined || settings.surfaceAltM === "")
+                ? null
+                : (Number.isFinite(Number(settings.surfaceAltM)) ? Number(settings.surfaceAltM) : null),
             terrainGeometry: settings.terrainGeometry,
             activeEffects: settings.activeEffects,
-            useTempProfileWind: true,
+            useTempProfileWind: settings.useTempProfileWind !== false,
+            maxVerticalMs: Number.isFinite(Number(settings.maxVerticalMs)) ? Number(settings.maxVerticalMs) : 4.0,
+            maxVerticalRatio: Number.isFinite(Number(settings.maxVerticalRatio)) ? Number(settings.maxVerticalRatio) : 0.35,
             source: sourceLabel,
             coolingZones
         });

@@ -3,7 +3,7 @@
 // This module is standalone and does not mutate existing terrain modules.
 
 window.WindField = {
-    VERSION: "2.6.12-wind-3d-stage1",
+    VERSION: "2.6.14-wind-physics-align.1",
 
     lastField: null,
 
@@ -14,11 +14,14 @@ window.WindField = {
         aglM: 30,
         baseSpeedMs: 4.5,
         baseDirDeg: 230,
+        allowFallbackBaseVector: false,
         tempProfile: null,
         surfaceAltM: null,
         useTempProfileWind: true,
         terrainGeometry: null,
         activeEffects: null,
+        maxVerticalMs: 4.0,
+        maxVerticalRatio: 0.35,
         tempDeltaKBase: 0,
         coolingZones: [],
         source: "ODVODENE"
@@ -68,6 +71,12 @@ window.WindField = {
             diagnostics: {
                 note: "WIND MVP field generated. Cooling zones, terrain steering and convergence are model estimates.",
                 effectsApplied: effectsResult.applied
+            },
+            model: {
+                useTempProfileWind: cfg.useTempProfileWind,
+                allowFallbackBaseVector: cfg.allowFallbackBaseVector,
+                maxVerticalMs: cfg.maxVerticalMs,
+                maxVerticalRatio: cfg.maxVerticalRatio
             }
         };
 
@@ -94,10 +103,13 @@ window.WindField = {
         cfg.aglM = this.clampNumber(cfg.aglM, 1, 5000, "aglM");
         cfg.baseSpeedMs = this.clampNumber(cfg.baseSpeedMs, 0, 80, "baseSpeedMs");
         cfg.baseDirDeg = this.wrapDegrees(cfg.baseDirDeg);
+        cfg.allowFallbackBaseVector = cfg.allowFallbackBaseVector === true;
         cfg.surfaceAltM = (cfg.surfaceAltM === null || cfg.surfaceAltM === undefined || cfg.surfaceAltM === "")
             ? null
             : (Number.isFinite(Number(cfg.surfaceAltM)) ? Number(cfg.surfaceAltM) : null);
         cfg.useTempProfileWind = cfg.useTempProfileWind !== false;
+        cfg.maxVerticalMs = this.clampNumber(cfg.maxVerticalMs, 0.2, 20, "maxVerticalMs");
+        cfg.maxVerticalRatio = this.clampNumber(cfg.maxVerticalRatio, 0.05, 1.2, "maxVerticalRatio");
         cfg.terrainGeometry = cfg.terrainGeometry && Array.isArray(cfg.terrainGeometry.cells)
             ? cfg.terrainGeometry
             : null;
@@ -110,6 +122,9 @@ window.WindField = {
                 ? window.PilotNetwork.liveAtmosferaTEMP
                 : null);
         cfg.tempLevels = this.parseTempLevels(cfg.tempProfile);
+        if (cfg.useTempProfileWind && cfg.tempLevels.length < 2) {
+            throw new Error("WindField.createField: TEMP profil musí mať aspoň dve platné hladiny.");
+        }
         cfg.profileWind = this.resolveProfileWind(cfg);
         cfg.tempDeltaKBase = Number(cfg.tempDeltaKBase) || 0;
         cfg.coolingZones = Array.isArray(cfg.coolingZones) ? cfg.coolingZones : [];
@@ -162,8 +177,21 @@ window.WindField = {
         const target = Number(targetAltMsl);
         const low = levels[0];
         const high = levels[levels.length - 1];
-        if (target < low.z_m || target > high.z_m) {
-            return null;
+        if (target <= low.z_m) {
+            const sample = this.levelToWindSample(low, target);
+            return {
+                ...sample,
+                source_temp_lower_index: low.idx,
+                source_temp_upper_index: low.idx
+            };
+        }
+        if (target >= high.z_m) {
+            const sample = this.levelToWindSample(high, target);
+            return {
+                ...sample,
+                source_temp_lower_index: high.idx,
+                source_temp_upper_index: high.idx
+            };
         }
 
         for (let i = 0; i < levels.length - 1; i += 1) {
@@ -239,12 +267,11 @@ window.WindField = {
             return null;
         }
 
-        const target = Number(targetAltMsl);
+        const lowClamp = Number(levels[0].z_m);
+        const highClamp = Number(levels[levels.length - 1].z_m);
+        const target = Math.max(lowClamp, Math.min(highClamp, Number(targetAltMsl)));
         const low = levels[0];
         const high = levels[levels.length - 1];
-        if (target < low.z_m || target > high.z_m) {
-            return null;
-        }
 
         for (let i = 0; i < levels.length - 1; i += 1) {
             const a = levels[i];
@@ -282,6 +309,18 @@ window.WindField = {
         if (!bracket?.low || !bracket?.high) return 0.5;
 
         const dz = Math.max(1, Number(bracket.high.z_m) - Number(bracket.low.z_m));
+
+        if (window.MeteoCore?.moistLapseRateKPerM) {
+            const tLowK = Number(bracket.low.T_c) + 273.15;
+            const tHighK = Number(bracket.high.T_c) + 273.15;
+            const tMidK = (tLowK + tHighK) / 2;
+            const pMid = (Number(bracket.low.p_hpa) + Number(bracket.high.p_hpa)) / 2;
+            const envGamma = (Number(bracket.low.T_c) - Number(bracket.high.T_c)) / dz;
+            const moistGamma = Number(window.MeteoCore.moistLapseRateKPerM(tMidK, pMid));
+            const stabilityProxy = (moistGamma - envGamma + 0.0015) / 0.006;
+            return this.clamp01(stabilityProxy);
+        }
+
         const tempDelta = Number(bracket.high.T_c) - Number(bracket.low.T_c);
         const lapseKPerKm = (tempDelta / dz) * 1000;
         return this.clamp01((lapseKPerKm + 8) / 14);
@@ -380,7 +419,16 @@ window.WindField = {
             ? Number(prevState.vertical_momentum_ms) * verticalPersistence
             : 0;
         const liftFromSlope = Math.max(0, projected.u) * terrainWeight;
-        const wMs = projected.u * terrainWeight + carriedVertical + liftFromSlope;
+        const wRaw = projected.u * terrainWeight + carriedVertical + liftFromSlope;
+        const hWind = Math.hypot(projected.e, projected.n);
+        const maxVerticalMs = Number.isFinite(Number(field?.model?.maxVerticalMs))
+            ? Number(field.model.maxVerticalMs)
+            : 4.0;
+        const maxVerticalRatio = Number.isFinite(Number(field?.model?.maxVerticalRatio))
+            ? Number(field.model.maxVerticalRatio)
+            : 0.35;
+        const wCap = Math.max(0.2, Math.min(maxVerticalMs, hWind * maxVerticalRatio + 0.5));
+        const wMs = Math.max(-wCap, Math.min(wCap, wRaw));
         const speedMs = Math.hypot(projected.e, projected.n, wMs);
         const dirDeg = this.wrapDegrees((Math.atan2(projected.e, projected.n) * 180) / Math.PI);
         const flowState = clearanceAgl < 8 && wMs <= 0.02
@@ -507,8 +555,13 @@ window.WindField = {
 
                 const cooling = this.coolingAtPoint(lat, lon, cfg.coolingZones);
                 const speedScale = Math.max(0.15, 1 - 0.2 * Math.min(1, Math.abs(cooling.deltaK) / 4));
-                const ambientU = Number.isFinite(profileSample?.u_ms) ? profileSample.u_ms : baseU;
-                const ambientV = Number.isFinite(profileSample?.v_ms) ? profileSample.v_ms : baseV;
+                const allowFallback = !cfg.useTempProfileWind || cfg.allowFallbackBaseVector;
+                const ambientU = Number.isFinite(profileSample?.u_ms)
+                    ? profileSample.u_ms
+                    : (allowFallback ? baseU : 0);
+                const ambientV = Number.isFinite(profileSample?.v_ms)
+                    ? profileSample.v_ms
+                    : (allowFallback ? baseV : 0);
                 const u = ambientU * speedScale + cooling.driftUMs;
                 const v = ambientV * speedScale + cooling.driftVMs;
                 const speedMs = Math.hypot(u, v);

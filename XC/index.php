@@ -223,6 +223,44 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             consoleLog.scrollTop = consoleLog.scrollHeight;
         }
 
+        function logTempProfileSummary(contextLabel = "RESET") {
+            const profile = Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP)
+                ? window.PilotNetwork.liveAtmosferaTEMP
+                : [];
+
+            if (profile.length < 2) {
+                logStatus("TEMP profil: nie je načítaný alebo nemá dosť hladín (" + contextLabel + ").", "info");
+                return;
+            }
+
+            const valid = profile
+                .filter((row) => Number.isFinite(Number(row.z_m)))
+                .sort((a, b) => Number(a.z_m) - Number(b.z_m));
+
+            if (valid.length < 2) {
+                logStatus("TEMP profil: načítaný, ale bez validných výškových hladín (" + contextLabel + ").", "info");
+                return;
+            }
+
+            const surface = valid[0];
+            const top = valid[valid.length - 1];
+            const surfaceWind = Number.isFinite(Number(surface.w_speed_kts))
+                ? (Number(surface.w_speed_kts) * 0.514444).toFixed(1) + " m/s @ " + Math.round(Number(surface.w_dir_deg) || 0) + "°"
+                : "--";
+            const topWind = Number.isFinite(Number(top.w_speed_kts))
+                ? (Number(top.w_speed_kts) * 0.514444).toFixed(1) + " m/s @ " + Math.round(Number(top.w_dir_deg) || 0) + "°"
+                : "--";
+
+            logStatus(
+                "TEMP profil (" + contextLabel + "): " + valid.length +
+                " hladín, spodok z=" + Math.round(Number(surface.z_m) || 0) + " m" +
+                ", vrch z=" + Math.round(Number(top.z_m) || 0) + " m" +
+                ", vietor pri zemi " + surfaceWind +
+                ", vietor hore " + topWind + ".",
+                "info"
+            );
+        }
+
         function setMapState(text, type = "info") {
             const state = document.getElementById("mapState");
             if (!state) return;
@@ -266,14 +304,15 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                 aglM: 260,
                 radiusM: 1200,
                 spacingM: 120,
-                baseSpeedMs: 4.5,
-                baseDirDeg: 230,
+                allowFallbackBaseVector: false,
                 useTempProfileWind: true,
                 tempSourceMode: "auto",
                 tempSourceUrl: "XCtrack/temp.json",
                 colorMode: "tempDeltaK",
                 colorTheme: "dark",
                 animationEnabled: false,
+                maxVerticalMs: 4.0,
+                maxVerticalRatio: 0.35,
                 source: "ODVODENE"
             });
 
@@ -287,7 +326,11 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                     stepMeters: 90,
                     radiusM: 1200,
                     spacingM: 120,
+                    allowFallbackBaseVector: false,
                     useTempProfileWind: true,
+                    maxVerticalMs: 4.0,
+                    maxVerticalRatio: 0.35,
+                    coolingZones: [],
                     animationEnabled: false
                 });
 
@@ -333,6 +376,7 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
 
         document.getElementById("clearDebugButton").addEventListener("click", () => {
             document.getElementById("debugLog").replaceChildren();
+            logTempProfileSummary("RESET");
         });
 
         document.getElementById("hideDebugButton").addEventListener("click", () => {

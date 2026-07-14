@@ -273,7 +273,15 @@ window.WindRender = {
         for (let attempt = 0; attempt < retries; attempt += 1) {
             const latTrial = state.lat + (currentVector.v * dt) / cfg.metersPerDegLat;
             const lonTrial = state.lon + (currentVector.u * dt) / cfg.metersPerDegLon;
-            const wTrial = currentVector.w + prevW * Math.max(0.55, 0.9 - 0.18 * (sample.stability_index || 0));
+            const wTrialRaw = currentVector.w + prevW * Math.max(0.55, 0.9 - 0.18 * (sample.stability_index || 0));
+            const maxVerticalMs = Number.isFinite(Number(field?.model?.maxVerticalMs))
+                ? Number(field.model.maxVerticalMs)
+                : 4.0;
+            const maxVerticalRatio = Number.isFinite(Number(field?.model?.maxVerticalRatio))
+                ? Number(field.model.maxVerticalRatio)
+                : 0.35;
+            const wCap = Math.max(0.2, Math.min(maxVerticalMs, hSpeed * maxVerticalRatio + 0.5));
+            const wTrial = Math.max(-wCap, Math.min(wCap, wTrialRaw));
             const zTrial = (Number.isFinite(Number(state.height_msl)) ? Number(state.height_msl) : Number(sample.height_msl) || 0) + wTrial * dt;
 
             const nextSample = window.WindField.sampleWindVector3D(field, latTrial, lonTrial, zTrial, {
