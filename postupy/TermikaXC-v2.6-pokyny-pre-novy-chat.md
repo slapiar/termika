@@ -1,5 +1,21 @@
 # TermikaXC v2.6 – pokyny pre nový chat
 
+## Prvá úloha na zajtra (priorita P1)
+
+Overiť a navrhnúť stabilný algoritmus prízemných prúdnic v teréne tak, aby:
+
+- prúdnice nekončili neprimerane na hrebeni bez fyzikálneho dôvodu,
+- v závetrí nevznikal nefyzikálny dojem „málo štartov bez vysvetlenia“,
+- model negeneroval žiadne umelé prúdenie ani umelé zrýchlenia/spomalenia,
+- každý dôvod ukončenia prúdnice bol diagnosticky vysvetliteľný v logu.
+
+Minimálny výstup zajtrajšej práce:
+
+- porovnanie minimálne 2 kandidátnych numerických schém integrácie dráhy,
+- explicitný zoznam ukončovacích podmienok a ich fyzikálna interpretácia,
+- návrh jednotného seedovania pre náveternú aj záveternú stranu,
+- testovacie scenáre: rovina, náveterný svah, hrebeň, závetrie.
+
 ## Účel dokumentu
 
 Tento dokument slúži ako štartovací kontext pre nový pracovný chat k verzii TermikaXC v2.6. Jeho cieľom je nadviazať na doterajší vývoj bez nutnosti opakovane načítavať a analyzovať celý predchádzajúci rozhovor.

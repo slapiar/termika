@@ -8,6 +8,17 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 
 ### Pridané
 
+- Rozšírené ovládanie testovacieho fokusu v paneli.
+  - `XC/terrain-analysis-test.php` má nové ručné zadanie stredu vo formáte `lat, lon`,
+  - nové tlačidlo na okamžitý presun kamery nad zadaný stred do výšky 3000 m ASL,
+  - marker a text stredu sa po ručnom zadaní synchronizujú s mapou.
+- Rozšírený diagnostický log vstupov pred spustením analýzy.
+  - testovací panel vypisuje `VSTUPY ANALÝZY` a `VSTUPY WIND` vrátane polomeru fokusu, rozostupu, režimov a zdroja TEMP,
+  - doplnené hlásenie `WIND TEMP zdroj` s reálne použitým zdrojom profilu (`settings`, `PilotNetwork`, `cache`, `WindTempLoader`).
+- Samostatný mapový prepínač viditeľnosti geometrie reliéfu.
+  - v `XC/terrain-analysis-test.php` je v časti mapových vrstiev nový checkbox `Zobraziť geometriu reliéfu`,
+  - prepína iba render vrstvy, nie samotný výpočet geometrickej analýzy.
+
 - Dokumentačná a architektonická vetva `WIND v2` pre fokusovo orientované ukladanie vetra.
   - nový dokument `postupy/WIND-noty-v2.md` s koncovým rozhodnutím `Fokus-first` (`Cesium = Zem`, `binárne polia = dátová pravda`, `WebM = výkonová cache`),
   - nový návrh schémy manifestu `postupy/WIND-focus-manifest-schema-v1.json`,
@@ -110,6 +121,21 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - `tools/RELEASE.md`.
 
 ### Opravené
+
+- Oprava konzistencie TEMP cache a logovania zdroja profilu.
+  - `XC/js/wind-ui.js` drží `lastTempProfile` aj `lastTempSource`,
+  - pri ďalšom behu sa TEMP profil korektne berie z cache, ak je dostupný,
+  - odstránená nekonzistentná situácia „TEMP profil (cache)“ a následné „TEMP profil chýba...“ v tom istom výpočte.
+- Odstránenie umelo generovaného prúdenia v prízemnej WIND vrstve.
+  - `XC/js/wind-field.js` už negeneruje syntetický drift/cooling zóny ani fallback vektor mimo TEMP poľa,
+  - bez TEMP profilu sa výpočet zastaví chybou (žiadne tiché dopĺňanie vetra),
+  - `XC/js/wind-render.js` už nenabaľuje vertikálny moment medzi krokmi,
+  - `XC/js/wind-effect-terrain.js` používa iba nepenetračnú projekciu na normálu terénu bez heuristického speed-scalingu,
+  - `XC/terrain-analysis-test.php` používa v aktívnych efektoch iba `terrain-steering`.
+- Odstránený pevný horný limit veľkosti mriežky pre geometriu terénu.
+  - `XC/js/terrain-analysis.js` už nemá fixné obmedzenie `rows/cols <= 101`,
+  - validácia pre `rows`/`cols` používa minimálnu hranicu a nekonečný horný rozsah,
+  - do vstupného logu pribudol odhad veľkosti mriežky (`X×Y`, počet bodov) pred výpočtom.
 
 - Viditeľnosť animácie vetra v testovacej stránke.
   - `XC/js/wind-render.js` používa pre animovaný vektor reálny čas (`performance.now`) namiesto závislosti na scénickom čase,
