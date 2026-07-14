@@ -18,6 +18,13 @@ window.WindUI = {
         baseSpeedMs: 4.5,
         baseDirDeg: 230,
         useTempProfileWind: true,
+        tempSourceMode: "auto",
+        tempSourceUrl: "XCtrack/temp.json",
+        windyTempUrl: "",
+        windyTempUrlTemplate: "",
+        stationTempUrl: "",
+        stationIndexUrl: "",
+        stationProfileUrlTemplate: "",
         colorMode: "tempDeltaK",
         colorTheme: "dark",
         animationEnabled: false,
@@ -47,17 +54,61 @@ window.WindUI = {
         ];
     },
 
+    extractTempProfilePayload: function (payload) {
+        if (Array.isArray(payload)) return payload;
+        if (!payload || typeof payload !== "object") return null;
+        if (Array.isArray(payload.profile)) return payload.profile;
+        if (Array.isArray(payload.levels)) return payload.levels;
+        if (Array.isArray(payload.data)) return payload.data;
+        return null;
+    },
+
+    loadTempProfileFromUrl: async function (url) {
+        if (typeof url !== "string" || url.trim() === "") {
+            throw new Error("Chýba adresa TEMP profilu.");
+        }
+
+        const response = await fetch(url + "?v=" + Date.now(), { cache: "no-store" });
+        if (!response.ok) {
+            throw new Error("TEMP profil sa nepodarilo načítať: HTTP " + response.status);
+        }
+
+        const payload = await response.json();
+        const profile = this.extractTempProfilePayload(payload);
+        if (!Array.isArray(profile) || profile.length < 2) {
+            throw new Error("TEMP profil je prázdny alebo nemá očakávaný formát poľa.");
+        }
+
+        return profile;
+    },
+
     runDemo: async function (viewer, center, options = {}) {
-        if (!window.WindField || !window.WindRender) {
+        if (!window.WindField || !window.WindRender || !window.WindTempLoader) {
             throw new Error("WindField and WindRender modules must be loaded first.");
         }
 
         const settings = { ...this.settings, ...options };
-        const profile = Array.isArray(settings.tempProfile)
+        let profile = Array.isArray(settings.tempProfile) && settings.tempProfile.length >= 2
             ? settings.tempProfile
-            : (Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP)
+            : (Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP) && window.PilotNetwork.liveAtmosferaTEMP.length >= 2
                 ? window.PilotNetwork.liveAtmosferaTEMP
                 : null);
+
+        if (!Array.isArray(profile) || profile.length < 2) {
+            const sourceMode = String(settings.tempSourceMode || this.defaultSettings.tempSourceMode || "auto");
+            if (typeof window.logStatus === "function") {
+                window.logStatus("TEMP profil chýba. Načítavam zdroj v režime „" + sourceMode + "“...", "info");
+            }
+            profile = await window.WindTempLoader.loadProfile(center, {
+                sourceMode,
+                tempSourceUrl: settings.tempSourceUrl,
+                windyTempUrl: settings.windyTempUrl,
+                windyTempUrlTemplate: settings.windyTempUrlTemplate,
+                stationTempUrl: settings.stationTempUrl,
+                stationIndexUrl: settings.stationIndexUrl,
+                stationProfileUrlTemplate: settings.stationProfileUrlTemplate
+            });
+        }
 
         const sourceLabel = profile && profile.length
             ? "ODVODENE_Z_TEMP"
@@ -78,7 +129,7 @@ window.WindUI = {
             surfaceAltM: Number.isFinite(Number(settings.surfaceAltM)) ? Number(settings.surfaceAltM) : null,
             terrainGeometry: settings.terrainGeometry,
             activeEffects: settings.activeEffects,
-            useTempProfileWind: settings.useTempProfileWind,
+            useTempProfileWind: true,
             source: sourceLabel,
             coolingZones
         });

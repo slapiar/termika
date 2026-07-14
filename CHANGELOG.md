@@ -45,7 +45,11 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - základná farba prúdnice je `#70E8FF`, aby bola veterná vrstva čitateľnejšia na tmavom podklade,
   - animované úsečky sú tmavšie než základná čiara a ich dĺžka aj rozostup sa viažu na rýchlosť vetra,
   - hrebeň a závetrie majú vlastné profilovanie výšky, dĺžky a počtu animovaných segmentov, aby tok pôsobil plastickejšie pri prechode cez terénnu hranu,
+  - `XC/js/wind-temp-loader.js` zavádza samostatný TEMP loader s režimami `auto` (`Windy → stanica → súbor`), `windy`, `station` a `file`,
+  - ak TEMP profil nie je k dispozícii, `XC/js/wind-ui.js` ho automaticky načíta cez tento loader a bez neho sa WIND vrstva nespustí,
+  - TEMP sa pri samplovaní medzi hladinami prepočítava nelineárne cez potenciálnu teplotu a logaritmický tlakový blend, nie prostým lineárnym `t`,
   - `XC/terrain-analysis-test.php` dopĺňa prepínače farebnosti, prepínač animácie a prepínač intenzity animácie (`nízka/stredná/vysoká/auto`),
+  - v testovacej stránke je nový výber zdroja TEMP a URL polia pre Windy/stanicu/súbor,
   - režim `auto` prepína profil intenzity podľa meraného FPS a pri zmene profilu vykoná re-render bez potreby nového výpočtu poľa,
   - vo WIND paneli je živý indikátor `FPS | AUTO profil`.
 - Pridaná samostatná MVP kostra meteorologického prvku `WIND` bez integrácie do existujúcich stránok, aby nezasahovala do rozpracovaných commitov.

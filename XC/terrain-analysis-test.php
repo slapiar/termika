@@ -24,6 +24,7 @@ $assetVersion = '20260712-07';
     <script src="js/terrain-analysis-core.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-analysis-geometry.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-contours.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/wind-temp-loader.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-field.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-effects-core.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-effect-terrain.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
@@ -116,6 +117,18 @@ $assetVersion = '20260712-07';
         <fieldset>
             <legend>WIND vrstva (MVP)</legend>
             <label><input id="windEnabled" type="checkbox" checked> Zobraziť veterné prúdnice</label>
+            <label>Zdroj TEMP
+                <select id="windTempSourceMode">
+                    <option value="auto" selected>Auto (Windy → stanica → súbor)</option>
+                    <option value="windy">Windy.com</option>
+                    <option value="station">Najbližšia meteo stanica</option>
+                    <option value="file">Súbor</option>
+                </select>
+            </label>
+            <label>TEMP súbor / URL <input id="windTempSourceUrl" type="text" value="XCtrack/temp.json"></label>
+            <label>Windy URL / template <input id="windyTempUrl" type="text" placeholder="https://... alebo template s ${lat}/${lon}"></label>
+            <label>Station index URL <input id="stationIndexUrl" type="text" placeholder="https://... alebo template s ${lat}/${lon}"></label>
+            <label>Station profile URL template <input id="stationProfileUrlTemplate" type="text" placeholder="https://.../${stationId}.json"></label>
             <label>Výška nad terénom <input id="windAglInput" type="number" min="20" max="5000" step="10" value="300"> m AGL</label>
             <label>Rozostup vetra <input id="windSpacingInput" type="number" min="30" max="1200" step="10" value="120"> m</label>
             <label>Základná rýchlosť <input id="windSpeedInput" type="number" min="0" max="40" step="0.1" value="4.5"> m/s</label>
@@ -193,6 +206,11 @@ $assetVersion = '20260712-07';
     const radiusInput = document.getElementById('radiusInput');
     const contoursVisible = document.getElementById('contoursVisible');
     const windEnabled = document.getElementById('windEnabled');
+    const windTempSourceMode = document.getElementById('windTempSourceMode');
+    const windTempSourceUrl = document.getElementById('windTempSourceUrl');
+    const windyTempUrl = document.getElementById('windyTempUrl');
+    const stationIndexUrl = document.getElementById('stationIndexUrl');
+    const stationProfileUrlTemplate = document.getElementById('stationProfileUrlTemplate');
     const windAglInput = document.getElementById('windAglInput');
     const windSpacingInput = document.getElementById('windSpacingInput');
     const windSpeedInput = document.getElementById('windSpeedInput');
@@ -345,6 +363,11 @@ $assetVersion = '20260712-07';
             baseSpeedMs: Number(windSpeedInput.value),
             baseDirDeg: Number(windDirInput.value),
             useTempProfileWind: windUseTempProfile.checked,
+            tempSourceMode: windTempSourceMode.value,
+            tempSourceUrl: windTempSourceUrl.value,
+            windyTempUrl: windyTempUrl.value,
+            stationIndexUrl: stationIndexUrl.value,
+            stationProfileUrlTemplate: stationProfileUrlTemplate.value,
             colorMode: windColorMode.value,
             colorTheme: windColorTheme.value,
             animationEnabled: windAnimate.checked,
@@ -479,6 +502,11 @@ $assetVersion = '20260712-07';
             baseSpeedMs: Number(windSpeedInput.value),
             baseDirDeg: Number(windDirInput.value),
             useTempProfileWind: windUseTempProfile.checked,
+            tempSourceMode: windTempSourceMode.value,
+            tempSourceUrl: windTempSourceUrl.value,
+            windyTempUrl: windyTempUrl.value,
+            stationIndexUrl: stationIndexUrl.value,
+            stationProfileUrlTemplate: stationProfileUrlTemplate.value,
             terrainGeometry: geometry,
             activeEffects: ['terrain-steering', 'surface-thermal'],
             colorMode: windColorMode.value,

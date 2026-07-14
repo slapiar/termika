@@ -170,33 +170,56 @@ window.WindField = {
             if (target < a.z_m || target > b.z_m) continue;
 
             const t = (target - a.z_m) / Math.max(1e-6, (b.z_m - a.z_m));
+            const blend = t * t * (3 - 2 * t);
             const dirA = (a.w_dir_deg * Math.PI) / 180;
             const dirB = (b.w_dir_deg * Math.PI) / 180;
             const spdA = a.w_speed_kts * 0.514444;
             const spdB = b.w_speed_kts * 0.514444;
+            const kappa = 0.2854;
+            const pressureA = Number.isFinite(a.p_hpa) && a.p_hpa > 0 ? a.p_hpa : null;
+            const pressureB = Number.isFinite(b.p_hpa) && b.p_hpa > 0 ? b.p_hpa : null;
+            const thetaA = Number.isFinite(a.T_c) && pressureA
+                ? (a.T_c + 273.15) * Math.pow(1000 / pressureA, kappa)
+                : null;
+            const thetaB = Number.isFinite(b.T_c) && pressureB
+                ? (b.T_c + 273.15) * Math.pow(1000 / pressureB, kappa)
+                : null;
 
             const uA = -Math.sin(dirA) * spdA;
             const vA = -Math.cos(dirA) * spdA;
             const uB = -Math.sin(dirB) * spdB;
             const vB = -Math.cos(dirB) * spdB;
 
-            const u = uA + (uB - uA) * t;
-            const v = vA + (vB - vA) * t;
+            const pressureBlend = pressureA && pressureB
+                ? Math.exp(Math.log(pressureA) + (Math.log(pressureB) - Math.log(pressureA)) * blend)
+                : (Number.isFinite(a.p_hpa) && Number.isFinite(b.p_hpa)
+                    ? a.p_hpa + (b.p_hpa - a.p_hpa) * blend
+                    : null);
+            const thetaBlend = Number.isFinite(thetaA) && Number.isFinite(thetaB)
+                ? thetaA + (thetaB - thetaA) * blend
+                : null;
+            const tempBlend = Number.isFinite(thetaBlend) && Number.isFinite(pressureBlend)
+                ? thetaBlend / Math.pow(1000 / Math.max(1e-6, pressureBlend), kappa) - 273.15
+                : (Number.isFinite(a.T_c) && Number.isFinite(b.T_c)
+                    ? a.T_c + (b.T_c - a.T_c) * blend
+                    : null);
+            const dewpointBlend = Number.isFinite(a.Td_c) && Number.isFinite(b.Td_c)
+                ? a.Td_c + (b.Td_c - a.Td_c) * blend
+                : null;
+
+            const shearBias = Math.max(0, Math.min(0.18, Math.abs((Number(b.w_speed_kts) || 0) - (Number(a.w_speed_kts) || 0)) / 120));
+            const vectorBlend = Math.max(0, Math.min(1, blend + (blend - t) * shearBias));
+            const u = uA + (uB - uA) * vectorBlend;
+            const v = vA + (vB - vA) * vectorBlend;
             const speedMs = Math.hypot(u, v);
             const dirToDeg = this.wrapDegrees((Math.atan2(u, v) * 180) / Math.PI);
 
             return {
                 targetAltMsl: target,
                 z_m: target,
-                p_hpa: Number.isFinite(a.p_hpa) && Number.isFinite(b.p_hpa)
-                    ? a.p_hpa + (b.p_hpa - a.p_hpa) * t
-                    : null,
-                T_c: Number.isFinite(a.T_c) && Number.isFinite(b.T_c)
-                    ? a.T_c + (b.T_c - a.T_c) * t
-                    : null,
-                Td_c: Number.isFinite(a.Td_c) && Number.isFinite(b.Td_c)
-                    ? a.Td_c + (b.Td_c - a.Td_c) * t
-                    : null,
+                p_hpa: Number.isFinite(pressureBlend) ? pressureBlend : null,
+                T_c: Number.isFinite(tempBlend) ? tempBlend : null,
+                Td_c: Number.isFinite(dewpointBlend) ? dewpointBlend : null,
                 u_ms: u,
                 v_ms: v,
                 speed_ms: speedMs,
