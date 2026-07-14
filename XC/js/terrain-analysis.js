@@ -83,8 +83,8 @@ window.TerrainAnalysis = {
     normalizujNastavenia: function (options) {
         const config = { ...this.defaultOptions, ...options };
 
-        config.rows = this.neparneCeleCislo(config.rows, 5, 101, "rows");
-        config.cols = this.neparneCeleCislo(config.cols, 5, 101, "cols");
+        config.rows = this.neparneCeleCislo(config.rows, 5, null, "rows");
+        config.cols = this.neparneCeleCislo(config.cols, 5, null, "cols");
         config.spacingM = this.konecneCislo(config.spacingM, 5, 1000, "spacingM");
         config.fallbackTerrainLevel = Math.round(
             this.konecneCislo(config.fallbackTerrainLevel, 0, 20, "fallbackTerrainLevel")
@@ -106,16 +106,17 @@ window.TerrainAnalysis = {
     neparneCeleCislo: function (value, min, max, name) {
         let number = Math.round(this.konecneCislo(value, min, max, name));
         if (number % 2 === 0) number += 1;
-        if (number > max) number -= 2;
+        if (Number.isFinite(max) && number > max) number -= 2;
         return number;
     },
 
     konecneCislo: function (value, min, max, name) {
         const number = Number(value);
-        if (!Number.isFinite(number) || number < min || number > max) {
+        const hasMax = Number.isFinite(max);
+        if (!Number.isFinite(number) || number < min || (hasMax && number > max)) {
             throw new Error(
                 "Neplatné nastavenie " + name + ". Očakávaný rozsah je " +
-                min + " až " + max + "."
+                min + (hasMax ? (" až " + max) : " a viac") + "."
             );
         }
         return number;

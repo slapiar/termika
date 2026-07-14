@@ -269,7 +269,7 @@ $assetVersion = '20260712-07';
                     'TEMP profil (cache): ' + sorted.length +
                     ' hladín, z=' + Math.round(Number(low.z_m) || 0) +
                     ' až ' + Math.round(Number(high.z_m) || 0) +
-                    ' m, režim „' + mode + '".',
+                    ' m, režim „' + mode + '”.',
                     'info'
                 );
                 return;
@@ -288,6 +288,11 @@ $assetVersion = '20260712-07';
         const center = selectedCenter || { lat: NaN, lon: NaN };
         const focusRadiusM = Number(radiusInput.value);
         const gridSpacingM = Number(document.getElementById('spacingInput').value);
+        const halfSteps = (Number.isFinite(focusRadiusM) && Number.isFinite(gridSpacingM) && gridSpacingM > 0)
+            ? (Math.ceil(focusRadiusM / gridSpacingM) + 1)
+            : null;
+        const estimatedGridSize = Number.isFinite(halfSteps) ? (halfSteps * 2 + 1) : null;
+        const estimatedGridPoints = Number.isFinite(estimatedGridSize) ? (estimatedGridSize * estimatedGridSize) : null;
         const windRadiusM = Number(radiusInput.value);
         const windSpacingM = Number(windSpacingInput.value);
         const windAglM = Number(windAglInput.value);
@@ -298,6 +303,8 @@ $assetVersion = '20260712-07';
             'VSTUPY ANALÝZY: stred ' + Number(center.lat).toFixed(5) + ', ' + Number(center.lon).toFixed(5) +
             ' | fokus radius ' + (Number.isFinite(focusRadiusM) ? focusRadiusM.toFixed(0) : '--') + ' m' +
             ' | rozostup mriežky ' + (Number.isFinite(gridSpacingM) ? gridSpacingM.toFixed(0) : '--') + ' m' +
+            ' | odhad mriežky ' + (Number.isFinite(estimatedGridSize) ? (estimatedGridSize + '×' + estimatedGridSize) : '--') +
+            ' (~' + (Number.isFinite(estimatedGridPoints) ? estimatedGridPoints.toLocaleString('sk-SK') : '--') + ' bodov)' +
             ' | moduly [' + (enabledModules.length ? enabledModules.join(', ') : 'none') + ']' +
             ' | mapové vrstvy geometry=' + (geometryVisible.checked ? 'on' : 'off') +
             ', contours=' + (contoursVisible.checked ? 'on' : 'off') + '.',
