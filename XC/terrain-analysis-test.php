@@ -91,6 +91,10 @@ $assetVersion = '20260712-07';
     <div class="window-body">
         <p>Kruhový zameriavač ukazuje oblasť prvotného pohľadu. Kliknutím na terén zvolíš jej stred.</p>
         <p>Stred: <strong id="centerText">46.43000, 11.85000</strong></p>
+        <label>Zadaj stred (lat, lon)
+            <input id="centerInput" type="text" value="46.43000, 11.85000" placeholder="46.43000, 11.85000" style="width:220px">
+        </label>
+        <button id="centerApplyButton" type="button">Presunúť mapu na stred (3000 m ASL)</button>
 
         <fieldset>
             <legend>Rozsah analýzy</legend>
@@ -204,6 +208,8 @@ $assetVersion = '20260712-07';
 <script>
     const statusEl = document.getElementById('status');
     const centerText = document.getElementById('centerText');
+    const centerInput = document.getElementById('centerInput');
+    const centerApplyButton = document.getElementById('centerApplyButton');
     const radiusInput = document.getElementById('radiusInput');
     const geometryVisible = document.getElementById('geometryVisible');
     const contoursVisible = document.getElementById('contoursVisible');
@@ -231,6 +237,31 @@ $assetVersion = '20260712-07';
     let windFpsEstimate = 60;
     let windAutoActiveProfile = 'medium';
     let windAutoRerenderBusy = false;
+
+    function formatCenter(point) {
+        return point.lat.toFixed(5) + ', ' + point.lon.toFixed(5);
+    }
+
+    function syncCenterUi(point) {
+        centerText.textContent = formatCenter(point);
+        centerInput.value = formatCenter(point);
+    }
+
+    function parseCenterInput(text) {
+        const raw = String(text || '').trim();
+        if (!raw) return null;
+
+        const normalized = raw.replace(/;/g, ' ').replace(/,/g, ' ');
+        const parts = normalized.split(/\s+/).filter(Boolean);
+        if (parts.length < 2) return null;
+
+        const lat = Number(parts[0]);
+        const lon = Number(parts[1]);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+        if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+
+        return { lat, lon };
+    }
 
     function refreshWindFpsIndicator() {
         if (!windFpsIndicator) return;
@@ -435,6 +466,7 @@ $assetVersion = '20260712-07';
     viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(selectedCenter.lon, selectedCenter.lat, 9000)
     });
+    syncCenterUi(selectedCenter);
 
     if (window.WindUI) {
         window.WindUI.init({
@@ -513,9 +545,34 @@ $assetVersion = '20260712-07';
         selectedCenter = point;
         previewCenter = { ...point };
         selectedPoint.position = Cesium.Cartesian3.fromDegrees(point.lon, point.lat);
-        centerText.textContent = point.lat.toFixed(5) + ', ' + point.lon.toFixed(5);
+        syncCenterUi(point);
         logStatus('Vybraný nový stred kruhovej analýzy.');
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+    centerApplyButton.addEventListener('click', () => {
+        const parsed = parseCenterInput(centerInput.value);
+        if (!parsed) {
+            logStatus('Súradnice nie sú platné. Použi formát: 46.43000, 11.85000', 'error');
+            return;
+        }
+
+        selectedCenter = parsed;
+        previewCenter = { ...parsed };
+        selectedPoint.position = Cesium.Cartesian3.fromDegrees(parsed.lon, parsed.lat);
+        syncCenterUi(parsed);
+
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(parsed.lon, parsed.lat, 3000)
+        });
+
+        logStatus('Stred bol nastavený ručne na ' + formatCenter(parsed) + '. Kamera je nad bodom vo výške 3000 m ASL.', 'success');
+    });
+
+    centerInput.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        centerApplyButton.click();
+    });
 
     geometryVisible.addEventListener('change', () => {
         TerrainAnalysisCore.setLayerVisible('geometry', geometryVisible.checked);
