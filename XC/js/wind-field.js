@@ -94,7 +94,9 @@ window.WindField = {
         cfg.aglM = this.clampNumber(cfg.aglM, 1, 5000, "aglM");
         cfg.baseSpeedMs = this.clampNumber(cfg.baseSpeedMs, 0, 80, "baseSpeedMs");
         cfg.baseDirDeg = this.wrapDegrees(cfg.baseDirDeg);
-        cfg.surfaceAltM = Number.isFinite(Number(cfg.surfaceAltM)) ? Number(cfg.surfaceAltM) : null;
+        cfg.surfaceAltM = (cfg.surfaceAltM === null || cfg.surfaceAltM === undefined || cfg.surfaceAltM === "")
+            ? null
+            : (Number.isFinite(Number(cfg.surfaceAltM)) ? Number(cfg.surfaceAltM) : null);
         cfg.useTempProfileWind = cfg.useTempProfileWind !== false;
         cfg.terrainGeometry = cfg.terrainGeometry && Array.isArray(cfg.terrainGeometry.cells)
             ? cfg.terrainGeometry

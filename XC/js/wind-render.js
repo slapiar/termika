@@ -13,8 +13,10 @@ window.WindRender = {
         seedEvery: 4,
         maxSteps: 45,
         stepMeters: 90,
+        focusEdgeBufferM: 120,
         minSpeedMs: 0.2,
         minHorizontalSpeedMs: 0.15,
+        maxStepDtS: 8,
         minClearanceM: 6,
         maxCollisionRetries: 5,
         lineWidthMin: 1,
@@ -140,6 +142,8 @@ window.WindRender = {
         const seedEvery = Math.max(1, Number(style.seedEvery) || 4);
         const maxSteps = Math.max(2, Number(style.maxSteps) || 45);
         const stepMeters = Math.max(10, Number(style.stepMeters) || 90);
+        const focusEdgeBufferM = Math.max(0, Math.min(Number(field.radiusM) || 0, Number(style.focusEdgeBufferM) || 120));
+        const safeFocusRadiusM = Math.max(0, (Number(field.radiusM) || 0) - focusEdgeBufferM);
 
         const metersPerDegLat = 111320;
         const centerLat = Number(field.center?.lat) || 0;
@@ -147,6 +151,12 @@ window.WindRender = {
 
         field.cells.forEach((seed) => {
             if ((seed.row % seedEvery !== 0) || (seed.col % seedEvery !== 0)) {
+                return;
+            }
+
+            const seedNorth = (Number(seed.lat) - Number(field.center?.lat || 0)) * metersPerDegLat;
+            const seedEast = (Number(seed.lon) - Number(field.center?.lon || 0)) * metersPerDegLon;
+            if (Math.hypot(seedNorth, seedEast) > safeFocusRadiusM) {
                 return;
             }
 
@@ -187,9 +197,17 @@ window.WindRender = {
                 });
                 lastSample = sample;
 
+                const dNorthNow = (sample.lat - field.center.lat) * metersPerDegLat;
+                const dEastNow = (sample.lon - field.center.lon) * metersPerDegLon;
+                if (Math.hypot(dNorthNow, dEastNow) > safeFocusRadiusM) {
+                    terminationReason = "FOCUS_EDGE_BUFFER";
+                    break;
+                }
+
                 const stepResult = this.integrateStep3D(field, sample, state, {
                     stepMeters,
                     minHorizontalSpeedMs: style.minHorizontalSpeedMs,
+                    maxStepDtS: style.maxStepDtS,
                     minClearanceM: style.minClearanceM,
                     maxCollisionRetries: style.maxCollisionRetries,
                     metersPerDegLat,
@@ -234,8 +252,13 @@ window.WindRender = {
             v: Number(sample.v_ms) || 0,
             w: Number(sample.w_ms) || 0
         };
-        const hSpeed = Math.max(Number(cfg.minHorizontalSpeedMs) || 0.15, Math.hypot(currentVector.u, currentVector.v));
+        const hSpeedRaw = Math.hypot(currentVector.u, currentVector.v);
+        if (hSpeedRaw < (Number(cfg.minHorizontalSpeedMs) || 0.15)) {
+            return { accepted: false, reason: "PHYSICAL_STAGNATION", state };
+        }
+        const hSpeed = hSpeedRaw;
         const minClearance = Math.max(0, Number(cfg.minClearanceM) || 6);
+        const maxStepDtS = Math.max(0.2, Number(cfg.maxStepDtS) || 8);
         const retries = Math.max(1, Number(cfg.maxCollisionRetries) || 5);
         const previousHeading = Math.atan2(Number(state.u_ms) || 0, Number(state.v_ms) || 0);
         const currentHeading = Math.atan2(currentVector.u, currentVector.v);
@@ -244,6 +267,7 @@ window.WindRender = {
         const turnPenalty = turnDeltaDeg > 50 ? 0.35 : (turnDeltaDeg > 25 ? 0.55 : 1);
         const baseDt = Math.max(0.05, Number(cfg.stepMeters) / hSpeed);
         let dt = baseDt * terrainPenalty * turnPenalty;
+        dt = Math.min(dt, maxStepDtS);
         const prevW = Number(state.w_ms) || 0;
 
         for (let attempt = 0; attempt < retries; attempt += 1) {
