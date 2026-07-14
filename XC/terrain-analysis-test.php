@@ -135,6 +135,13 @@ $assetVersion = '20260712-07';
                 </select>
             </label>
             <label><input id="windAnimate" type="checkbox" checked> Animovať smer toku</label>
+            <label>Intenzita animácie
+                <select id="windAnimationIntensity">
+                    <option value="low">Nízka</option>
+                    <option value="medium" selected>Stredná</option>
+                    <option value="high">Vysoká</option>
+                </select>
+            </label>
         </fieldset>
 
         <button id="analyzeButton" type="button">Spustiť vybrané analýzy</button>
@@ -192,6 +199,7 @@ $assetVersion = '20260712-07';
     const windColorMode = document.getElementById('windColorMode');
     const windColorTheme = document.getElementById('windColorTheme');
     const windAnimate = document.getElementById('windAnimate');
+    const windAnimationIntensity = document.getElementById('windAnimationIntensity');
     const cellDiagnostics = document.getElementById('cellDiagnostics');
     const cellDiagnosticsBody = document.getElementById('cellDiagnosticsBody');
     let selectedCenter = { lat: 46.43, lon: 11.85 };
@@ -397,6 +405,31 @@ $assetVersion = '20260712-07';
         }
 
         const surfaceAltM = await resolveSurfaceAltitudeM(center);
+        const animationProfiles = {
+            low: {
+                animationSpeedFactor: 3.5,
+                animationTrailSeconds: 1.4,
+                animationMinSegmentM: 45,
+                animationMaxSegmentM: 220,
+                animationSamples: 4
+            },
+            medium: {
+                animationSpeedFactor: 8,
+                animationTrailSeconds: 2.0,
+                animationMinSegmentM: 80,
+                animationMaxSegmentM: 420,
+                animationSamples: 6
+            },
+            high: {
+                animationSpeedFactor: 13,
+                animationTrailSeconds: 2.8,
+                animationMinSegmentM: 110,
+                animationMaxSegmentM: 600,
+                animationSamples: 8
+            }
+        };
+        const animationCfg = animationProfiles[windAnimationIntensity.value] || animationProfiles.medium;
+
         const windResult = await window.WindUI.runDemo(viewer, center, {
             aglM: Number(windAglInput.value),
             radiusM,
@@ -409,6 +442,7 @@ $assetVersion = '20260712-07';
             colorMode: windColorMode.value,
             colorTheme: windColorTheme.value,
             animationEnabled: windAnimate.checked,
+            ...animationCfg,
             surfaceAltM,
             seedEvery: 3,
             maxSteps: 42,
