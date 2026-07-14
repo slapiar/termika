@@ -8,6 +8,31 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 
 ### Pridané
 
+- Dokumentačná a architektonická vetva `WIND v2` pre fokusovo orientované ukladanie vetra.
+  - nový dokument `postupy/WIND-noty-v2.md` s koncovým rozhodnutím `Fokus-first` (`Cesium = Zem`, `binárne polia = dátová pravda`, `WebM = výkonová cache`),
+  - nový návrh schémy manifestu `postupy/WIND-focus-manifest-schema-v1.json`,
+  - nový technický návrh binárneho formátu poľa `postupy/WIND-binarne-pole-format-v1.md`,
+  - nové retenčné profily `postupy/WIND-retencne-profily-v1.md` pre 50 GB, 200 GB a 1 TB,
+  - nový ukážkový manifest `postupy/WIND-focus-manifest-example-v1.json`.
+- CLI validačný checker manifestu vetra.
+  - nový nástroj `tools/validate-wind-focus-manifest.php`,
+  - validácia povinných polí, časov, hashov, vrstiev, encodingu a väzby render cache na hash binárnej vrstvy,
+  - jednoznačné návratové kódy (`0` validné, `1` nevalidné, `2` chybné volanie alebo vstupný súbor).
+- Integrácia WIND vrstvy do testovacej stránky terénnej analýzy.
+  - `XC/terrain-analysis-test.php` načítava `wind-field`, `wind-render`, `wind-ui`,
+  - nové UI ovládanie pre WIND (zapnutie vrstvy, AGL, rozostup, základná rýchlosť, smer, použitie TEMP profilu),
+  - WIND výpočet sa spúšťa po terénnej analýze v rovnakom pracovnom fokuse,
+  - clear akcia odstraňuje aj veternú vrstvu.
+- Modulárne rozšírenie správania vetra cez efektové moduly.
+  - nový registrátor `XC/js/wind-effects-core.js`,
+  - nový efekt `XC/js/wind-effect-terrain.js` (terrain steering zo sklonu, orientácie svahu a krivosti),
+  - nový efekt `XC/js/wind-effect-surface.js` (povrchovo-teplotný kontrast + indikátor triggeru bubliny),
+  - `XC/js/wind-field.js` aplikuje efekty modulárne a po nich prepočítava konvergenciu.
+- Rozšírený render vetra s riadením vizuálneho jazyka a voliteľnou animáciou.
+  - `XC/js/wind-render.js` podporuje farebné režimy `tempDeltaK`, `speed`, `convergence`,
+  - podpora tém pre tmavé a svetlé pozadie,
+  - voliteľná animácia smeru toku cez pohyblivý marker po prúdnici,
+  - `XC/terrain-analysis-test.php` dopĺňa prepínače farebnosti a prepínač animácie.
 - Pridaná samostatná MVP kostra meteorologického prvku `WIND` bez integrácie do existujúcich stránok, aby nezasahovala do rozpracovaných commitov.
   - nový modul `XC/js/wind-field.js` pre výpočet 2D veterného poľa pri zemi (AGL), odhad `tempDeltaK` a pracovnú convergenciu,
   - nový modul `XC/js/wind-render.js` pre vykreslenie prúdnic so smerovými šípkami, farbou podľa teplotného kontrastu a hrúbkou podľa rýchlosti,
@@ -87,6 +112,8 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 
 ### Technické rozhodnutia
 
+- Pri historickom ukladaní vetra zostávajú autoritatívnym zdrojom binárne vrstvy viazané na fokus; render video (`WebM`) je iba výkonová cache a nesmie nahradiť fyzikálny zdroj pravdy.
+- Modul `WIND` sa ďalej rozširuje cez samostatné efektové moduly (`wind-effects-*`) namiesto pevného monolitického výpočtu, aby bolo možné transparentne zapínať a vypínať jednotlivé vplyvy.
 - Mesh nie je iba vizualizácia. Je spoločnou topologickou vrstvou pre budúcu energetickú bilanciu plôch a dynamické účinky geometrických rozhraní na prízemné prúdenie.
 - Drôtená topológia meshu a plošná výplň zostávajú v samostatných moduloch. Plošný renderer nesmie meniť vrcholy, hrany ani fyzikálne trojuholníky.
 - Celistvé farebné oblasti M1.2 sú zatiaľ vizuálnym spojením susedných trojuholníkov rovnakej rodiny; nejde ešte o topologicky zlúčené mnohouholníky.
