@@ -278,8 +278,45 @@ $assetVersion = '20260712-07';
 
         logStatus(
             'TEMP profil: režim „' + mode +
-            '”, zdroj „' + (sourceUrl || 'nezadaný') +
+            '“, zdroj „' + (sourceUrl || 'nezadaný') +
             '”. Profil sa načíta pred výpočtom WIND vrstvy.',
+            'info'
+        );
+    }
+
+    function logInputSnapshot(enabledModules) {
+        const center = selectedCenter || { lat: NaN, lon: NaN };
+        const focusRadiusM = Number(radiusInput.value);
+        const gridSpacingM = Number(document.getElementById('spacingInput').value);
+        const windRadiusM = Number(radiusInput.value);
+        const windSpacingM = Number(windSpacingInput.value);
+        const windAglM = Number(windAglInput.value);
+        const windSpeedMs = Number(windSpeedInput.value);
+        const windDirDeg = Number(windDirInput.value);
+
+        logStatus(
+            'VSTUPY ANALÝZY: stred ' + Number(center.lat).toFixed(5) + ', ' + Number(center.lon).toFixed(5) +
+            ' | fokus radius ' + (Number.isFinite(focusRadiusM) ? focusRadiusM.toFixed(0) : '--') + ' m' +
+            ' | rozostup mriežky ' + (Number.isFinite(gridSpacingM) ? gridSpacingM.toFixed(0) : '--') + ' m' +
+            ' | moduly [' + (enabledModules.length ? enabledModules.join(', ') : 'none') + ']' +
+            ' | mapové vrstvy geometry=' + (geometryVisible.checked ? 'on' : 'off') +
+            ', contours=' + (contoursVisible.checked ? 'on' : 'off') + '.',
+            'info'
+        );
+
+        logStatus(
+            'VSTUPY WIND: enabled=' + (windEnabled.checked ? 'on' : 'off') +
+            ' | radius ' + (Number.isFinite(windRadiusM) ? windRadiusM.toFixed(0) : '--') + ' m' +
+            ' | spacing ' + (Number.isFinite(windSpacingM) ? windSpacingM.toFixed(0) : '--') + ' m' +
+            ' | AGL ' + (Number.isFinite(windAglM) ? windAglM.toFixed(0) : '--') + ' m' +
+            ' | base ' + (Number.isFinite(windSpeedMs) ? windSpeedMs.toFixed(1) : '--') + ' m/s @ ' +
+            (Number.isFinite(windDirDeg) ? windDirDeg.toFixed(0) : '--') + '°' +
+            ' | tempMode=' + windTempSourceMode.value +
+            ' | useTempProfile=' + (windUseTempProfile.checked ? 'on' : 'off') +
+            ' | color=' + windColorMode.value + '/' + windColorTheme.value +
+            ' | animate=' + (windAnimate.checked ? 'on' : 'off') +
+            ' (' + windAnimationIntensity.value + ')' +
+            ' | sourceUrl=' + (String(windTempSourceUrl.value || '').trim() || 'nezadaný') + '.',
             'info'
         );
     }
@@ -566,6 +603,16 @@ $assetVersion = '20260712-07';
             stepMeters: 90
         });
 
+        const tempSourceInfo = window.WindUI?.state?.lastTempSource || null;
+        if (tempSourceInfo) {
+            const requested = tempSourceInfo.requestedMode ? ('; requested=' + tempSourceInfo.requestedMode) : '';
+            const loaderDetail = tempSourceInfo.loaderInfo?.detail ? ('; detail=' + tempSourceInfo.loaderInfo.detail) : '';
+            logStatus(
+                'WIND TEMP zdroj: ' + tempSourceInfo.type + ' -> ' + (tempSourceInfo.detail || 'n/a') + requested + loaderDetail + '.',
+                'info'
+            );
+        }
+
         const weather = windResult.field.weatherTracking || {};
         const mode = weather.mode || 'FALLBACK_BASE_VECTOR';
         const sampled = Number.isFinite(Number(weather.sampledLevelZ_m))
@@ -658,6 +705,7 @@ $assetVersion = '20260712-07';
         button.disabled = true;
         statusEl.replaceChildren();
         logTempSummaryFirst();
+        logInputSnapshot(enabledModules);
         logStatus('Spúšťam moduly: ' + enabledModules.join(', ') + '.');
 
         try {

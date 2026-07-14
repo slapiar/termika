@@ -8,7 +8,9 @@ window.WindUI = {
     state: {
         enabled: false,
         lastField: null,
-        lastRenderStats: null
+        lastRenderStats: null,
+        lastTempProfile: null,
+        lastTempSource: null
     },
 
     defaultSettings: {
@@ -73,11 +75,31 @@ window.WindUI = {
         }
 
         const settings = { ...this.settings, ...options };
+        let tempSource = null;
         let profile = Array.isArray(settings.tempProfile) && settings.tempProfile.length >= 2
             ? settings.tempProfile
             : (Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP) && window.PilotNetwork.liveAtmosferaTEMP.length >= 2
                 ? window.PilotNetwork.liveAtmosferaTEMP
-                : null);
+                : (Array.isArray(this.state.lastTempProfile) && this.state.lastTempProfile.length >= 2
+                    ? this.state.lastTempProfile
+                    : null));
+
+        if (Array.isArray(settings.tempProfile) && settings.tempProfile.length >= 2) {
+            tempSource = {
+                type: "settings.tempProfile",
+                detail: "direct-options"
+            };
+        } else if (Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP) && window.PilotNetwork.liveAtmosferaTEMP.length >= 2) {
+            tempSource = {
+                type: "PilotNetwork.liveAtmosferaTEMP",
+                detail: "pilot-network"
+            };
+        } else if (Array.isArray(this.state.lastTempProfile) && this.state.lastTempProfile.length >= 2) {
+            tempSource = {
+                type: "WindUI.cache",
+                detail: "lastTempProfile"
+            };
+        }
 
         if (!Array.isArray(profile) || profile.length < 2) {
             const sourceMode = String(settings.tempSourceMode || this.defaultSettings.tempSourceMode || "auto");
@@ -93,7 +115,17 @@ window.WindUI = {
                 stationIndexUrl: settings.stationIndexUrl,
                 stationProfileUrlTemplate: settings.stationProfileUrlTemplate
             });
+
+            tempSource = {
+                type: "WindTempLoader",
+                detail: window.WindTempLoader?.lastResolvedSource?.resolvedMode || sourceMode,
+                requestedMode: sourceMode,
+                loaderInfo: window.WindTempLoader?.lastResolvedSource || null
+            };
         }
+
+        this.state.lastTempProfile = Array.isArray(profile) ? profile.slice() : null;
+        this.state.lastTempSource = tempSource;
 
         const sourceLabel = profile && profile.length
             ? "ODVODENE_Z_TEMP"

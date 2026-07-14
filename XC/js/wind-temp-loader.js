@@ -5,6 +5,8 @@
 window.WindTempLoader = {
     VERSION: "2.6.13-wind-temp-loader.1",
 
+    lastResolvedSource: null,
+
     defaultSettings: {
         sourceMode: "auto",
         tempSourceUrl: "XCtrack/temp.json",
@@ -191,13 +193,35 @@ window.WindTempLoader = {
         for (const currentMode of tryModes) {
             try {
                 if (currentMode === "windy") {
-                    return await this.loadWindyProfile(center, settings);
+                    const profile = await this.loadWindyProfile(center, settings);
+                    this.lastResolvedSource = {
+                        requestedMode: mode,
+                        resolvedMode: currentMode,
+                        detail: "windy",
+                        timestamp: new Date().toISOString()
+                    };
+                    return profile;
                 }
                 if (currentMode === "station") {
-                    return await this.loadNearestStationProfile(center, settings);
+                    const profile = await this.loadNearestStationProfile(center, settings);
+                    this.lastResolvedSource = {
+                        requestedMode: mode,
+                        resolvedMode: currentMode,
+                        detail: "nearest-station",
+                        timestamp: new Date().toISOString()
+                    };
+                    return profile;
                 }
                 if (currentMode === "file") {
-                    return await this.loadFromUrl(settings.tempSourceUrl || this.defaultSettings.tempSourceUrl);
+                    const url = settings.tempSourceUrl || this.defaultSettings.tempSourceUrl;
+                    const profile = await this.loadFromUrl(url);
+                    this.lastResolvedSource = {
+                        requestedMode: mode,
+                        resolvedMode: currentMode,
+                        detail: String(url || ""),
+                        timestamp: new Date().toISOString()
+                    };
+                    return profile;
                 }
                 throw new Error("Neznámy TEMP source mode: " + currentMode);
             } catch (error) {
