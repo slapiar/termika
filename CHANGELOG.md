@@ -8,6 +8,12 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 
 ### Pridané
 
+- Nový režim farbenia vetra podľa vertikálneho pohybu.
+  - `XC/js/wind-render.js` podporuje nový `colorMode = verticalMotion`,
+  - v `XC/terrain-analysis-test.php` pribudla voľba `Vertikálny pohyb (stúpanie/klesanie)`.
+- Dynamická legenda farieb vetra pre všetky režimy zobrazenia.
+  - `XC/terrain-analysis-test.php` zobrazuje živú legendu pre režimy `tempDeltaK`, `speed`, `convergence`, `verticalMotion`,
+  - legenda sa automaticky aktualizuje pri zmene režimu alebo témy farieb.
 - Rozšírené ovládanie testovacieho fokusu v paneli.
   - `XC/terrain-analysis-test.php` má nové ručné zadanie stredu vo formáte `lat, lon`,
   - nové tlačidlo na okamžitý presun kamery nad zadaný stred do výšky 3000 m ASL,
@@ -18,6 +24,13 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 - Samostatný mapový prepínač viditeľnosti geometrie reliéfu.
   - v `XC/terrain-analysis-test.php` je v časti mapových vrstiev nový checkbox `Zobraziť geometriu reliéfu`,
   - prepína iba render vrstvy, nie samotný výpočet geometrickej analýzy.
+- Natívny režim záznamu videa priamo z Cesium canvasu v testovacej stránke.
+  - v `XC/terrain-analysis-test.php` pribudla sekcia `Záznam videa` (FPS 30/60, kvalita normal/high, auto-hide pomocných okien),
+  - nové tlačidlo `Start recording / Stop recording` používa `MediaRecorder` nad `canvas.captureStream(...)`,
+  - po zastavení záznamu sa video automaticky exportuje do súboru (`WebM` podľa podpory browsera),
+  - pribudol REC badge s časovačom a stavové hlášky o štarte, stopnutí a exporte.
+- Nový dokumentovaný postup pre snímanie a web export videa.
+  - nový súbor `postupy/MEDIArecord.md` popisuje OBS workflow, natívny one-click record v appke a odporúčané exportné parametre pre web.
 
 - Dokumentačná a architektonická vetva `WIND v2` pre fokusovo orientované ukladanie vetra.
   - nový dokument `postupy/WIND-noty-v2.md` s koncovým rozhodnutím `Fokus-first` (`Cesium = Zem`, `binárne polia = dátová pravda`, `WebM = výkonová cache`),
@@ -121,6 +134,12 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - `tools/RELEASE.md`.
 
 ### Opravené
+
+- Upravené segmentové farbenie prúdnic vo vertikálnom režime podľa celej dráhy trendu.
+  - červenou je vyznačený celý úsek, kde výška prúdnice rastie,
+  - modrou je vyznačený celý úsek, kde výška prúdnice klesá,
+  - úseky s takmer nulovou zmenou výšky ostávajú svetlošedé,
+  - `XC/js/wind-field.js` aj `XC/js/wind-effect-terrain.js` používajú konzistentnú obojstrannú projekciu do dotykovej roviny terénu, aby boli stúpanie aj klesanie prirodzene viditeľné.
 
 - Oprava konzistencie TEMP cache a logovania zdroja profilu.
   - `XC/js/wind-ui.js` drží `lastTempProfile` aj `lastTempSource`,

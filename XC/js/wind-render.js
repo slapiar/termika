@@ -22,6 +22,7 @@ window.WindRender = {
         lineWidthMin: 1,
         lineWidthMax: 4,
         alpha: 0.9,
+        verticalDeltaThresholdM: 0.08,
         heightOffsetM: 24,
         colorMode: "tempDeltaK",
         colorTheme: "dark",
@@ -78,24 +79,59 @@ window.WindRender = {
                 )
             );
 
-            ds.entities.add({
-                polyline: {
-                    positions,
-                    width,
-                    material: color,
-                    clampToGround: !useMslHeight
-                },
-                properties: {
-                    type: "WIND_STREAMLINE",
-                    speed_ms: speedMs,
-                    dir_deg: line.dirDeg,
-                    vertical_ms: line.verticalMs,
-                    tempDeltaK: line.tempDeltaK,
-                    convergence: line.convergence,
-                    flow_state: line.flowState,
-                    termination_reason: line.terminationReason
+            if (String(cfg.colorMode || "") === "verticalMotion") {
+                const segments = this.buildVerticalTransitionSegments(
+                    line.points,
+                    useMslHeight,
+                    cfg.verticalDeltaThresholdM
+                );
+
+                for (let i = 0; i < positions.length - 1; i += 1) {
+                    const seg = segments[i] || { sign: 0, isBoundary: false, deltaM: 0 };
+                    const segColor = this.colorForVerticalTransition(seg.sign, seg.isBoundary, cfg.alpha);
+
+                    ds.entities.add({
+                        polyline: {
+                            positions: [positions[i], positions[i + 1]],
+                            width,
+                            material: segColor,
+                            clampToGround: !useMslHeight
+                        },
+                        properties: {
+                            type: "WIND_STREAMLINE_SEGMENT",
+                            speed_ms: speedMs,
+                            dir_deg: line.dirDeg,
+                            vertical_ms: line.verticalMs,
+                            segment_vertical_delta_m: seg.deltaM,
+                            segment_vertical_sign: seg.sign,
+                            segment_vertical_boundary: seg.isBoundary,
+                            tempDeltaK: line.tempDeltaK,
+                            convergence: line.convergence,
+                            flow_state: line.flowState,
+                            termination_reason: line.terminationReason
+                        }
+                    });
                 }
-            });
+            } else {
+                ds.entities.add({
+                    polyline: {
+                        positions,
+                        width,
+                        material: color,
+                        clampToGround: !useMslHeight
+                    },
+                    properties: {
+                        type: "WIND_STREAMLINE",
+                        speed_ms: speedMs,
+                        dir_deg: line.dirDeg,
+                        vertical_ms: line.verticalMs,
+                        tempDeltaK: line.tempDeltaK,
+                        convergence: line.convergence,
+                        flow_state: line.flowState,
+                        termination_reason: line.terminationReason
+                    }
+                });
+            }
 
             const tip = line.points[line.points.length - 1];
             if (tip) {
@@ -371,6 +407,62 @@ window.WindRender = {
         if (w > 0.05) return Cesium.Color.fromCssColorString("#FF9AA2").withAlpha(alpha);
         if (w < -0.05) return Cesium.Color.fromCssColorString("#8FD3FF").withAlpha(alpha);
         return Cesium.Color.fromCssColorString("#C8D6DF").withAlpha(alpha);
+    },
+
+    pointHeightForVerticalMode: function (point, useMslHeight) {
+        if (useMslHeight && Number.isFinite(Number(point?.heightMsl))) {
+            return Number(point.heightMsl);
+        }
+        if (Number.isFinite(Number(point?.heightM))) {
+            return Number(point.heightM);
+        }
+        return null;
+    },
+
+    verticalSignFromDelta: function (deltaM, thresholdM) {
+        const d = Number(deltaM);
+        const t = Math.max(1e-4, Number(thresholdM) || 0.25);
+        if (!Number.isFinite(d)) return 0;
+        if (d > t) return 1;
+        if (d < -t) return -1;
+        return 0;
+    },
+
+    buildVerticalTransitionSegments: function (points, useMslHeight, thresholdM) {
+        if (!Array.isArray(points) || points.length < 2) return [];
+
+        const base = [];
+        for (let i = 0; i < points.length - 1; i += 1) {
+            const h0 = this.pointHeightForVerticalMode(points[i], useMslHeight);
+            const h1 = this.pointHeightForVerticalMode(points[i + 1], useMslHeight);
+            const deltaM = Number.isFinite(h0) && Number.isFinite(h1) ? (h1 - h0) : 0;
+            base.push({
+                deltaM,
+                sign: this.verticalSignFromDelta(deltaM, thresholdM)
+            });
+        }
+
+        return base.map((segment, index) => {
+            const prevSign = index > 0 ? base[index - 1].sign : segment.sign;
+            const nextSign = index < base.length - 1 ? base[index + 1].sign : segment.sign;
+            const isBoundary = segment.sign !== 0 && (segment.sign !== prevSign || segment.sign !== nextSign);
+            return {
+                deltaM: segment.deltaM,
+                sign: segment.sign,
+                isBoundary
+            };
+        });
+    },
+
+    colorForVerticalTransition: function (sign, isBoundary, alpha) {
+        const a = Number(alpha) || 0.9;
+        if (sign === 0) {
+            return Cesium.Color.fromCssColorString("#C8D6DF").withAlpha(Math.max(0.35, a * 0.78));
+        }
+        if (sign > 0) {
+            return Cesium.Color.fromCssColorString("#FF9AA2").withAlpha(a);
+        }
+        return Cesium.Color.fromCssColorString("#8FD3FF").withAlpha(a);
     },
 
     resolveLineColor: function (line, cfg) {

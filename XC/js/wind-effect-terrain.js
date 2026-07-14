@@ -151,18 +151,15 @@
                     u: Number(cell.w_ms) || 0
                 };
 
-                // Nepenetrácia terénu: pri V·n < 0 odstráň zložku smerujúcu do povrchu.
+                // Tok viažeme na dotykovú rovinu svahu. To prirodzene dáva
+                // stúpanie na náveternej a klesanie na záveternej strane.
                 const dot = v0.e * normal.e + v0.n * normal.n + v0.u * normal.u;
-                let vt = v0;
-                let penetrationRemoved = 0;
-                if (dot < 0) {
-                    vt = {
-                        e: v0.e - dot * normal.e,
-                        n: v0.n - dot * normal.n,
-                        u: v0.u - dot * normal.u
-                    };
-                    penetrationRemoved = Math.abs(dot);
-                }
+                const vt = {
+                    e: v0.e - dot * normal.e,
+                    n: v0.n - dot * normal.n,
+                    u: v0.u - dot * normal.u
+                };
+                const penetrationRemoved = Math.abs(dot);
 
                 cell.u_ms = vt.e;
                 cell.v_ms = vt.n;

@@ -331,10 +331,6 @@ window.WindField = {
 
     projectVectorToTerrain: function (vector, normal) {
         const dot = vector.e * normal.e + vector.n * normal.n + vector.u * normal.u;
-        if (dot >= 0) {
-            return { e: vector.e, n: vector.n, u: vector.u, penetrationRemoved: 0 };
-        }
-
         return {
             e: vector.e - dot * normal.e,
             n: vector.n - dot * normal.n,

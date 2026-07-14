@@ -76,6 +76,10 @@ $assetVersion = '20260712-07';
         #windowDock button{padding:6px 10px;border:1px solid #54778a;border-radius:5px;background:#10212b;color:#dff7ff;cursor:pointer}
         #windowDock button:hover{background:#1c3b4b}
         #aimHint{position:absolute;left:50%;top:12px;z-index:12;transform:translateX(-50%);padding:6px 10px;background:rgba(7,16,24,.78);color:#d8f8ff;border:1px solid #426277;border-radius:6px;font:12px/1.2 system-ui;pointer-events:none}
+        .record-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .record-badge{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border:1px solid #a33;border-radius:999px;background:rgba(120,0,0,.35);color:#ffd7d7;font-size:12px;font-weight:700;letter-spacing:.2px}
+        .record-dot{width:8px;height:8px;border-radius:50%;background:#ff6b6b;box-shadow:0 0 8px rgba(255,107,107,.8)}
+        #recordToggleButton.recording{background:#50191f;color:#ffdfe2;border-color:#aa4c57}
         @media (max-width:760px){#panel{width:calc(100vw - 24px);height:60vh}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}#windowDock{bottom:6px}}
     </style>
 </head>
@@ -147,6 +151,7 @@ $assetVersion = '20260712-07';
                     <option value="verticalMotion">Vertikálny pohyb (stúpanie/klesanie)</option>
                 </select>
             </label>
+            <div id="windColorLegend" style="margin-top:6px;padding:6px 8px;border:1px solid #35505f;border-radius:6px;background:rgba(16,33,43,.45);font-size:12px;color:#cfe3ef"></div>
             <label>Téma farieb
                 <select id="windColorTheme">
                     <option value="dark" selected>Tmavé pozadie</option>
@@ -163,6 +168,27 @@ $assetVersion = '20260712-07';
                 </select>
             </label>
             <div id="windFpsIndicator" style="margin-top:4px;color:#8fa9b8;font-size:12px;">FPS: -- | AUTO profil: --</div>
+
+            <fieldset>
+                <legend>Záznam videa</legend>
+                <label>FPS záznamu
+                    <select id="recordFps">
+                        <option value="30" selected>30 fps</option>
+                        <option value="60">60 fps</option>
+                    </select>
+                </label>
+                <label>Kvalita
+                    <select id="recordQuality">
+                        <option value="normal" selected>Normal (8 Mbps)</option>
+                        <option value="high">High (16 Mbps)</option>
+                    </select>
+                </label>
+                <label><input id="recordAutoHideUi" type="checkbox" checked> Pri zázname skryť legendu a diagnostiku</label>
+                <div class="record-row">
+                    <button id="recordToggleButton" type="button">Start recording</button>
+                    <span id="recordBadge" class="record-badge" hidden><i class="record-dot"></i><span id="recordElapsed">REC 00:00</span></span>
+                </div>
+            </fieldset>
         </fieldset>
 
         <button id="analyzeButton" type="button">Spustiť vybrané analýzy</button>
@@ -227,9 +253,16 @@ $assetVersion = '20260712-07';
     const windUseTempProfile = document.getElementById('windUseTempProfile');
     const windColorMode = document.getElementById('windColorMode');
     const windColorTheme = document.getElementById('windColorTheme');
+    const windColorLegend = document.getElementById('windColorLegend');
     const windAnimate = document.getElementById('windAnimate');
     const windAnimationIntensity = document.getElementById('windAnimationIntensity');
     const windFpsIndicator = document.getElementById('windFpsIndicator');
+    const recordFps = document.getElementById('recordFps');
+    const recordQuality = document.getElementById('recordQuality');
+    const recordAutoHideUi = document.getElementById('recordAutoHideUi');
+    const recordToggleButton = document.getElementById('recordToggleButton');
+    const recordBadge = document.getElementById('recordBadge');
+    const recordElapsed = document.getElementById('recordElapsed');
     const cellDiagnostics = document.getElementById('cellDiagnostics');
     const cellDiagnosticsBody = document.getElementById('cellDiagnosticsBody');
     let selectedCenter = { lat: 46.43, lon: 11.85 };
@@ -238,9 +271,189 @@ $assetVersion = '20260712-07';
     let windFpsEstimate = 60;
     let windAutoActiveProfile = 'medium';
     let windAutoRerenderBusy = false;
+    let activeRecorder = null;
+    let activeRecordStream = null;
+    let activeRecordChunks = [];
+    let recordStartedAtMs = 0;
+    let recordTimer = null;
+    let recordHiddenTargets = [];
 
     function formatCenter(point) {
         return point.lat.toFixed(5) + ', ' + point.lon.toFixed(5);
+    }
+
+    function formatElapsedRecording(ms) {
+        const totalSec = Math.max(0, Math.floor(Number(ms || 0) / 1000));
+        const mm = Math.floor(totalSec / 60).toString().padStart(2, '0');
+        const ss = (totalSec % 60).toString().padStart(2, '0');
+        return mm + ':' + ss;
+    }
+
+    function updateRecordUi(isRecording) {
+        if (!recordToggleButton || !recordBadge || !recordElapsed) return;
+        recordToggleButton.textContent = isRecording ? 'Stop recording' : 'Start recording';
+        recordToggleButton.classList.toggle('recording', isRecording);
+        recordBadge.hidden = !isRecording;
+        if (!isRecording) {
+            recordElapsed.textContent = 'REC 00:00';
+        }
+    }
+
+    function updateRecordingTimer() {
+        if (!recordElapsed || !recordStartedAtMs) return;
+        recordElapsed.textContent = 'REC ' + formatElapsedRecording(Date.now() - recordStartedAtMs);
+    }
+
+    function setRecordingAuxUiHidden(hidden) {
+        const targets = [
+            document.getElementById('legend'),
+            document.getElementById('cellDiagnostics'),
+            document.getElementById('windowDock'),
+            document.getElementById('aimHint')
+        ].filter(Boolean);
+
+        if (hidden) {
+            recordHiddenTargets = targets
+                .filter((el) => !el.hidden)
+                .map((el) => el.id);
+            recordHiddenTargets.forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) el.hidden = true;
+            });
+            return;
+        }
+
+        recordHiddenTargets.forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.hidden = false;
+        });
+        recordHiddenTargets = [];
+    }
+
+    function selectRecordMimeType() {
+        if (!window.MediaRecorder || typeof MediaRecorder.isTypeSupported !== 'function') {
+            return '';
+        }
+        const candidates = [
+            'video/webm;codecs=vp9',
+            'video/webm;codecs=vp8',
+            'video/webm'
+        ];
+        for (const type of candidates) {
+            if (MediaRecorder.isTypeSupported(type)) return type;
+        }
+        return '';
+    }
+
+    function getRecordBitrate() {
+        return String(recordQuality?.value || 'normal') === 'high' ? 16000000 : 8000000;
+    }
+
+    function downloadRecordedVideo(blob, mimeType) {
+        const isWebm = String(mimeType || '').toLowerCase().includes('webm');
+        const ext = isWebm ? 'webm' : 'mp4';
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const filename = 'termikaxc-wind-' + stamp + '.' + ext;
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        return filename;
+    }
+
+    function cleanupRecordingState() {
+        if (recordTimer) {
+            clearInterval(recordTimer);
+            recordTimer = null;
+        }
+        if (activeRecordStream) {
+            activeRecordStream.getTracks().forEach((track) => {
+                try { track.stop(); } catch (_) {}
+            });
+        }
+        activeRecorder = null;
+        activeRecordStream = null;
+        activeRecordChunks = [];
+        recordStartedAtMs = 0;
+        updateRecordUi(false);
+        setRecordingAuxUiHidden(false);
+    }
+
+    function startRecording() {
+        if (activeRecorder && activeRecorder.state === 'recording') return;
+        if (!window.MediaRecorder) {
+            logStatus('MediaRecorder nie je v tomto prehliadači podporený. Použi OBS alebo iný browser.', 'error');
+            return;
+        }
+
+        const canvas = viewer?.scene?.canvas;
+        if (!canvas || typeof canvas.captureStream !== 'function') {
+            logStatus('Canvas captureStream nie je dostupný. Záznam sa nedá spustiť.', 'error');
+            return;
+        }
+
+        const fps = Math.max(15, Number(recordFps?.value) || 30);
+        const mimeType = selectRecordMimeType();
+        const recordOptions = { videoBitsPerSecond: getRecordBitrate() };
+        if (mimeType) recordOptions.mimeType = mimeType;
+
+        try {
+            activeRecordChunks = [];
+            activeRecordStream = canvas.captureStream(fps);
+            activeRecorder = new MediaRecorder(activeRecordStream, recordOptions);
+            recordStartedAtMs = Date.now();
+
+            activeRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) activeRecordChunks.push(event.data);
+            };
+            activeRecorder.onerror = (event) => {
+                const detail = event?.error?.message || 'neznamy problem recordera';
+                logStatus('Recorder chyba: ' + detail, 'error');
+            };
+            activeRecorder.onstop = () => {
+                try {
+                    const usedMime = activeRecorder?.mimeType || mimeType || 'video/webm';
+                    const blob = new Blob(activeRecordChunks, { type: usedMime });
+                    const filename = downloadRecordedVideo(blob, usedMime);
+                    logStatus('Video uložené: ' + filename + ' (' + Math.round(blob.size / 1024 / 1024 * 10) / 10 + ' MB).', 'success');
+                } catch (err) {
+                    logStatus('Nepodarilo sa uložiť video: ' + (err?.message || String(err)), 'error');
+                } finally {
+                    cleanupRecordingState();
+                }
+            };
+
+            if (recordAutoHideUi?.checked) {
+                setRecordingAuxUiHidden(true);
+            }
+
+            activeRecorder.start(1000);
+            updateRecordUi(true);
+            updateRecordingTimer();
+            recordTimer = setInterval(updateRecordingTimer, 500);
+            logStatus('WIND záznam spustený: ' + fps + ' fps, kvalita ' + (recordQuality?.value || 'normal') + '.');
+        } catch (error) {
+            cleanupRecordingState();
+            logStatus('Záznam sa nepodarilo spustiť: ' + (error?.message || String(error)), 'error');
+        }
+    }
+
+    function stopRecording() {
+        if (!activeRecorder || activeRecorder.state !== 'recording') {
+            cleanupRecordingState();
+            return;
+        }
+        try {
+            activeRecorder.stop();
+            logStatus('WIND záznam zastavený, pripravujem export videa.');
+        } catch (error) {
+            cleanupRecordingState();
+            logStatus('Stop záznamu zlyhal: ' + (error?.message || String(error)), 'error');
+        }
     }
 
     function syncCenterUi(point) {
@@ -271,6 +484,53 @@ $assetVersion = '20260712-07';
             ? windAutoActiveProfile
             : 'manual';
         windFpsIndicator.textContent = 'FPS: ' + fpsText + ' | AUTO profil: ' + autoText;
+    }
+
+    function windLegendSwatch(color, label, note) {
+        return '<div style="display:grid;grid-template-columns:14px 1fr;gap:8px;align-items:start;margin:3px 0">' +
+            '<span style="width:12px;height:12px;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:' + color + ';margin-top:2px"></span>' +
+            '<span><strong style="color:#fff">' + label + '</strong> · ' + note + '</span>' +
+            '</div>';
+    }
+
+    function refreshWindColorLegend() {
+        if (!windColorLegend) return;
+
+        const mode = String(windColorMode?.value || 'tempDeltaK');
+        const theme = String(windColorTheme?.value || 'dark');
+
+        if (mode === 'speed') {
+            const end = theme === 'light' ? '#d62828' : '#ff6b6b';
+            windColorLegend.innerHTML =
+                '<div style="margin-bottom:4px"><strong>Legenda farieb vetra: Rýchlosť</strong></div>' +
+                windLegendSwatch('#70e8ff', 'Nízka rýchlosť', 'slabší vietor') +
+                windLegendSwatch(end, 'Vysoká rýchlosť', 'silnejší vietor');
+            return;
+        }
+
+        if (mode === 'convergence') {
+            windColorLegend.innerHTML =
+                '<div style="margin-bottom:4px"><strong>Legenda farieb vetra: Konvergencia/divergencia</strong></div>' +
+                windLegendSwatch('#00ACC1', 'Konvergencia', 'zbiehanie toku') +
+                windLegendSwatch('#AB47BC', 'Divergencia', 'rozbiehanie toku') +
+                windLegendSwatch('#90A4AE', 'Neutrál', 'blízko nulovej zmeny');
+            return;
+        }
+
+        if (mode === 'verticalMotion') {
+            windColorLegend.innerHTML =
+                '<div style="margin-bottom:4px"><strong>Legenda farieb vetra: Vertikálny pohyb</strong></div>' +
+                windLegendSwatch('#FF9AA2', 'Stúpanie', 'celý úsek, kde výška prúdnice narastá') +
+                windLegendSwatch('#8FD3FF', 'Klesanie', 'celý úsek, kde výška prúdnice klesá') +
+                windLegendSwatch('#C8D6DF', 'Bez zmeny výšky', 'takmer vodorovný úsek prúdnice');
+            return;
+        }
+
+        windColorLegend.innerHTML =
+            '<div style="margin-bottom:4px"><strong>Legenda farieb vetra: Teplotný kontrast</strong></div>' +
+            windLegendSwatch('#1E88E5', 'Chladnejší vzduch', 'nižší tempDeltaK') +
+            windLegendSwatch('#70E8FF', 'Neutrál', 'okolie 0 K') +
+            windLegendSwatch('#FFB300', 'Teplejší vzduch', 'vyšší tempDeltaK');
     }
 
     function logStatus(text, type = 'info') {
@@ -462,7 +722,18 @@ $assetVersion = '20260712-07';
     });
 
     windAnimationIntensity.addEventListener('change', refreshWindFpsIndicator);
+    windColorMode.addEventListener('change', refreshWindColorLegend);
+    windColorTheme.addEventListener('change', refreshWindColorLegend);
+    recordToggleButton.addEventListener('click', () => {
+        if (activeRecorder && activeRecorder.state === 'recording') {
+            stopRecording();
+            return;
+        }
+        startRecording();
+    });
     refreshWindFpsIndicator();
+    refreshWindColorLegend();
+    updateRecordUi(false);
 
     viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(selectedCenter.lon, selectedCenter.lat, 9000)
@@ -831,6 +1102,10 @@ $assetVersion = '20260712-07';
         window.WindUI?.clear?.(viewer);
         cellDiagnostics.hidden = true;
         logStatus('Výsledné mapové vrstvy boli skryté.');
+    });
+
+    window.addEventListener('beforeunload', () => {
+        cleanupRecordingState();
     });
 
     function keepWindowInViewport(windowEl) {
