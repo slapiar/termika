@@ -168,6 +168,17 @@ $assetVersion = '20260712-07';
                 </select>
             </label>
             <div id="windFpsIndicator" style="margin-top:4px;color:#8fa9b8;font-size:12px;">FPS: -- | AUTO profil: --</div>
+            <label>Práca s generáciami vetra
+                <select id="windGenerationMode">
+                    <option value="replace" selected>Nahradiť (zmazať všetko a vykresliť novú)</option>
+                    <option value="keep">Zachovať predošlé generácie</option>
+                    <option value="clear-last">Zmazať poslednú a vykresliť novú</option>
+                </select>
+            </label>
+            <div class="record-row">
+                <button id="windDeleteLastButton" type="button">Zmazať poslednú generáciu</button>
+                <button id="windDeleteAllButton" type="button">Zmazať všetky generácie</button>
+            </div>
 
             <fieldset>
                 <legend>Záznam videa</legend>
@@ -257,6 +268,9 @@ $assetVersion = '20260712-07';
     const windAnimate = document.getElementById('windAnimate');
     const windAnimationIntensity = document.getElementById('windAnimationIntensity');
     const windFpsIndicator = document.getElementById('windFpsIndicator');
+    const windGenerationMode = document.getElementById('windGenerationMode');
+    const windDeleteLastButton = document.getElementById('windDeleteLastButton');
+    const windDeleteAllButton = document.getElementById('windDeleteAllButton');
     const recordFps = document.getElementById('recordFps');
     const recordQuality = document.getElementById('recordQuality');
     const recordAutoHideUi = document.getElementById('recordAutoHideUi');
@@ -486,6 +500,32 @@ $assetVersion = '20260712-07';
         windFpsIndicator.textContent = 'FPS: ' + fpsText + ' | AUTO profil: ' + autoText;
     }
 
+    function resolveWindGenerationConfig() {
+        const mode = String(windGenerationMode?.value || 'replace');
+        if (mode === 'keep') {
+            return {
+                mode,
+                preservePrevious: true,
+                clearMode: 'none',
+                label: 'zachovať predošlé'
+            };
+        }
+        if (mode === 'clear-last') {
+            return {
+                mode,
+                preservePrevious: false,
+                clearMode: 'last',
+                label: 'zmazať poslednú'
+            };
+        }
+        return {
+            mode: 'replace',
+            preservePrevious: false,
+            clearMode: 'all',
+            label: 'zmazať všetko'
+        };
+    }
+
     function windLegendSwatch(color, label, note) {
         return '<div style="display:grid;grid-template-columns:14px 1fr;gap:8px;align-items:start;margin:3px 0">' +
             '<span style="width:12px;height:12px;border-radius:50%;border:1px solid rgba(255,255,255,.55);background:' + color + ';margin-top:2px"></span>' +
@@ -615,6 +655,7 @@ $assetVersion = '20260712-07';
             ' | color=' + windColorMode.value + '/' + windColorTheme.value +
             ' | animate=' + (windAnimate.checked ? 'on' : 'off') +
             ' (' + windAnimationIntensity.value + ')' +
+            ' | generations=' + resolveWindGenerationConfig().mode +
             ' | sourceUrl=' + (String(windTempSourceUrl.value || '').trim() || 'nezadaný') + '.',
             'info'
         );
@@ -724,6 +765,22 @@ $assetVersion = '20260712-07';
     windAnimationIntensity.addEventListener('change', refreshWindFpsIndicator);
     windColorMode.addEventListener('change', refreshWindColorLegend);
     windColorTheme.addEventListener('change', refreshWindColorLegend);
+    windDeleteLastButton.addEventListener('click', () => {
+        const removed = Number(window.WindRender?.clear?.(viewer, 'last') || 0);
+        if (removed > 0) {
+            logStatus('WIND: zmazaná posledná generácia.', 'success');
+            return;
+        }
+        logStatus('WIND: nebola nájdená žiadna generácia na zmazanie.', 'info');
+    });
+    windDeleteAllButton.addEventListener('click', () => {
+        const removed = Number(window.WindRender?.clear?.(viewer, 'all') || 0);
+        if (removed > 0) {
+            logStatus('WIND: zmazané všetky generácie (' + removed + ').', 'success');
+            return;
+        }
+        logStatus('WIND: neboli nájdené žiadne generácie na zmazanie.', 'info');
+    });
     recordToggleButton.addEventListener('click', () => {
         if (activeRecorder && activeRecorder.state === 'recording') {
             stopRecording();
@@ -909,6 +966,7 @@ $assetVersion = '20260712-07';
         const activeIntensity = requestedIntensity === 'auto' ? resolveAutoProfile() : requestedIntensity;
         windAutoActiveProfile = activeIntensity;
         const animationCfg = animationProfiles[activeIntensity] || animationProfiles.medium;
+        const generationCfg = resolveWindGenerationConfig();
         refreshWindFpsIndicator();
 
         const windResult = await window.WindUI.runDemo(viewer, center, {
@@ -929,6 +987,8 @@ $assetVersion = '20260712-07';
             colorMode: windColorMode.value,
             colorTheme: windColorTheme.value,
             animationEnabled: windAnimate.checked,
+            preservePrevious: generationCfg.preservePrevious,
+            clearMode: generationCfg.clearMode,
             maxVerticalMs: 4.0,
             maxVerticalRatio: 0.35,
             coolingZones: [],
@@ -961,7 +1021,9 @@ $assetVersion = '20260712-07';
         logStatus(
             'WIND: vykreslených prúdnic ' + windResult.stats.rendered +
             ' / seedov ' + windResult.stats.streamlines +
+            ' / vrstiev ' + (Number(windResult?.stats?.activeLayers) || 0) +
             ', režim ' + mode + ', ' + sampled +
+            ', generácie: ' + generationCfg.label +
             (flowStates.length ? ', flow_state: ' + flowStates.join('/') : '') + '.',
             'success'
         );
@@ -1022,6 +1084,7 @@ $assetVersion = '20260712-07';
                 colorMode: windColorMode.value,
                 colorTheme: windColorTheme.value,
                 animationEnabled: windAnimate.checked,
+                clearMode: 'last',
                 ...animationProfiles[nextProfile]
             });
             refreshWindFpsIndicator();

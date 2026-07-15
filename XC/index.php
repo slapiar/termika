@@ -170,6 +170,18 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                 <div class="row"><span class="label">TEMP súbor:</span><span id="pTempFile" class="val">temp.json</span></div>
                 <div class="row"><span class="label">TEMP hladín:</span><span id="pTempLevels" class="val">--</span></div>
                 <div class="row"><span class="label">Miesto:</span><span id="pSite" class="val">--</span></div>
+                <div class="separator"></div>
+                <div class="panel-subtitle">WIND GENERÁCIE</div>
+                <div class="wind-generation-radio-group" role="radiogroup" aria-label="Režim generácie vetra">
+                    <label><input type="radio" name="windGenerationModeMain" value="keep" checked> Zachovať poslednú generáciu</label>
+                    <label><input type="radio" name="windGenerationModeMain" value="clear-last"> Vymazať poslednú generáciu</label>
+                    <label><input type="radio" name="windGenerationModeMain" value="clear-all"> Vymazať všetky generácie z mapy</label>
+                </div>
+                <div class="wind-generation-mini-actions">
+                    <button id="windClearTodayButtonMain" type="button" title="Ručne vymazať všetky dnešné generácie z GENauto a z mapy">Vymazať dnešné GENauto</button>
+                    <button id="windLoadFromFilesButtonMain" type="button" title="Načítať vietor zo súborov GENauto/wind">Načítať vietor zo súborov</button>
+                    <button id="mapLoadFromFilesButtonMain" type="button" title="Načítať mapové generácie zo súborov GENauto/map">Načítať mapu zo súborov</button>
+                </div>
             </div>
         </aside>
 
@@ -211,6 +223,84 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
     <script>
         let viewer = null;
         let bioChart = null;
+        let windLoadingFromFiles = false;
+        let mapLoadingFromFiles = false;
+        let genAutoMapLayer = null;
+
+        const windGenerationModeMainInputs = Array.from(document.querySelectorAll('input[name="windGenerationModeMain"]'));
+        const windClearTodayButtonMain = document.getElementById("windClearTodayButtonMain");
+        const windLoadFromFilesButtonMain = document.getElementById("windLoadFromFilesButtonMain");
+        const mapLoadFromFilesButtonMain = document.getElementById("mapLoadFromFilesButtonMain");
+
+        function getWindGenerationModeMain() {
+            const checked = windGenerationModeMainInputs.find((input) => input.checked);
+            return String(checked?.value || "keep");
+        }
+
+        function resolveWindGenerationConfigMain() {
+            const mode = getWindGenerationModeMain();
+            if (mode === "keep") {
+                return {
+                    mode,
+                    preservePrevious: true,
+                    clearMode: "none",
+                    label: "zachovať predošlé"
+                };
+            }
+            if (mode === "clear-last") {
+                return {
+                    mode,
+                    preservePrevious: false,
+                    clearMode: "last",
+                    label: "zmazať poslednú"
+                };
+            }
+            return {
+                mode: "clear-all",
+                preservePrevious: false,
+                clearMode: "all",
+                label: "zmazať všetko"
+            };
+        }
+
+        async function genAutoRequest(action, payload = {}) {
+            const response = await fetch("genauto.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ action, ...payload })
+            });
+
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (_) {
+                throw new Error("GENauto endpoint vrátil neplatný JSON.");
+            }
+
+            if (!response.ok || data?.status !== "success") {
+                throw new Error(String(data?.message || "GENauto operácia zlyhala."));
+            }
+
+            return data;
+        }
+
+        async function persistGenerationAuto(kind, center, payload) {
+            if (!center || !Number.isFinite(Number(center.lat)) || !Number.isFinite(Number(center.lon))) {
+                return;
+            }
+
+            try {
+                await genAutoRequest("saveGeneration", {
+                    kind,
+                    center,
+                    payload
+                });
+            } catch (error) {
+                logStatus("GENauto zapis pre " + kind + " zlyhal: " + error.message, "error");
+            }
+        }
 
         function logStatus(text, statusType = "info") {
             const consoleLog = document.getElementById("debugLog");
@@ -276,7 +366,7 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             }, 120);
         }
 
-        async function renderWindLayer(reason = "") {
+        async function renderWindLayer(reason = "", options = {}) {
             if (!viewer || viewer.isDestroyed()) return;
             if (!window.WindUI || !window.WindField || !window.WindRender || !window.WindTempLoader) {
                 logStatus("WIND vrstva nie je dostupná (moduly sa nenačítali).", "error");
@@ -284,61 +374,84 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             }
 
             const points = Array.isArray(window.PilotNetwork?.letoveBody) ? window.PilotNetwork.letoveBody : [];
-            if (!points.length) {
-                logStatus("WIND vrstva: chýbajú letové body pre výpočet.", "error");
-                return;
-            }
-
             const idxRaw = Number(window.PilotNetwork?.currentIndex);
             const idx = Number.isFinite(idxRaw)
-                ? Math.max(0, Math.min(points.length - 1, Math.round(idxRaw)))
+                ? Math.max(0, Math.min(Math.max(0, points.length - 1), Math.round(idxRaw)))
                 : 0;
-            const point = points[idx] || points[0];
-            const center = { lat: Number(point.lat), lon: Number(point.lon) };
+            const point = points[idx] || points[0] || null;
+
+            const centerCandidate = options.centerOverride || (point ? { lat: Number(point.lat), lon: Number(point.lon) } : null);
+            const center = centerCandidate
+                ? { lat: Number(centerCandidate.lat), lon: Number(centerCandidate.lon) }
+                : null;
+
             if (!Number.isFinite(center.lat) || !Number.isFinite(center.lon)) {
                 logStatus("WIND vrstva: neplatný stred výpočtu.", "error");
                 return;
             }
 
-            window.WindUI.init({
-                aglM: 260,
+            const generationCfg = options.generationConfigOverride || resolveWindGenerationConfigMain();
+            const skipAutoRecord = options.skipAutoRecord === true;
+            const windOverrides = options.windOverrides && typeof options.windOverrides === "object"
+                ? options.windOverrides
+                : {};
+
+            const renderOptions = {
+                seedEvery: 3,
+                maxSteps: 42,
+                stepMeters: 90,
                 radiusM: 1200,
                 spacingM: 120,
                 allowFallbackBaseVector: false,
                 useTempProfileWind: true,
+                maxVerticalMs: 4.0,
+                maxVerticalRatio: 0.35,
+                coolingZones: [],
+                animationEnabled: false,
+                ...windOverrides,
+                preservePrevious: generationCfg.preservePrevious,
+                clearMode: generationCfg.clearMode
+            };
+
+            const tempProfile = Array.isArray(options.tempProfileOverride)
+                ? options.tempProfileOverride
+                : (Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP)
+                    ? window.PilotNetwork.liveAtmosferaTEMP
+                    : null);
+
+            window.WindUI.init({
+                aglM: renderOptions.aglM ?? 260,
+                radiusM: renderOptions.radiusM,
+                spacingM: renderOptions.spacingM,
+                allowFallbackBaseVector: renderOptions.allowFallbackBaseVector,
+                useTempProfileWind: renderOptions.useTempProfileWind,
                 tempSourceMode: "auto",
                 tempSourceUrl: "XCtrack/temp.json",
                 colorMode: "tempDeltaK",
                 colorTheme: "dark",
-                animationEnabled: false,
-                maxVerticalMs: 4.0,
-                maxVerticalRatio: 0.35,
+                animationEnabled: renderOptions.animationEnabled,
+                preservePrevious: generationCfg.preservePrevious,
+                clearMode: generationCfg.clearMode,
+                maxVerticalMs: renderOptions.maxVerticalMs,
+                maxVerticalRatio: renderOptions.maxVerticalRatio,
                 source: "ODVODENE"
             });
 
             try {
                 const windResult = await window.WindUI.runDemo(viewer, center, {
-                    tempProfile: Array.isArray(window.PilotNetwork?.liveAtmosferaTEMP)
-                        ? window.PilotNetwork.liveAtmosferaTEMP
-                        : null,
-                    seedEvery: 3,
-                    maxSteps: 42,
-                    stepMeters: 90,
-                    radiusM: 1200,
-                    spacingM: 120,
-                    allowFallbackBaseVector: false,
-                    useTempProfileWind: true,
-                    maxVerticalMs: 4.0,
-                    maxVerticalRatio: 0.35,
-                    coolingZones: [],
-                    animationEnabled: false
+                    tempProfile,
+                    ...renderOptions
                 });
 
                 const rendered = Number(windResult?.stats?.rendered) || 0;
                 const seeds = Number(windResult?.stats?.streamlines) || 0;
+                const activeLayers = Number(windResult?.stats?.activeLayers) || 0;
+                const generationId = Number(windResult?.stats?.generationId) || 0;
                 if (rendered > 0) {
                     logStatus(
                         "WIND: vykreslených prúdnic " + rendered + " / seedov " + seeds +
+                        " / vrstiev " + activeLayers +
+                        ", generácie: " + generationCfg.label +
                         (reason ? " (" + reason + ")" : ""),
                         "success"
                     );
@@ -348,8 +461,247 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                         "error"
                     );
                 }
+
+                if (!skipAutoRecord) {
+                    const mapPayload = {
+                        reason,
+                        generationMode: generationCfg.mode,
+                        generationId,
+                        rendered,
+                        activeLayers,
+                        focusCenter: center,
+                        currentIndex: idx,
+                        flightPoint: point
+                            ? {
+                                lat: Number(point.lat),
+                                lon: Number(point.lon),
+                                time_s: Number(point.time_s),
+                                render_alt_m: Number(point.render_alt_m),
+                                agl_m: Number(point.agl_m)
+                            }
+                            : null
+                    };
+
+                    const windPayload = {
+                        reason,
+                        generationMode: generationCfg.mode,
+                        generationId,
+                        rendered,
+                        seeds,
+                        activeLayers,
+                        focusCenter: center,
+                        windSettings: {
+                            ...renderOptions,
+                            preservePrevious: generationCfg.preservePrevious,
+                            clearMode: generationCfg.clearMode
+                        },
+                        tempProfile: Array.isArray(tempProfile) ? tempProfile : null,
+                        tempSource: window.WindUI?.state?.lastTempSource || null
+                    };
+
+                    await persistGenerationAuto("map", center, mapPayload);
+                    await persistGenerationAuto("wind", center, windPayload);
+                }
+
+                return windResult;
             } catch (error) {
                 logStatus("WIND vrstvu sa nepodarilo vykresliť: " + error.message, "error");
+                return null;
+            }
+        }
+
+        async function loadWindFromGenAutoFiles() {
+            if (!viewer || viewer.isDestroyed()) {
+                logStatus("WIND: mapa ešte nie je pripravená na načítanie zo súborov.", "error");
+                return;
+            }
+            if (windLoadingFromFiles) {
+                logStatus("WIND: načítanie zo súborov už prebieha.", "info");
+                return;
+            }
+
+            windLoadingFromFiles = true;
+            windLoadFromFilesButtonMain.disabled = true;
+            const originalButtonText = windLoadFromFilesButtonMain.textContent;
+            windLoadFromFilesButtonMain.textContent = "… načítavam";
+
+            try {
+                const response = await genAutoRequest("listWindToday", { limit: 300 });
+                const records = Array.isArray(response.records) ? response.records : [];
+
+                if (!records.length) {
+                    logStatus("GENauto: pre dnešok nie sú uložené žiadne WIND súbory.", "info");
+                    return;
+                }
+
+                window.WindRender?.clear?.(viewer, "all");
+                logStatus("GENauto: načítavam " + records.length + " WIND generácií zo súborov.", "info");
+
+                for (let i = 0; i < records.length; i += 1) {
+                    const rec = records[i] || {};
+                    const payload = rec.payload && typeof rec.payload === "object" ? rec.payload : {};
+                    const center = payload.focusCenter || rec.center;
+                    const tempProfile = Array.isArray(payload.tempProfile) ? payload.tempProfile : null;
+                    const windSettings = payload.windSettings && typeof payload.windSettings === "object"
+                        ? payload.windSettings
+                        : {};
+
+                    const generationConfigOverride = i === 0
+                        ? { mode: "clear-all", preservePrevious: false, clearMode: "all", label: "zmazať všetko" }
+                        : { mode: "keep", preservePrevious: true, clearMode: "none", label: "zachovať predošlé" };
+
+                    await renderWindLayer("GENauto súbor " + (i + 1) + "/" + records.length, {
+                        centerOverride: center,
+                        tempProfileOverride: tempProfile,
+                        windOverrides: windSettings,
+                        generationConfigOverride,
+                        skipAutoRecord: true
+                    });
+                }
+
+                logStatus("GENauto: načítanie súborov dokončené.", "success");
+            } catch (error) {
+                logStatus("GENauto: načítanie vetra zo súborov zlyhalo: " + error.message, "error");
+            } finally {
+                windLoadingFromFiles = false;
+                windLoadFromFilesButtonMain.disabled = false;
+                windLoadFromFilesButtonMain.textContent = originalButtonText;
+            }
+        }
+
+        function clearGenAutoMapLayer() {
+            if (!viewer || viewer.isDestroyed()) return;
+            if (!genAutoMapLayer) return;
+            viewer.dataSources.remove(genAutoMapLayer, true);
+            genAutoMapLayer = null;
+        }
+
+        function formatUtcTimeShort(isoText) {
+            const date = new Date(String(isoText || ""));
+            if (Number.isNaN(date.getTime())) return "--:--:--";
+            return date.toISOString().slice(11, 19);
+        }
+
+        async function renderMapGenerationsInScene(records) {
+            if (!viewer || viewer.isDestroyed() || !window.Cesium) return;
+
+            clearGenAutoMapLayer();
+
+            const ds = new Cesium.CustomDataSource("GENAUTO_MAP_POINTS");
+            const positions = [];
+
+            records.forEach((record, index) => {
+                const center = record?.center || record?.payload?.focusCenter || null;
+                const lat = Number(center?.lat);
+                const lon = Number(center?.lon);
+                if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+                const cart = Cesium.Cartesian3.fromDegrees(lon, lat, 26);
+                positions.push(cart);
+
+                const localTime = formatUtcTimeShort(record.generated_at_utc);
+                const mode = String(record?.payload?.generationMode || "-");
+
+                ds.entities.add({
+                    position: cart,
+                    point: {
+                        pixelSize: 7,
+                        color: Cesium.Color.fromCssColorString("#FFD166"),
+                        outlineColor: Cesium.Color.fromCssColorString("#2A1A00"),
+                        outlineWidth: 1
+                    },
+                    label: {
+                        text: String(index + 1) + " · " + localTime + " · " + mode,
+                        font: "11px monospace",
+                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                        fillColor: Cesium.Color.fromCssColorString("#FFF5D6"),
+                        outlineColor: Cesium.Color.fromCssColorString("#1D1D1D"),
+                        outlineWidth: 2,
+                        pixelOffset: new Cesium.Cartesian2(14, -10),
+                        horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                        verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                        disableDepthTestDistance: Number.POSITIVE_INFINITY
+                    },
+                    properties: {
+                        type: "GENAUTO_MAP_POINT",
+                        generated_at_utc: String(record.generated_at_utc || ""),
+                        generation_mode: mode
+                    }
+                });
+            });
+
+            if (positions.length >= 2) {
+                ds.entities.add({
+                    polyline: {
+                        positions,
+                        width: 2,
+                        material: Cesium.Color.fromCssColorString("#FFD166").withAlpha(0.75)
+                    },
+                    properties: {
+                        type: "GENAUTO_MAP_PATH"
+                    }
+                });
+            }
+
+            genAutoMapLayer = ds;
+            await viewer.dataSources.add(ds);
+
+            if (positions.length >= 2) {
+                const bounds = Cesium.BoundingSphere.fromPoints(positions);
+                viewer.camera.flyToBoundingSphere(bounds, {
+                    duration: 1.8,
+                    offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-38), Math.max(900, bounds.radius * 2.2))
+                });
+                return;
+            }
+
+            if (positions.length === 1) {
+                const cartographic = Cesium.Cartographic.fromCartesian(positions[0]);
+                if (cartographic) {
+                    viewer.camera.flyTo({
+                        destination: Cesium.Cartesian3.fromRadians(
+                            cartographic.longitude,
+                            cartographic.latitude,
+                            2600
+                        ),
+                        duration: 1.5
+                    });
+                }
+            }
+        }
+
+        async function loadMapFromGenAutoFiles() {
+            if (!viewer || viewer.isDestroyed()) {
+                logStatus("MAPA: scéna ešte nie je pripravená.", "error");
+                return;
+            }
+            if (mapLoadingFromFiles) {
+                logStatus("MAPA: načítanie mapových generácií už prebieha.", "info");
+                return;
+            }
+
+            mapLoadingFromFiles = true;
+            mapLoadFromFilesButtonMain.disabled = true;
+            const originalButtonText = mapLoadFromFilesButtonMain.textContent;
+            mapLoadFromFilesButtonMain.textContent = "… načítavam";
+
+            try {
+                const response = await genAutoRequest("listMapToday", { limit: 1000 });
+                const records = Array.isArray(response.records) ? response.records : [];
+                if (!records.length) {
+                    clearGenAutoMapLayer();
+                    logStatus("GENauto: pre dnešok nie sú uložené žiadne mapové generácie.", "info");
+                    return;
+                }
+
+                await renderMapGenerationsInScene(records);
+                logStatus("GENauto: načítaných mapových generácií " + records.length + ".", "success");
+            } catch (error) {
+                logStatus("GENauto: načítanie mapových generácií zlyhalo: " + error.message, "error");
+            } finally {
+                mapLoadingFromFiles = false;
+                mapLoadFromFilesButtonMain.disabled = false;
+                mapLoadFromFilesButtonMain.textContent = originalButtonText;
             }
         }
 
@@ -377,6 +729,44 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
         document.getElementById("clearDebugButton").addEventListener("click", () => {
             document.getElementById("debugLog").replaceChildren();
             logTempProfileSummary("RESET");
+        });
+
+        windClearTodayButtonMain?.addEventListener("click", async () => {
+            if (!viewer || viewer.isDestroyed()) {
+                logStatus("GENauto: mapa ešte nie je pripravená.", "error");
+                return;
+            }
+
+            windClearTodayButtonMain.disabled = true;
+            const originalText = windClearTodayButtonMain.textContent;
+            windClearTodayButtonMain.textContent = "… mažem";
+
+            try {
+                const removedLayers = Number(window.WindRender?.clear?.(viewer, "all") || 0);
+                clearGenAutoMapLayer();
+                const response = await genAutoRequest("clearToday", { kinds: ["map", "wind"] });
+                const deletedMap = Number(response.deleted?.map || 0);
+                const deletedWind = Number(response.deleted?.wind || 0);
+
+                logStatus(
+                    "GENauto: zmazané dnešné súbory map=" + deletedMap + ", wind=" + deletedWind +
+                    "; odstránené vrstvy z mapy=" + removedLayers + ".",
+                    "success"
+                );
+            } catch (error) {
+                logStatus("GENauto: mazanie dnešných generácií zlyhalo: " + error.message, "error");
+            } finally {
+                windClearTodayButtonMain.disabled = false;
+                windClearTodayButtonMain.textContent = originalText;
+            }
+        });
+
+        windLoadFromFilesButtonMain?.addEventListener("click", async () => {
+            await loadWindFromGenAutoFiles();
+        });
+
+        mapLoadFromFilesButtonMain?.addEventListener("click", async () => {
+            await loadMapFromGenAutoFiles();
         });
 
         document.getElementById("hideDebugButton").addEventListener("click", () => {

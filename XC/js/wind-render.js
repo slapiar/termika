@@ -7,6 +7,8 @@ window.WindRender = {
 
     dataSourceName: "WIND_STREAMLINES",
 
+    generationCounter: 0,
+
     baseStreamlineColor: "#70E8FF",
 
     defaultStyle: {
@@ -34,16 +36,44 @@ window.WindRender = {
         animationMaxSegmentM: 420
     },
 
-    clear: function (viewer) {
+    getWindDataSources: function (viewer) {
+        if (!viewer?.dataSources) return [];
+
+        const list = [];
+        const count = Number(viewer.dataSources.length) || 0;
+        for (let i = 0; i < count; i += 1) {
+            const ds = viewer.dataSources.get(i);
+            if (!ds) continue;
+
+            const name = String(ds.name || "");
+            if (
+                ds._termikaWindLayer === true ||
+                name === this.dataSourceName ||
+                name.indexOf(this.dataSourceName + "#") === 0
+            ) {
+                list.push(ds);
+            }
+        }
+
+        return list;
+    },
+
+    clear: function (viewer, scope = "all") {
         if (!viewer?.dataSources) return;
 
-        const existing = viewer.dataSources
-            .getByName(this.dataSourceName)
-            .slice();
+        const existing = this.getWindDataSources(viewer);
+        if (!existing.length) return 0;
 
-        existing.forEach((ds) => {
+        const normalizedScope = String(scope || "all").toLowerCase();
+        const targets = normalizedScope === "last"
+            ? [existing[existing.length - 1]]
+            : existing;
+
+        targets.forEach((ds) => {
             viewer.dataSources.remove(ds, true);
         });
+
+        return targets.length;
     },
 
     renderField: async function (viewer, field, style = {}) {
@@ -51,10 +81,26 @@ window.WindRender = {
             return { rendered: 0, reason: "Viewer, Cesium, or field data missing." };
         }
 
-        this.clear(viewer);
-
         const cfg = { ...this.defaultStyle, ...style };
-        const ds = new Cesium.CustomDataSource(this.dataSourceName);
+        const preservePrevious = cfg.preservePrevious === true;
+        const clearModeRaw = String(cfg.clearMode || "all").toLowerCase();
+        const clearMode = clearModeRaw === "last"
+            ? "last"
+            : (clearModeRaw === "none" ? "none" : "all");
+
+        if (!preservePrevious && clearMode !== "none") {
+            this.clear(viewer, clearMode);
+        }
+
+        this.generationCounter += 1;
+        const generationId = this.generationCounter;
+        const useGeneratedName = preservePrevious || clearMode === "last";
+        const dsName = useGeneratedName
+            ? (this.dataSourceName + "#" + generationId)
+            : this.dataSourceName;
+        const ds = new Cesium.CustomDataSource(dsName);
+        ds._termikaWindLayer = true;
+        ds._termikaWindGeneration = generationId;
 
         const streamlines = this.buildStreamlines(field, cfg);
         let rendered = 0;
@@ -168,7 +214,12 @@ window.WindRender = {
         });
 
         viewer.dataSources.add(ds);
-        return { rendered, streamlines: streamlines.length };
+        return {
+            rendered,
+            streamlines: streamlines.length,
+            generationId,
+            activeLayers: this.getWindDataSources(viewer).length
+        };
     },
 
     buildStreamlines: function (field, style) {

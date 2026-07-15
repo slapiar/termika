@@ -162,7 +162,9 @@ window.WindUI = {
             stepMeters: settings.stepMeters,
             colorMode: settings.colorMode,
             colorTheme: settings.colorTheme,
-            animationEnabled: settings.animationEnabled
+            animationEnabled: settings.animationEnabled,
+            preservePrevious: settings.preservePrevious === true,
+            clearMode: settings.clearMode
         });
 
         this.state.lastField = field;
