@@ -27,6 +27,9 @@ if (stripos($html, 'asset/explorer-profile.css') === false) {
 if (stripos($html, 'asset/explorer-profile-dock.css') === false) {
     $headAssets .= '    <link rel="stylesheet" href="asset/explorer-profile-dock.css?v=20260715-01">' . "\n";
 }
+if (stripos($html, 'asset/explorer-profile-follow.css') === false) {
+    $headAssets .= '    <link rel="stylesheet" href="asset/explorer-profile-follow.css?v=20260715-01">' . "\n";
+}
 if (stripos($html, 'asset/workspace-polish.css') === false) {
     $headAssets .= '    <link rel="stylesheet" href="asset/workspace-polish.css?v=20260715-02">' . "\n";
 }
@@ -53,6 +56,9 @@ if (stripos($html, 'js/explorer-profile.js') === false) {
 }
 if (stripos($html, 'js/explorer-profile-dock.js') === false) {
     $bodyScripts .= '    <script src="js/explorer-profile-dock.js?v=20260715-01"></script>' . "\n";
+}
+if (stripos($html, 'js/explorer-profile-follow.js') === false) {
+    $bodyScripts .= '    <script src="js/explorer-profile-follow.js?v=20260715-01"></script>' . "\n";
 }
 if (stripos($html, 'js/workspace-crosshair.js') === false) {
     $bodyScripts .= '    <script src="js/workspace-crosshair.js?v=20260715-01"></script>' . "\n";
