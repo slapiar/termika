@@ -13,8 +13,47 @@
         { id: 'route', label: 'Trať', hint: 'nacvakávanie a práca s trasou' },
         { id: 'start', label: 'Štart', hint: 'štartová páska a výšková podmienka' },
         { id: 'points', label: 'Body', hint: 'zoznam a parametre otočných bodov' },
+        { id: 'profile', label: 'Profil', hint: 'výškový profil terénu pod traťou' },
         { id: 'export', label: 'Export', hint: 'súhrn, JSON a plánovací IGC' }
     ];
+
+    const originalSections = Array.from(sidebarScroll.querySelectorAll(':scope > .section'));
+    const profileSection = document.createElement('section');
+    profileSection.className = 'section explorer-profile-section';
+    profileSection.innerHTML = `
+        <h2>Výškový profil <small>terén pod plánovanou traťou</small></h2>
+        <div class="explorer-profile-toolbar">
+            <div class="explorer-profile-copy">
+                <strong>Profil celej úlohy</strong>
+                <span>Od štartu cez otočné body až po uzavretie trate.</span>
+            </div>
+            <label class="explorer-profile-samples">Vzorky
+                <select id="explorerProfileSamples" aria-label="Počet vzoriek výškového profilu">
+                    <option value="120">120</option>
+                    <option value="240" selected>240</option>
+                    <option value="400">400</option>
+                </select>
+            </label>
+            <button id="explorerProfileRefresh" type="button">↻ Prepočítať</button>
+        </div>
+        <div id="explorerProfileStatus" class="status" data-kind="info">Otvor profil po nakreslení aspoň jedného úseku trate.</div>
+        <div class="explorer-profile-stats" aria-label="Súhrn výškového profilu">
+            <div><strong id="profileDistance">—</strong><span>VZDIALENOSŤ</span></div>
+            <div><strong id="profileMinHeight">—</strong><span>MINIMUM</span></div>
+            <div><strong id="profileMaxHeight">—</strong><span>MAXIMUM</span></div>
+            <div><strong id="profileAscent">—</strong><span>STÚPANIE TERÉNU</span></div>
+            <div><strong id="profileDescent">—</strong><span>KLESANIE TERÉNU</span></div>
+        </div>
+        <div id="explorerProfileChartWrap" class="explorer-profile-chart-wrap">
+            <canvas id="explorerProfileCanvas" aria-label="Graf výškového profilu trate"></canvas>
+            <div id="explorerProfileTooltip" class="explorer-profile-tooltip" hidden></div>
+            <div id="explorerProfileEmpty" class="explorer-profile-empty">Nakresli alebo načítaj trať a otvor túto roletu.</div>
+        </div>
+        <p class="hint">Profil zobrazuje model terénu pod spojnicou bodov. Značky v grafe označujú štart a jednotlivé otočné body.</p>
+    `;
+
+    const exportAnchor = originalSections[4] || null;
+    sidebarScroll.insertBefore(profileSection, exportAnchor);
 
     const navShell = document.createElement('div');
     navShell.id = 'explorerNavShell';
@@ -91,6 +130,9 @@
             tab.classList.remove('is-active');
             tab.setAttribute('aria-selected', 'false');
         });
+        document.dispatchEvent(new CustomEvent('termikaxc:explorer-panel-close', {
+            detail: { panelId: formerPanel }
+        }));
         if (focusTab && formerPanel) {
             navShell.querySelector(`[data-explorer-panel-target="${formerPanel}"]`)?.focus();
         }
@@ -115,6 +157,9 @@
         });
         sidebar.classList.add('is-open');
         sidebar.scrollTop = 0;
+        document.dispatchEvent(new CustomEvent('termikaxc:explorer-panel-open', {
+            detail: { panelId }
+        }));
     }
 
     function applyDock(dock) {
