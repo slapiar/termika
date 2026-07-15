@@ -117,8 +117,8 @@ $assetVersion = '20260712-07';
         .drawer-card .action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
         .drawer-card button{padding:7px 10px;border:1px solid #54778a;border-radius:6px;background:#10212b;color:#dff7ff;cursor:pointer}
         .drawer-card button:hover{background:#1c3b4b;border-color:#70e8ff}
-        .quick-tool-dock{position:absolute;top:76px;right:12px;z-index:31;display:flex;gap:8px;padding:8px;border:1px solid #426277;border-radius:10px;background:rgba(7,16,24,.88);box-shadow:0 8px 20px rgba(0,0,0,.35)}
-        .quick-tool-dock button{width:38px;height:38px;padding:0;border:1px solid #54778a;border-radius:10px;background:#10212b;color:#dff7ff;cursor:pointer;font:700 16px/1 system-ui}
+        .quick-tool-dock{position:absolute;top:76px;right:12px;z-index:31;display:flex;gap:6px;padding:6px;border:1px solid #426277;border-radius:9px;background:rgba(7,16,24,.86);box-shadow:0 8px 18px rgba(0,0,0,.32)}
+        .quick-tool-dock button{width:32px;height:32px;padding:0;border:1px solid #54778a;border-radius:8px;background:#10212b;color:#dff7ff;cursor:pointer;font:700 13px/1 system-ui}
         .quick-tool-dock button:hover{background:#1c3b4b;border-color:#70e8ff}
         .temp-data-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
         .temp-summary-pill{padding:8px;border:1px solid #35505f;border-radius:8px;background:rgba(7,16,24,.55)}
@@ -135,7 +135,7 @@ $assetVersion = '20260712-07';
         #debugConsole{left:12px;bottom:12px;width:560px;height:260px}
         #status{max-height:none;height:100%;overflow:auto;white-space:pre-wrap;color:#d7e7ef;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
         @media (max-width:1200px){.drawer-card,.drawer-card.wide{grid-column:span 6}.temp-data-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
-        @media (max-width:760px){.nav-shell{left:8px;right:8px;top:8px}.nav-shell[data-dock="bottom"]{bottom:8px}.nav-shell[data-dock="left"],.nav-shell[data-dock="right"]{width:calc(100vw - 16px)}.nav-bar{align-items:flex-start;flex-direction:column}.nav-primary{justify-content:flex-start}.nav-meta{width:100%;justify-content:space-between}.drawer-card,.drawer-card.wide{grid-column:1 / -1}.quick-tool-dock{top:auto;right:8px;bottom:72px;flex-wrap:wrap;width:54px}.quick-tool-dock button{width:38px;height:38px}.temp-data-summary{grid-template-columns:1fr 1fr}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}}
+        @media (max-width:760px){.nav-shell{left:8px;right:8px;top:8px}.nav-shell[data-dock="bottom"]{bottom:8px}.nav-shell[data-dock="left"],.nav-shell[data-dock="right"]{width:calc(100vw - 16px)}.nav-bar{align-items:flex-start;flex-direction:column}.nav-primary{justify-content:flex-start}.nav-meta{width:100%;justify-content:space-between}.drawer-card,.drawer-card.wide{grid-column:1 / -1}.quick-tool-dock{top:auto;right:8px;bottom:72px;flex-wrap:wrap;width:46px;padding:5px;gap:5px}.quick-tool-dock button{width:30px;height:30px;font-size:12px}.temp-data-summary{grid-template-columns:1fr 1fr}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}}
     </style>
 </head>
 <body>
@@ -171,7 +171,7 @@ $assetVersion = '20260712-07';
         </div>
     </div>
 
-    <section id="navDrawer" class="nav-drawer" aria-label="Obsah navigačnej sekcie">
+    <section id="navDrawer" class="nav-drawer" aria-label="Obsah navigačnej sekcie" hidden>
         <div class="nav-drawer-section" data-nav-section="explorer">
             <div class="drawer-grid">
                 <div class="drawer-card full">
@@ -417,7 +417,7 @@ $assetVersion = '20260712-07';
     <button type="button" data-show-window="cellDiagnostics" title="Diagnostika bunky">?</button>
 </nav>
 
-<aside id="legend" class="floating-window" data-window-name="Legenda" aria-label="Legenda geometrie terénu">
+<aside id="legend" class="floating-window" data-window-name="Legenda" aria-label="Legenda geometrie terénu" hidden>
     <header class="window-header">
         <div class="window-title">Legenda geometrie</div>
         <div class="window-actions"><button class="window-action close-window" type="button" title="Zavrieť okno">×</button></div>
@@ -446,7 +446,7 @@ $assetVersion = '20260712-07';
     </div>
 </section>
 
-<section id="debugConsole" class="floating-window" data-window-name="Debugger">
+<section id="debugConsole" class="floating-window" data-window-name="Debugger" hidden>
     <header class="window-header">
         <div class="window-title">Debugger · systémový monitor úloh</div>
         <div class="window-actions">
@@ -1809,7 +1809,8 @@ $assetVersion = '20260712-07';
         }
     });
     applyNavDock(navDockMode?.value || 'top');
-    setActiveNavSection('sources', true);
+    setActiveNavSection('sources', false);
+    toggleNavDrawer(false);
     renderTempProfileViews([], manualTempSourceName);
     windClearTodayButtonTest?.addEventListener('click', async () => {
         if (!viewer || viewer.isDestroyed()) {
