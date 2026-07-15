@@ -53,6 +53,14 @@
             document.head.appendChild(stylesheet);
         }
 
+        if (!document.querySelector('link[data-workspace-cesium-toolbar-offset="true"]')) {
+            const stylesheet = document.createElement("link");
+            stylesheet.rel = "stylesheet";
+            stylesheet.href = "asset/workspace-cesium-toolbar-offset.css?v=20260715-01";
+            stylesheet.dataset.workspaceCesiumToolbarOffset = "true";
+            document.head.appendChild(stylesheet);
+        }
+
         if (!document.querySelector('script[data-workspace-crosshair="true"]')) {
             const script = document.createElement("script");
             script.src = "js/workspace-crosshair.js?v=20260715-01";
@@ -66,6 +74,14 @@
             script.src = "js/workspace-hud-toggle.js?v=20260715-01";
             script.defer = true;
             script.dataset.workspaceHudToggle = "true";
+            document.body.appendChild(script);
+        }
+
+        if (!document.querySelector('script[data-workspace-cesium-toolbar-offset="true"]')) {
+            const script = document.createElement("script");
+            script.src = "js/workspace-cesium-toolbar-offset.js?v=20260715-01";
+            script.defer = true;
+            script.dataset.workspaceCesiumToolbarOffset = "true";
             document.body.appendChild(script);
         }
 
