@@ -1,0 +1,53 @@
+/* TermikaXC Explorer – mäkké sledovanie trate mapou z pripnutého profilu. */
+
+#explorerProfileFollowToggle {
+    display: none;
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 7px 10px;
+    white-space: nowrap;
+}
+
+#explorerProfileBottomDock #explorerProfileFollowToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-color: var(--explorer-nav-border-soft);
+}
+
+#explorerProfileBottomDock #explorerProfileFollowToggle.is-active {
+    border-color: #16a2bd;
+    background: rgba(182, 239, 249, 0.92);
+    color: #00647b;
+    box-shadow: 0 0 0 1px rgba(22, 162, 189, 0.16) inset;
+}
+
+body[data-explorer-theme="dark"] #explorerProfileBottomDock #explorerProfileFollowToggle.is-active {
+    border-color: #70e8ff;
+    background: #174152;
+    color: #bff6ff;
+}
+
+@media (max-width: 680px) {
+    #explorerProfileBottomDock #explorerProfileFollowToggle {
+        padding-inline: 8px;
+        font-size: 9px !important;
+    }
+}
+
+@media (max-width: 560px) {
+    #explorerProfileBottomDock #explorerProfileFollowToggle {
+        width: 34px;
+        min-width: 34px;
+        padding: 0;
+        overflow: hidden;
+        font-size: 0 !important;
+        letter-spacing: 0 !important;
+    }
+
+    #explorerProfileBottomDock #explorerProfileFollowToggle::before {
+        content: "◎";
+        font-size: 14px;
+        line-height: 1;
+    }
+}
