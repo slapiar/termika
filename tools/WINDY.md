@@ -225,27 +225,4 @@ Pred realnym letovym testom spustit v testovacej stranke `XC/terrain-analysis-te
 ### API kľúče Windy
 
 API kľúče sú uložené v `XC/asset/local-config.php` (nie je trackovany gitom).
-
-Point Forecast
-
-iqdFujsB7b7FhkKAg4CK8aIvABrntb89
-
-Issued on 15. 7. 2026
-
-Map Forecast
-
-WHXfj9GBOmQtF0uhLyWqxa06C4NtpUIw
-
-Issued on 15. 7. 2026
-
-Webcams
-
-sGQwIUnY7lq8PHgCQsFMszyAcFkAUPF8
-
-Issued on 15. 7. 2026
-
-Plugins
-
-pdy26NObTWzKkrXzbpKbrJuP3cVSoBKx
-
-Issued on 15. 7. 2026
+K dispozícii: Point Forecast, Map Forecast, Webcams, Plugins.
