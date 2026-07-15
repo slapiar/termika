@@ -3,7 +3,7 @@
 // This module is opt-in; no existing scene state is changed until renderField() is called.
 
 window.WindRender = {
-    VERSION: "2.6.9-wind-mvp.1",
+    VERSION: "2.6.10-wind-rk.1",
 
     dataSourceName: "WIND_STREAMLINES",
 
@@ -19,8 +19,12 @@ window.WindRender = {
         minSpeedMs: 0.2,
         minHorizontalSpeedMs: 0.15,
         maxStepDtS: 8,
+        minStepDtS: 0.08,
         minClearanceM: 6,
         maxCollisionRetries: 5,
+        integratorMethod: "rk45",
+        integrationTolerance: 0.9,
+        integrationSafety: 0.85,
         lineWidthMin: 1,
         lineWidthMax: 4,
         alpha: 0.9,
@@ -154,7 +158,8 @@ window.WindRender = {
                             tempDeltaK: line.tempDeltaK,
                             convergence: line.convergence,
                             flow_state: line.flowState,
-                            termination_reason: line.terminationReason
+                            termination_reason: line.terminationReason,
+                            termination_is_guard: line.terminationIsGuard === true
                         }
                     });
                 }
@@ -174,7 +179,8 @@ window.WindRender = {
                         tempDeltaK: line.tempDeltaK,
                         convergence: line.convergence,
                         flow_state: line.flowState,
-                        termination_reason: line.terminationReason
+                        termination_reason: line.terminationReason,
+                        termination_is_guard: line.terminationIsGuard === true
                     }
                 });
             }
@@ -229,10 +235,12 @@ window.WindRender = {
 
         const lines = [];
         const seedEvery = Math.max(1, Number(style.seedEvery) || 4);
-        const maxSteps = Math.max(2, Number(style.maxSteps) || 45);
+        const maxStepsInput = Math.max(2, Number(style.maxSteps) || 45);
         const stepMeters = Math.max(10, Number(style.stepMeters) || 90);
         const focusEdgeBufferM = Math.max(0, Math.min(Number(field.radiusM) || 0, Number(style.focusEdgeBufferM) || 120));
         const safeFocusRadiusM = Math.max(0, (Number(field.radiusM) || 0) - focusEdgeBufferM);
+        const dynamicGuard = Math.ceil((Math.max(200, Number(field.radiusM) || 1200) * 2) / Math.max(10, stepMeters)) * 7;
+        const maxStepsGuard = Math.max(maxStepsInput, dynamicGuard);
 
         const metersPerDegLat = 111320;
         const centerLat = Number(field.center?.lat) || 0;
@@ -258,12 +266,14 @@ window.WindRender = {
                     : (Number.isFinite(Number(seed.terrain_height_msl)) ? Number(seed.terrain_height_msl) + (Number(seed.agl_m) || 0) : null),
                 w_ms: Number(seed.w_ms) || 0,
                 vertical_momentum_ms: Number(seed.w_ms) || 0,
+                vertical_displacement_m: 0,
+                step_dt_s: Math.max(0.08, Math.min(2.5, stepMeters / Math.max(0.2, Number(seed.speed_ms) || 3))),
                 flow_state: seed.flow_state || "ATTACHED"
             };
             let lastSample = null;
-            let terminationReason = "MAX_STEPS";
+            let terminationReason = "INTEGRATION_GUARD";
 
-            for (let i = 0; i < maxSteps; i += 1) {
+            for (let i = 0; i < maxStepsGuard; i += 1) {
                 const sample = window.WindField.sampleWindVector3D(field, state.lat, state.lon, state.height_msl, state);
                 if (!sample?.valid) {
                     terminationReason = sample?.reason || "VALIDITY_END";
@@ -316,6 +326,10 @@ window.WindRender = {
                     terminationReason = "LEFT_FOCUS";
                     break;
                 }
+
+                if (i === maxStepsGuard - 1) {
+                    terminationReason = "INTEGRATION_GUARD";
+                }
             }
 
             if (points.length >= 2) {
@@ -328,7 +342,8 @@ window.WindRender = {
                     convergence: lastSample?.convergence,
                     heightMsl: Number.isFinite(Number(lastSample?.height_msl)) ? Number(lastSample.height_msl) : state.height_msl,
                     flowState: lastSample?.flow_state || "ATTACHED",
-                    terminationReason
+                    terminationReason,
+                    terminationIsGuard: terminationReason === "INTEGRATION_GUARD"
                 });
             }
         });
@@ -340,51 +355,48 @@ window.WindRender = {
         const currentVector = {
             u: Number(sample.u_ms) || 0,
             v: Number(sample.v_ms) || 0,
-            w: Number(sample.w_ms) || 0
+            w: Number(state.w_ms)
         };
         const hSpeedRaw = Math.hypot(currentVector.u, currentVector.v);
         if (hSpeedRaw < (Number(cfg.minHorizontalSpeedMs) || 0.15)) {
             return { accepted: false, reason: "PHYSICAL_STAGNATION", state };
         }
-        const hSpeed = hSpeedRaw;
+
         const minClearance = Math.max(0, Number(cfg.minClearanceM) || 6);
         const maxStepDtS = Math.max(0.2, Number(cfg.maxStepDtS) || 8);
+        const minStepDtS = Math.max(0.02, Number(cfg.minStepDtS) || 0.08);
         const retries = Math.max(1, Number(cfg.maxCollisionRetries) || 5);
         const previousHeading = Math.atan2(Number(state.u_ms) || 0, Number(state.v_ms) || 0);
         const currentHeading = Math.atan2(currentVector.u, currentVector.v);
         const turnDeltaDeg = this.angularDeltaDeg((currentHeading * 180) / Math.PI, (previousHeading * 180) / Math.PI);
         const terrainPenalty = sample.clearance_agl < 35 ? 0.35 : (sample.clearance_agl < 90 ? 0.65 : 1);
         const turnPenalty = turnDeltaDeg > 50 ? 0.35 : (turnDeltaDeg > 25 ? 0.55 : 1);
-        const baseDt = Math.max(0.05, Number(cfg.stepMeters) / hSpeed);
-        let dt = baseDt * terrainPenalty * turnPenalty;
-        dt = Math.min(dt, maxStepDtS);
+        const baseDtRaw = Number.isFinite(Number(state.step_dt_s))
+            ? Number(state.step_dt_s)
+            : Math.max(0.05, Number(cfg.stepMeters) / Math.max(0.1, hSpeedRaw));
+        let dt = Math.max(minStepDtS, Math.min(maxStepDtS, baseDtRaw * terrainPenalty * turnPenalty));
+        const method = String(cfg.integratorMethod || "rk45").toLowerCase();
+
         for (let attempt = 0; attempt < retries; attempt += 1) {
-            const latTrial = state.lat + (currentVector.v * dt) / cfg.metersPerDegLat;
-            const lonTrial = state.lon + (currentVector.u * dt) / cfg.metersPerDegLon;
-            const wTrialRaw = currentVector.w;
-            const maxVerticalMs = Number.isFinite(Number(field?.model?.maxVerticalMs))
-                ? Number(field.model.maxVerticalMs)
-                : 4.0;
-            const maxVerticalRatio = Number.isFinite(Number(field?.model?.maxVerticalRatio))
-                ? Number(field.model.maxVerticalRatio)
-                : 0.35;
-            const wCap = Math.max(0.2, Math.min(maxVerticalMs, hSpeed * maxVerticalRatio + 0.5));
-            const wTrial = Math.max(-wCap, Math.min(wCap, wTrialRaw));
-            const zTrial = (Number.isFinite(Number(state.height_msl)) ? Number(state.height_msl) : Number(sample.height_msl) || 0) + wTrial * dt;
+            const stepResult = method === "rk4"
+                ? this.integrateRk4Step(field, state, dt, cfg)
+                : this.integrateRk45Step(field, state, dt, cfg);
 
-            const nextSample = window.WindField.sampleWindVector3D(field, latTrial, lonTrial, zTrial, {
-                vertical_momentum_ms: wTrial,
-                w_ms: wTrial,
-                u_ms: currentVector.u,
-                v_ms: currentVector.v
-            });
+            if (!stepResult?.valid) {
+                if (Number.isFinite(Number(stepResult?.retryDt))) {
+                    dt = Math.max(minStepDtS, Math.min(maxStepDtS, Number(stepResult.retryDt)));
+                    continue;
+                }
+                return { accepted: false, reason: stepResult?.reason || "NUMERICAL_FAILURE", state };
+            }
 
+            const nextSample = stepResult.sample;
             if (!nextSample?.valid) {
                 return { accepted: false, reason: nextSample?.reason || "VALIDITY_END", state };
             }
 
-            if (Number.isFinite(nextSample.terrain_height_msl) && zTrial <= nextSample.terrain_height_msl + minClearance) {
-                dt *= 0.5;
+            if (Number.isFinite(nextSample.terrain_height_msl) && Number(stepResult.state.height_msl) <= nextSample.terrain_height_msl + minClearance) {
+                dt = Math.max(minStepDtS, dt * 0.5);
                 continue;
             }
 
@@ -392,29 +404,206 @@ window.WindRender = {
                 (Math.atan2(Number(nextSample.u_ms) || 0, Number(nextSample.v_ms) || 0) * 180) / Math.PI,
                 (currentHeading * 180) / Math.PI
             );
-            if (headingChange > 55 || (Number(nextSample.clearance_agl) || 0) < minClearance * 2) {
-                dt *= 0.5;
+            if (headingChange > 62 || (Number(nextSample.clearance_agl) || 0) < minClearance * 1.6) {
+                dt = Math.max(minStepDtS, dt * 0.5);
                 continue;
             }
 
+            const acceptedState = {
+                lat: nextSample.lat,
+                lon: nextSample.lon,
+                height_msl: nextSample.height_msl,
+                u_ms: nextSample.u_ms,
+                v_ms: nextSample.v_ms,
+                w_ms: stepResult.state.w_ms,
+                vertical_momentum_ms: stepResult.state.w_ms,
+                vertical_displacement_m: stepResult.state.vertical_displacement_m,
+                step_dt_s: Number.isFinite(Number(stepResult.nextDt))
+                    ? Math.max(minStepDtS, Math.min(maxStepDtS, Number(stepResult.nextDt)))
+                    : dt,
+                flow_state: nextSample.flow_state,
+                termination_reason: nextSample.termination_reason || null
+            };
+
             return {
                 accepted: true,
-                state: {
-                    lat: nextSample.lat,
-                    lon: nextSample.lon,
-                    height_msl: nextSample.height_msl,
-                    u_ms: nextSample.u_ms,
-                    v_ms: nextSample.v_ms,
-                    w_ms: nextSample.w_ms,
-                    vertical_momentum_ms: nextSample.vertical_momentum_ms,
-                    flow_state: nextSample.flow_state,
-                    termination_reason: nextSample.termination_reason || null
-                },
+                state: acceptedState,
                 dt
             };
         }
 
         return { accepted: false, reason: "NUMERICAL_FAILURE", state };
+    },
+
+    derivative3D: function (field, probeState, cfg) {
+        const sample = window.WindField.sampleWindVector3D(field, probeState.lat, probeState.lon, probeState.height_msl, {
+            w_ms: probeState.w_ms,
+            vertical_momentum_ms: probeState.w_ms,
+            vertical_displacement_m: probeState.vertical_displacement_m,
+            u_ms: probeState.u_ms,
+            v_ms: probeState.v_ms
+        });
+        if (!sample?.valid) {
+            return { valid: false, reason: sample?.reason || "VALIDITY_END", sample: null };
+        }
+
+        const metersPerDegLat = Math.max(1e-6, Number(cfg.metersPerDegLat) || 111320);
+        const metersPerDegLon = Math.max(1e-6, Math.abs(Number(cfg.metersPerDegLon) || 1));
+        const wState = Number.isFinite(Number(probeState.w_ms)) ? Number(probeState.w_ms) : (Number(sample.w_ms) || 0);
+        const etaState = Number.isFinite(Number(probeState.vertical_displacement_m))
+            ? Number(probeState.vertical_displacement_m)
+            : 0;
+        const n2 = Number.isFinite(Number(sample.buoyancy_n2_s2)) ? Number(sample.buoyancy_n2_s2) : 0;
+        const damping = Number.isFinite(Number(sample.vertical_damping_s)) ? Number(sample.vertical_damping_s) : 0.15;
+        const wEq = Number.isFinite(Number(sample.w_equilibrium_ms)) ? Number(sample.w_equilibrium_ms) : (Number(sample.w_ms) || 0);
+        const wDot = Math.max(-14, Math.min(14, -(n2 * etaState) - damping * (wState - wEq)));
+
+        return {
+            valid: true,
+            sample,
+            d: {
+                lat: (Number(sample.v_ms) || 0) / metersPerDegLat,
+                lon: (Number(sample.u_ms) || 0) / metersPerDegLon,
+                z: wState,
+                w: wDot,
+                eta: wState,
+                u: Number(sample.u_ms) || 0,
+                v: Number(sample.v_ms) || 0
+            }
+        };
+    },
+
+    applyDerivative: function (state, derivative, dtScale) {
+        const dt = Number(dtScale) || 0;
+        return {
+            lat: Number(state.lat) + derivative.lat * dt,
+            lon: Number(state.lon) + derivative.lon * dt,
+            height_msl: Number(state.height_msl) + derivative.z * dt,
+            w_ms: Number(state.w_ms) + derivative.w * dt,
+            vertical_displacement_m: Number(state.vertical_displacement_m) + derivative.eta * dt,
+            u_ms: derivative.u,
+            v_ms: derivative.v
+        };
+    },
+
+    clampVerticalVelocity: function (field, sample, state) {
+        const hSpeed = Math.max(0, Math.hypot(Number(sample?.u_ms) || 0, Number(sample?.v_ms) || 0));
+        const maxVerticalMs = Number.isFinite(Number(field?.model?.maxVerticalMs))
+            ? Number(field.model.maxVerticalMs)
+            : 4.0;
+        const maxVerticalRatio = Number.isFinite(Number(field?.model?.maxVerticalRatio))
+            ? Number(field.model.maxVerticalRatio)
+            : 0.35;
+        const wCap = Math.max(0.2, Math.min(maxVerticalMs, hSpeed * maxVerticalRatio + 0.5));
+        const nextW = Math.max(-wCap, Math.min(wCap, Number(state?.w_ms) || 0));
+        return {
+            ...state,
+            w_ms: nextW,
+            vertical_momentum_ms: nextW
+        };
+    },
+
+    integrateRk4Core: function (field, state, dt, cfg) {
+        const k1 = this.derivative3D(field, state, cfg);
+        if (!k1.valid) return { valid: false, reason: k1.reason };
+
+        const s2 = this.applyDerivative(state, k1.d, dt * 0.5);
+        const k2 = this.derivative3D(field, s2, cfg);
+        if (!k2.valid) return { valid: false, reason: k2.reason };
+
+        const s3 = this.applyDerivative(state, k2.d, dt * 0.5);
+        const k3 = this.derivative3D(field, s3, cfg);
+        if (!k3.valid) return { valid: false, reason: k3.reason };
+
+        const s4 = this.applyDerivative(state, k3.d, dt);
+        const k4 = this.derivative3D(field, s4, cfg);
+        if (!k4.valid) return { valid: false, reason: k4.reason };
+
+        const next = {
+            lat: Number(state.lat) + (dt / 6) * (k1.d.lat + 2 * k2.d.lat + 2 * k3.d.lat + k4.d.lat),
+            lon: Number(state.lon) + (dt / 6) * (k1.d.lon + 2 * k2.d.lon + 2 * k3.d.lon + k4.d.lon),
+            height_msl: Number(state.height_msl) + (dt / 6) * (k1.d.z + 2 * k2.d.z + 2 * k3.d.z + k4.d.z),
+            w_ms: Number(state.w_ms) + (dt / 6) * (k1.d.w + 2 * k2.d.w + 2 * k3.d.w + k4.d.w),
+            vertical_displacement_m: Number(state.vertical_displacement_m) + (dt / 6) * (k1.d.eta + 2 * k2.d.eta + 2 * k3.d.eta + k4.d.eta),
+            u_ms: k4.d.u,
+            v_ms: k4.d.v
+        };
+
+        const endSample = window.WindField.sampleWindVector3D(field, next.lat, next.lon, next.height_msl, {
+            w_ms: next.w_ms,
+            vertical_momentum_ms: next.w_ms,
+            vertical_displacement_m: next.vertical_displacement_m,
+            u_ms: next.u_ms,
+            v_ms: next.v_ms
+        });
+        if (!endSample?.valid) {
+            return { valid: false, reason: endSample?.reason || "VALIDITY_END" };
+        }
+
+        const clamped = this.clampVerticalVelocity(field, endSample, next);
+        return {
+            valid: true,
+            state: {
+                ...clamped,
+                u_ms: Number(endSample.u_ms) || clamped.u_ms,
+                v_ms: Number(endSample.v_ms) || clamped.v_ms
+            },
+            sample: endSample
+        };
+    },
+
+    integrationErrorMeters: function (a, b, cfg) {
+        const dLatM = (Number(a.lat) - Number(b.lat)) * (Number(cfg.metersPerDegLat) || 111320);
+        const dLonM = (Number(a.lon) - Number(b.lon)) * (Number(cfg.metersPerDegLon) || 111320);
+        const dZM = Number(a.height_msl) - Number(b.height_msl);
+        return Math.hypot(dLatM, dLonM, dZM);
+    },
+
+    integrateRk4Step: function (field, state, dt, cfg) {
+        const res = this.integrateRk4Core(field, state, dt, cfg);
+        if (!res.valid) return res;
+        return {
+            valid: true,
+            state: res.state,
+            sample: res.sample,
+            nextDt: dt
+        };
+    },
+
+    integrateRk45Step: function (field, state, dt, cfg) {
+        const minStepDtS = Math.max(0.02, Number(cfg.minStepDtS) || 0.08);
+        const maxStepDtS = Math.max(minStepDtS, Number(cfg.maxStepDtS) || 8);
+        const tol = Math.max(0.05, Number(cfg.integrationTolerance) || 0.9);
+        const safety = Math.max(0.5, Math.min(0.98, Number(cfg.integrationSafety) || 0.85));
+
+        const full = this.integrateRk4Core(field, state, dt, cfg);
+        if (!full.valid) return full;
+
+        const half1 = this.integrateRk4Core(field, state, dt * 0.5, cfg);
+        if (!half1.valid) return half1;
+        const half2 = this.integrateRk4Core(field, half1.state, dt * 0.5, cfg);
+        if (!half2.valid) return half2;
+
+        const err = this.integrationErrorMeters(full.state, half2.state, cfg);
+        if (err > tol && dt > minStepDtS * 1.05) {
+            return {
+                valid: false,
+                reason: "NUMERICAL_FAILURE",
+                retryDt: Math.max(minStepDtS, dt * 0.5)
+            };
+        }
+
+        const scale = err > 1e-6
+            ? safety * Math.pow(tol / err, 0.2)
+            : 1.8;
+        const nextDt = Math.max(minStepDtS, Math.min(maxStepDtS, dt * Math.max(0.5, Math.min(2.2, scale))));
+
+        return {
+            valid: true,
+            state: half2.state,
+            sample: half2.sample,
+            nextDt
+        };
     },
 
     resolveDominantFlowState: function (states) {

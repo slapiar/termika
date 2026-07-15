@@ -3,7 +3,7 @@
 // No automatic integration with existing pages; call init() manually when needed.
 
 window.WindUI = {
-    VERSION: "2.6.14-wind-physics-align.1",
+    VERSION: "2.6.15-wind-rk-mesh.1",
 
     state: {
         enabled: false,
@@ -31,6 +31,8 @@ window.WindUI = {
         colorMode: "tempDeltaK",
         colorTheme: "dark",
         animationEnabled: false,
+        integratorMethod: "rk45",
+        integrationTolerance: 0.9,
         activeEffects: ["terrain-steering"],
         source: "ODVODENE"
     },
@@ -163,6 +165,8 @@ window.WindUI = {
             colorMode: settings.colorMode,
             colorTheme: settings.colorTheme,
             animationEnabled: settings.animationEnabled,
+            integratorMethod: settings.integratorMethod,
+            integrationTolerance: settings.integrationTolerance,
             preservePrevious: settings.preservePrevious === true,
             clearMode: settings.clearMode
         });

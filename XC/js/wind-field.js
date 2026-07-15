@@ -3,7 +3,7 @@
 // This module is standalone and does not mutate existing terrain modules.
 
 window.WindField = {
-    VERSION: "2.6.14-wind-physics-align.1",
+    VERSION: "2.6.15-wind-rk-mesh.1",
 
     lastField: null,
 
@@ -29,6 +29,7 @@ window.WindField = {
 
     createField: function (options = {}) {
         const cfg = this.normalizeOptions(options);
+        cfg.terrainSampler = this.createTerrainSampler(cfg.terrainGeometry, cfg.center);
         const grid = this.buildGrid(cfg.center, cfg.radiusM, cfg.spacingM);
         const cells = this.computeCells(grid, cfg);
         const withBaseConvergence = this.computeConvergence(cells, grid);
@@ -77,7 +78,8 @@ window.WindField = {
                 allowFallbackBaseVector: cfg.allowFallbackBaseVector,
                 maxVerticalMs: cfg.maxVerticalMs,
                 maxVerticalRatio: cfg.maxVerticalRatio
-            }
+            },
+            _terrainSampler: cfg.terrainSampler
         };
 
         this.lastField = result;
@@ -329,6 +331,42 @@ window.WindField = {
         return this.clamp01((lapseKPerKm + 8) / 14);
     },
 
+    bruntVaisalaN2FromBracket: function (bracket) {
+        if (!bracket?.low || !bracket?.high) return 0;
+
+        const z0 = Number(bracket.low.z_m);
+        const z1 = Number(bracket.high.z_m);
+        const p0 = Number(bracket.low.p_hpa);
+        const p1 = Number(bracket.high.p_hpa);
+        const t0 = Number(bracket.low.T_c);
+        const t1 = Number(bracket.high.T_c);
+
+        if (!Number.isFinite(z0) || !Number.isFinite(z1) || !Number.isFinite(t0) || !Number.isFinite(t1)) {
+            return 0;
+        }
+
+        const dz = Math.max(1, z1 - z0);
+        const kappa = 0.2854;
+        const theta0 = Number.isFinite(p0) && p0 > 0
+            ? (t0 + 273.15) * Math.pow(1000 / p0, kappa)
+            : (t0 + 273.15);
+        const theta1 = Number.isFinite(p1) && p1 > 0
+            ? (t1 + 273.15) * Math.pow(1000 / p1, kappa)
+            : (t1 + 273.15);
+        const thetaRef = Math.max(200, (theta0 + theta1) * 0.5);
+        const dThetaDz = (theta1 - theta0) / dz;
+        const n2 = (9.81 / thetaRef) * dThetaDz;
+
+        return Math.max(-0.01, Math.min(0.03, Number.isFinite(n2) ? n2 : 0));
+    },
+
+    verticalDampingFromN2: function (n2, terrainWeight) {
+        const omega = Math.sqrt(Math.max(0, Number(n2) || 0));
+        const weight = this.clamp01(terrainWeight);
+        const damping = 0.12 + 0.95 * omega + 0.18 * weight;
+        return Math.max(0.06, Math.min(2.5, damping));
+    },
+
     projectVectorToTerrain: function (vector, normal) {
         const dot = vector.e * normal.e + vector.n * normal.n + vector.u * normal.u;
         return {
@@ -339,12 +377,161 @@ window.WindField = {
         };
     },
 
+    pointToLocalMeters: function (center, lat, lon) {
+        const metersPerDegLat = 111320;
+        const metersPerDegLon = 111320 * Math.cos((Number(center?.lat) || 0) * Math.PI / 180);
+        return {
+            eastM: (Number(lon) - Number(center?.lon || 0)) * metersPerDegLon,
+            northM: (Number(lat) - Number(center?.lat || 0)) * metersPerDegLat
+        };
+    },
+
+    barycentric2D: function (point, a, b, c) {
+        const v0x = b.eastM - a.eastM;
+        const v0y = b.northM - a.northM;
+        const v1x = c.eastM - a.eastM;
+        const v1y = c.northM - a.northM;
+        const v2x = point.eastM - a.eastM;
+        const v2y = point.northM - a.northM;
+
+        const den = v0x * v1y - v1x * v0y;
+        if (Math.abs(den) < 1e-9) {
+            return null;
+        }
+
+        const inv = 1 / den;
+        const l1 = (v2x * v1y - v1x * v2y) * inv;
+        const l2 = (v0x * v2y - v2x * v0y) * inv;
+        const l0 = 1 - l1 - l2;
+        return { l0, l1, l2 };
+    },
+
+    createTerrainSampler: function (terrainGeometry, center) {
+        const mesh = terrainGeometry?.mesh;
+        if (!mesh?.faces?.length || !mesh?.vertices?.length) return null;
+
+        const vertexById = new Map();
+        mesh.vertices.forEach((vertex) => {
+            const local = this.pointToLocalMeters(center, Number(vertex.lat), Number(vertex.lon));
+            vertexById.set(vertex.id, {
+                id: vertex.id,
+                lat: Number(vertex.lat),
+                lon: Number(vertex.lon),
+                eastM: local.eastM,
+                northM: local.northM,
+                heightM: Number(vertex.heightM)
+            });
+        });
+
+        const edgeById = new Map((mesh.edges || []).map((edge) => [edge.id, edge]));
+        const faceSamples = [];
+
+        mesh.faces.forEach((face) => {
+            const verts = (face.vertexIds || []).map((id) => vertexById.get(id)).filter(Boolean);
+            if (verts.length !== 3) return;
+
+            const eastVals = verts.map((v) => v.eastM);
+            const northVals = verts.map((v) => v.northM);
+            const meanBreak = (face.edgeIds || [])
+                .map((edgeId) => Number(edgeById.get(edgeId)?.breakStrength))
+                .filter(Number.isFinite)
+                .reduce((sum, value, _, list) => sum + value / list.length, 0);
+
+            faceSamples.push({
+                face,
+                verts,
+                bounds: {
+                    minEast: Math.min(...eastVals),
+                    maxEast: Math.max(...eastVals),
+                    minNorth: Math.min(...northVals),
+                    maxNorth: Math.max(...northVals)
+                },
+                meanBreakStrength: Number.isFinite(meanBreak) ? meanBreak : 0
+            });
+        });
+
+        return {
+            center,
+            faceSamples,
+            fallbackCells: Array.isArray(terrainGeometry?.cells) ? terrainGeometry.cells : []
+        };
+    },
+
+    sampleTerrainWithSampler: function (sampler, lat, lon) {
+        if (!sampler?.faceSamples?.length) return null;
+
+        const point = this.pointToLocalMeters(sampler.center, lat, lon);
+        const eps = 1e-6;
+        let best = null;
+        let bestPenalty = Number.POSITIVE_INFINITY;
+
+        sampler.faceSamples.forEach((faceSample) => {
+            const b = faceSample.bounds;
+            if (point.eastM < b.minEast - 2 || point.eastM > b.maxEast + 2 || point.northM < b.minNorth - 2 || point.northM > b.maxNorth + 2) {
+                return;
+            }
+
+            const bc = this.barycentric2D(point, faceSample.verts[0], faceSample.verts[1], faceSample.verts[2]);
+            if (!bc) return;
+
+            const penalty = Math.max(0, -bc.l0) + Math.max(0, -bc.l1) + Math.max(0, -bc.l2);
+            if (penalty > 0.2) return;
+            if (penalty < bestPenalty) {
+                bestPenalty = penalty;
+                best = { faceSample, bc };
+            }
+        });
+
+        if (!best) return null;
+
+        const verts = best.faceSample.verts;
+        const w0 = best.bc.l0;
+        const w1 = best.bc.l1;
+        const w2 = best.bc.l2;
+        const heightMsl = w0 * Number(verts[0].heightM) + w1 * Number(verts[1].heightM) + w2 * Number(verts[2].heightM);
+        const face = best.faceSample.face;
+        const terrainNormal = {
+            e: Number(face?.normal?.east) || 0,
+            n: Number(face?.normal?.north) || 0,
+            u: Number(face?.normal?.up) || 1
+        };
+
+        return {
+            terrainHeightMsl: Number.isFinite(heightMsl) ? heightMsl : null,
+            terrainNormal,
+            terrainFaceId: String(face?.id || ""),
+            terrainFaceBreakStrength: best.faceSample.meanBreakStrength,
+            terrainCell: {
+                slopeDeg: Number(face?.slopeDeg),
+                aspectDeg: Number(face?.aspectDeg),
+                heightM: Number.isFinite(heightMsl) ? heightMsl : null
+            }
+        };
+    },
+
     terrainAtPoint: function (field, lat, lon) {
+        const fromMesh = this.sampleTerrainWithSampler(field?._terrainSampler || null, lat, lon);
+        if (fromMesh) {
+            return {
+                terrainCell: fromMesh.terrainCell,
+                terrainHeightMsl: fromMesh.terrainHeightMsl,
+                terrainNormal: fromMesh.terrainNormal,
+                terrainFaceId: fromMesh.terrainFaceId,
+                terrainFaceBreakStrength: fromMesh.terrainFaceBreakStrength
+            };
+        }
+
         const terrainCell = this.nearestTerrainGeometryCell(field?.terrainGeometry, lat, lon);
         const terrainHeightMsl = Number.isFinite(Number(terrainCell?.heightM))
             ? Number(terrainCell.heightM)
             : (Number.isFinite(Number(field?.surfaceAltM)) ? Number(field.surfaceAltM) : null);
-        return { terrainCell, terrainHeightMsl };
+        return {
+            terrainCell,
+            terrainHeightMsl,
+            terrainNormal: this.terrainNormalFromCell(terrainCell),
+            terrainFaceId: null,
+            terrainFaceBreakStrength: null
+        };
     },
 
     sampleWindVector3D: function (fieldOrLat, latOrLon, lonOrHeight, heightOrPrev, previousState = null) {
@@ -406,13 +593,15 @@ window.WindField = {
         };
 
         const terrain = this.terrainAtPoint(field, lat, lon);
-        const terrainNormal = this.terrainNormalFromCell(terrain.terrainCell);
+        const terrainNormal = terrain.terrainNormal || this.terrainNormalFromCell(terrain.terrainCell);
         const clearanceAgl = Number.isFinite(terrain.terrainHeightMsl)
             ? Math.max(0, baseHeight - terrain.terrainHeightMsl)
             : Number(field?.level?.agl_m) || 0;
         const terrainWeight = this.clamp01(1 - clearanceAgl / 480);
         const projected = this.projectVectorToTerrain({ e: u, n: v, u: 0 }, terrainNormal);
         const stability = this.stabilityFromBracket(bracket);
+        const n2 = this.bruntVaisalaN2FromBracket(bracket);
+        const dampingS = this.verticalDampingFromN2(n2, terrainWeight);
         const wRaw = projected.u;
         const hWind = Math.hypot(projected.e, projected.n);
         const maxVerticalMs = Number.isFinite(Number(field?.model?.maxVerticalMs))
@@ -451,9 +640,19 @@ window.WindField = {
             terrain_normal_up: terrainNormal.u,
             terrain_weight: terrainWeight,
             stability_index: stability,
+            buoyancy_n2_s2: n2,
+            vertical_damping_s: dampingS,
+            w_equilibrium_ms: wRaw,
             vertical_momentum_ms: wMs,
+            vertical_displacement_m: Number.isFinite(Number(prevState?.vertical_displacement_m))
+                ? Number(prevState.vertical_displacement_m)
+                : 0,
             flow_state: flowState,
             termination_reason: null,
+            terrain_face_id: terrain.terrainFaceId || null,
+            terrain_face_break_strength: Number.isFinite(Number(terrain.terrainFaceBreakStrength))
+                ? Number(terrain.terrainFaceBreakStrength)
+                : null,
             source: field?.source || "ODVODENE"
         };
     },
@@ -527,10 +726,13 @@ window.WindField = {
 
                 const lat = grid.center.lat + northM / grid.metersPerDegLat;
                 const lon = grid.center.lon + eastM / grid.metersPerDegLon;
-                const terrainCell = this.nearestTerrainGeometryCell(cfg.terrainGeometry, lat, lon);
-                const terrainHeightMsl = Number.isFinite(Number(terrainCell?.heightM))
-                    ? Number(terrainCell.heightM)
-                    : (Number.isFinite(cfg.surfaceAltM) ? cfg.surfaceAltM : null);
+                const terrainSample = this.sampleTerrainWithSampler(cfg.terrainSampler || null, lat, lon);
+                const terrainCell = terrainSample?.terrainCell || this.nearestTerrainGeometryCell(cfg.terrainGeometry, lat, lon);
+                const terrainHeightMsl = Number.isFinite(Number(terrainSample?.terrainHeightMsl))
+                    ? Number(terrainSample.terrainHeightMsl)
+                    : (Number.isFinite(Number(terrainCell?.heightM))
+                        ? Number(terrainCell.heightM)
+                        : (Number.isFinite(cfg.surfaceAltM) ? cfg.surfaceAltM : null));
 
                 const targetAltMsl = Number.isFinite(terrainHeightMsl)
                     ? terrainHeightMsl + cfg.aglM
