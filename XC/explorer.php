@@ -12,6 +12,12 @@ if (stripos($html, 'asset/explorer.css') === false) {
 if (stripos($html, 'asset/explorer-nav.css') === false) {
     $headAssets .= '    <link rel="stylesheet" href="asset/explorer-nav.css?v=20260715-01">' . "\n";
 }
+if (stripos($html, 'asset/explorer-theme.css') === false) {
+    $headAssets .= '    <link rel="stylesheet" href="asset/explorer-theme.css?v=20260715-01">' . "\n";
+}
+if (stripos($html, 'asset/explorer-theme-runtime.css') === false) {
+    $headAssets .= '    <link rel="stylesheet" href="asset/explorer-theme-runtime.css?v=20260715-01">' . "\n";
+}
 
 if ($headAssets !== '') {
     $headEnd = stripos($html, '</head>');
@@ -20,11 +26,18 @@ if ($headAssets !== '') {
     }
 }
 
+$bodyScripts = '';
 if (stripos($html, 'js/explorer-nav.js') === false) {
-    $script = '    <script src="js/explorer-nav.js?v=20260715-01"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/explorer-nav.js?v=20260715-01"></script>' . "\n";
+}
+if (stripos($html, 'js/explorer-theme.js') === false) {
+    $bodyScripts .= '    <script src="js/explorer-theme.js?v=20260715-01"></script>' . "\n";
+}
+
+if ($bodyScripts !== '') {
     $bodyEnd = stripos($html, '</body>');
     if ($bodyEnd !== false) {
-        $html = substr_replace($html, $script, $bodyEnd, 0);
+        $html = substr_replace($html, $bodyScripts, $bodyEnd, 0);
     }
 }
 
