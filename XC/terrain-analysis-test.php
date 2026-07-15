@@ -87,148 +87,335 @@ $assetVersion = '20260712-07';
         .compare-row{display:flex;align-items:center;gap:8px;margin-top:8px}
         .compare-row span{min-width:64px;color:#8fa9b8;font-size:12px}
         .compare-select{width:100%;padding:4px 6px;background:#10212b;color:#eef;border:1px solid #426277;border-radius:4px;font-size:12px}
-        @media (max-width:760px){#panel{width:calc(100vw - 24px);height:60vh}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}#windowDock{bottom:6px}}
+        .nav-shell{position:absolute;left:12px;right:12px;top:12px;z-index:34;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+        .nav-shell[data-dock="bottom"]{top:auto;bottom:12px}
+        .nav-shell[data-dock="left"]{top:12px;bottom:12px;right:auto;width:min(420px,calc(100vw - 24px))}
+        .nav-shell[data-dock="right"]{top:12px;bottom:12px;left:auto;width:min(420px,calc(100vw - 24px))}
+        .nav-bar,.nav-drawer,.quick-tool-dock{pointer-events:auto}
+        .nav-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid #426277;border-radius:10px;background:rgba(7,16,24,.94);box-shadow:0 10px 24px rgba(0,0,0,.38);backdrop-filter:blur(8px)}
+        .nav-brand{display:flex;flex-direction:column;gap:2px;min-width:0}
+        .nav-brand strong{font-size:13px;color:#70e8ff;letter-spacing:.4px}
+        .nav-brand span{font-size:11px;color:#8fa9b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .nav-primary{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;flex:1}
+        .nav-tab{padding:7px 10px;border:1px solid #54778a;border-radius:8px;background:#10212b;color:#dff7ff;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap}
+        .nav-tab.is-active,.nav-tab:hover{background:#1c3b4b;border-color:#70e8ff}
+        .nav-meta{display:flex;align-items:center;gap:8px}
+        .nav-dock-picker{display:flex;align-items:center;gap:6px;font-size:11px;color:#8fa9b8}
+        .nav-dock-picker select,.nav-close-button,.drawer-card input[type="text"],.drawer-card input[type="number"],.drawer-card select{background:#10212b;color:#eef;border:1px solid #426277;border-radius:6px}
+        .nav-dock-picker select{padding:5px 8px}
+        .nav-close-button{width:30px;height:30px;cursor:pointer;font-weight:700}
+        .nav-drawer{border:1px solid #426277;border-radius:12px;background:rgba(7,16,24,.97);box-shadow:0 12px 24px rgba(0,0,0,.42);max-height:min(62vh,720px);overflow:auto}
+        .nav-shell[data-dock="left"] .nav-drawer,.nav-shell[data-dock="right"] .nav-drawer{height:100%;max-height:none}
+        .nav-drawer-section{display:none;padding:14px}
+        .nav-drawer-section.is-active{display:block}
+        .drawer-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
+        .drawer-card{grid-column:span 4;padding:12px;border:1px solid #35505f;border-radius:10px;background:rgba(16,33,43,.62)}
+        .drawer-card.wide{grid-column:span 8}
+        .drawer-card.full{grid-column:1 / -1}
+        .drawer-card h3{margin:0 0 10px;color:#70e8ff;font-size:13px}
+        .drawer-card p{margin:0 0 8px;color:#b9cbd5;font-size:12px}
+        .drawer-card .action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+        .drawer-card button{padding:7px 10px;border:1px solid #54778a;border-radius:6px;background:#10212b;color:#dff7ff;cursor:pointer}
+        .drawer-card button:hover{background:#1c3b4b;border-color:#70e8ff}
+        .quick-tool-dock{position:absolute;top:76px;right:12px;z-index:31;display:flex;gap:8px;padding:8px;border:1px solid #426277;border-radius:10px;background:rgba(7,16,24,.88);box-shadow:0 8px 20px rgba(0,0,0,.35)}
+        .quick-tool-dock button{width:38px;height:38px;padding:0;border:1px solid #54778a;border-radius:10px;background:#10212b;color:#dff7ff;cursor:pointer;font:700 16px/1 system-ui}
+        .quick-tool-dock button:hover{background:#1c3b4b;border-color:#70e8ff}
+        .temp-data-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
+        .temp-summary-pill{padding:8px;border:1px solid #35505f;border-radius:8px;background:rgba(7,16,24,.55)}
+        .temp-summary-pill strong{display:block;color:#fff;font-size:13px}
+        .temp-summary-pill span{display:block;color:#8fa9b8;font-size:11px}
+        .temp-graph-wrap{height:320px;border:1px solid #35505f;border-radius:10px;background:rgba(7,16,24,.72);padding:8px}
+        #tempProfileGraph{width:100%;height:100%}
+        .temp-table-wrap{max-height:320px;overflow:auto;border:1px solid #35505f;border-radius:10px;background:rgba(7,16,24,.55)}
+        .temp-table{width:100%;border-collapse:collapse;font-size:12px}
+        .temp-table th,.temp-table td{padding:7px 8px;border-bottom:1px solid rgba(53,80,95,.65);text-align:right;font-variant-numeric:tabular-nums}
+        .temp-table th:first-child,.temp-table td:first-child{text-align:left}
+        .temp-table thead th{position:sticky;top:0;background:#10212b;color:#70e8ff}
+        .temp-empty{padding:20px;color:#8fa9b8;text-align:center}
+        #debugConsole{left:12px;bottom:12px;width:560px;height:260px}
+        #status{max-height:none;height:100%;overflow:auto;white-space:pre-wrap;color:#d7e7ef;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+        @media (max-width:1200px){.drawer-card,.drawer-card.wide{grid-column:span 6}.temp-data-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        @media (max-width:760px){.nav-shell{left:8px;right:8px;top:8px}.nav-shell[data-dock="bottom"]{bottom:8px}.nav-shell[data-dock="left"],.nav-shell[data-dock="right"]{width:calc(100vw - 16px)}.nav-bar{align-items:flex-start;flex-direction:column}.nav-primary{justify-content:flex-start}.nav-meta{width:100%;justify-content:space-between}.drawer-card,.drawer-card.wide{grid-column:1 / -1}.quick-tool-dock{top:auto;right:8px;bottom:72px;flex-wrap:wrap;width:54px}.quick-tool-dock button{width:38px;height:38px}.temp-data-summary{grid-template-columns:1fr 1fr}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}}
     </style>
 </head>
 <body>
 <div id="cesiumContainer"></div>
 <div id="aimHint">Klik na farebný bod = diagnostika · klik na terén = nový stred analýzy</div>
-
-<section id="panel" class="floating-window" data-window-name="Ovládanie">
-    <header class="window-header">
-        <div class="window-title">TermikaXC v2.6 · modulárna analýza terénu</div>
-        <div class="window-actions"><button class="window-action close-window" type="button" title="Zavrieť okno">×</button></div>
-    </header>
-    <div class="window-body">
-        <p>Kruhový zameriavač ukazuje oblasť prvotného pohľadu. Kliknutím na terén zvolíš jej stred.</p>
-        <p>Stred: <strong id="centerText">46.43000, 11.85000</strong></p>
-        <label>Zadaj stred (lat, lon)
-            <input id="centerInput" type="text" value="46.43000, 11.85000" placeholder="46.43000, 11.85000" style="width:220px">
-        </label>
-        <button id="centerApplyButton" type="button">Presunúť mapu na stred (3000 m ASL)</button>
-
-        <fieldset>
-            <legend>Rozsah analýzy</legend>
-            <label>Polomer kruhu <input id="radiusInput" type="number" min="40" max="20000" step="40" value="400"> m</label>
-            <label>Rozostup vzoriek <input id="spacingInput" type="number" min="5" max="1000" step="5" value="40"> m</label>
-        </fieldset>
-
-        <fieldset>
-            <legend>Analytické vrstvy</legend>
-            <label><input class="module-toggle" type="checkbox" value="geometry" checked> Geometria reliéfu</label>
-            <label><input class="module-toggle" type="checkbox" value="contours" checked> Vrstevnice</label>
-            <label class="future"><input type="checkbox" disabled> Doliny a žľaby – pripravujeme</label>
-            <label class="future"><input type="checkbox" disabled> Hydrológia – pripravujeme</label>
-            <label class="future"><input type="checkbox" disabled> Povrchový kryt – pripravujeme</label>
-            <label class="future"><input type="checkbox" disabled> Geológia – pripravujeme</label>
-            <label class="future"><input type="checkbox" disabled> Oslnenie – pripravujeme</label>
-        </fieldset>
-
-        <fieldset>
-            <legend>Mapové vrstvy</legend>
-            <label><input id="geometryVisible" type="checkbox" checked> Zobraziť geometriu reliéfu</label>
-            <label><input id="contoursVisible" type="checkbox" checked> Zobraziť tmavošedé vrstevnice</label>
-        </fieldset>
-
-        <fieldset>
-            <legend>WIND vrstva (MVP)</legend>
-            <label><input id="windEnabled" type="checkbox" checked> Zobraziť veterné prúdnice</label>
-            <label>Zdroj TEMP
-                <select id="windTempSourceMode">
-                    <option value="auto" selected>Auto (Windy → stanica → súbor)</option>
-                    <option value="windy">Windy.com</option>
-                    <option value="station">Najbližšia meteo stanica</option>
-                    <option value="file">Súbor</option>
+<div id="navShell" class="nav-shell" data-dock="top">
+    <div class="nav-bar" role="navigation" aria-label="Navigačný panel testovacej stránky">
+        <div class="nav-brand">
+            <strong>TermikaXC Test Navigator</strong>
+            <span>priorita: Zdroje → Analýza → Zobrazenie → Vietor → TEMP → Záznam → Okná</span>
+        </div>
+        <div class="nav-primary">
+            <button type="button" class="nav-tab" data-nav-route="explorer">Explorer</button>
+            <button type="button" class="nav-tab is-active" data-nav-section="sources">Zdroje</button>
+            <button type="button" class="nav-tab" data-nav-section="analysis">Analýza</button>
+            <button type="button" class="nav-tab" data-nav-section="display">Zobrazenie</button>
+            <button type="button" class="nav-tab" data-nav-section="wind">Vietor</button>
+            <button type="button" class="nav-tab" data-nav-section="temp">TEMP</button>
+            <button type="button" class="nav-tab" data-nav-section="record">Záznam</button>
+            <button type="button" class="nav-tab" data-nav-section="windows">Okná</button>
+            <button type="button" class="nav-tab nav-home-tab" data-nav-home="index">Domov</button>
+        </div>
+        <div class="nav-meta">
+            <label class="nav-dock-picker">Lišta
+                <select id="navDockMode" aria-label="Ukotvenie navigačnej lišty">
+                    <option value="top" selected>Hore</option>
+                    <option value="bottom">Dole</option>
+                    <option value="left">Vľavo</option>
+                    <option value="right">Vpravo</option>
                 </select>
             </label>
-            <label>TEMP súbor / URL <input id="windTempSourceUrl" type="text" value="XCtrack/temp.json"></label>
-            <label>Windy URL / template <input id="windyTempUrl" type="text" placeholder="https://... alebo template s ${lat}/${lon}"></label>
-            <label>Station index URL <input id="stationIndexUrl" type="text" placeholder="https://... alebo template s ${lat}/${lon}"></label>
-            <label>Station profile URL template <input id="stationProfileUrlTemplate" type="text" placeholder="https://.../${stationId}.json"></label>
-            <label>Výška nad terénom <input id="windAglInput" type="number" min="20" max="5000" step="10" value="300"> m AGL</label>
-            <label>Rozostup vetra <input id="windSpacingInput" type="number" min="30" max="1200" step="10" value="120"> m</label>
-            <label>Základná rýchlosť <input id="windSpeedInput" type="number" min="0" max="40" step="0.1" value="4.5"> m/s</label>
-            <label>Smer toku <input id="windDirInput" type="number" min="0" max="359" step="1" value="230"> °</label>
-            <label><input id="windUseTempProfile" type="checkbox" checked> Použiť vietor z TEMP profilu (ak je dostupný)</label>
-            <label>Farebnosť vetra
-                <select id="windColorMode">
-                    <option value="tempDeltaK" selected>Teplotný kontrast</option>
-                    <option value="speed">Rýchlosť vetra</option>
-                    <option value="convergence">Konvergencia/divergencia</option>
-                    <option value="verticalMotion">Vertikálny pohyb (stúpanie/klesanie)</option>
-                </select>
-            </label>
-            <div id="windColorLegend" style="margin-top:6px;padding:6px 8px;border:1px solid #35505f;border-radius:6px;background:rgba(16,33,43,.45);font-size:12px;color:#cfe3ef"></div>
-            <label>Téma farieb
-                <select id="windColorTheme">
-                    <option value="dark" selected>Tmavé pozadie</option>
-                    <option value="light">Svetlé pozadie</option>
-                </select>
-            </label>
-            <label><input id="windAnimate" type="checkbox" checked> Animovať smer toku</label>
-            <label>Intenzita animácie
-                <select id="windAnimationIntensity">
-                    <option value="low">Nízka</option>
-                    <option value="medium" selected>Stredná</option>
-                    <option value="high">Vysoká</option>
-                    <option value="auto">Auto (podľa FPS)</option>
-                </select>
-            </label>
-            <div id="windFpsIndicator" style="margin-top:4px;color:#8fa9b8;font-size:12px;">FPS: -- | AUTO profil: --</div>
-            <div class="wind-generation-radio-group" role="radiogroup" aria-label="Režim generácie vetra">
-                <label><input type="radio" name="windGenerationModeTest" value="keep" checked> Zachovať poslednú generáciu</label>
-                <label><input type="radio" name="windGenerationModeTest" value="clear-last"> Vymazať poslednú generáciu</label>
-                <label><input type="radio" name="windGenerationModeTest" value="clear-all"> Vymazať všetky generácie z mapy</label>
-            </div>
-            <div class="record-row">
-                <button id="windDeleteLastButton" type="button">Zmazať poslednú generáciu</button>
-                <button id="windDeleteAllButton" type="button">Zmazať všetky generácie</button>
-            </div>
-            <div class="wind-generation-mini-actions">
-                <button id="windClearTodayButtonTest" type="button" title="Ručne vymazať všetky dnešné generácie z GENauto a z mapy">Vymazať dnešné GENauto</button>
-                <button id="windLoadFromFilesButtonTest" type="button" title="Načítať vietor zo súborov GENauto/wind">Načítať vietor zo súborov</button>
-                <button id="mapLoadFromFilesButtonTest" type="button" title="Načítať mapové generácie zo súborov GENauto/map">Načítať mapu zo súborov</button>
-            </div>
-            <div class="compare-row">
-                <span>Porovnať:</span>
-                <select id="windCompareGenerationTest" class="compare-select" aria-label="Výber WIND generácie na porovnanie">
-                    <option value="">Najprv načítaj uložené WIND generácie</option>
-                </select>
-            </div>
-            <div class="compare-row">
-                <span>Mapa:</span>
-                <select id="mapCompareGenerationTest" class="compare-select" aria-label="Výber mapovej generácie na porovnanie">
-                    <option value="">Najprv načítaj uložené mapové generácie</option>
-                </select>
-            </div>
-
-            <fieldset>
-                <legend>Záznam videa</legend>
-                <label>FPS záznamu
-                    <select id="recordFps">
-                        <option value="30" selected>30 fps</option>
-                        <option value="60">60 fps</option>
-                    </select>
-                </label>
-                <label>Kvalita
-                    <select id="recordQuality">
-                        <option value="normal" selected>Normal (8 Mbps)</option>
-                        <option value="high">High (16 Mbps)</option>
-                    </select>
-                </label>
-                <label><input id="recordAutoHideUi" type="checkbox" checked> Pri zázname skryť legendu a diagnostiku</label>
-                <div class="record-row">
-                    <button id="recordToggleButton" type="button">Start recording</button>
-                    <span id="recordBadge" class="record-badge" hidden><i class="record-dot"></i><span id="recordElapsed">REC 00:00</span></span>
-                </div>
-            </fieldset>
-        </fieldset>
-
-        <button id="analyzeButton" type="button">Spustiť vybrané analýzy</button>
-        <button id="clearButton" type="button">Skryť výsledky</button>
-        <div id="status"></div>
+            <button id="navCloseDrawerButton" class="nav-close-button" type="button" title="Zavrieť vysúvateľný panel">×</button>
+        </div>
     </div>
-</section>
+
+    <section id="navDrawer" class="nav-drawer" aria-label="Obsah navigačnej sekcie">
+        <div class="nav-drawer-section" data-nav-section="explorer">
+            <div class="drawer-grid">
+                <div class="drawer-card full">
+                    <h3>Explorer</h3>
+                    <p>Táto sekcia je pripravená pre Joyee workflow a prieskumné nástroje. Môže tu pribudnúť výber vrstiev, diagnostické pohľady a ďalšie prieskumné režimy bez zahltenia hlavných sekcií.</p>
+                    <div class="action-row">
+                        <button type="button" data-show-window="legend">Legenda</button>
+                        <button type="button" data-show-window="cellDiagnostics">Diagnostika bunky</button>
+                        <button type="button" data-show-window="debugConsole">Debugger</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-drawer-section is-active" data-nav-section="sources">
+            <div class="drawer-grid">
+                <div class="drawer-card wide">
+                    <h3>Zdroje letu a profilov</h3>
+                    <p>Načítanie IGC a TEMP patrí sem. Z tejto sekcie sa začína pracovný tok.</p>
+                    <input id="igcFileInput" type="file" accept=".igc,text/plain,application/octet-stream" hidden>
+                    <input id="tempFileInput" type="file" accept=".json,.txt,.csv,.temp,.snd,application/json,text/plain,text/csv" hidden>
+                    <div class="action-row">
+                        <button id="loadIgcButton" type="button" title="Načítať iný IGC z počítača">Načítať IGC</button>
+                        <button id="loadTempButton" type="button" title="Načítať TEMP profil zo súboru">Načítať TEMP</button>
+                    </div>
+                    <div class="row"><span class="label">IGC zdroj:</span><span id="loadedIgcName" class="val">bez súboru</span></div>
+                    <div class="row"><span class="label">Aktuálny stred:</span><strong id="centerText">46.43000, 11.85000</strong></div>
+                    <div class="row"><span class="label">TEMP zdroj:</span><span id="pTempFile" class="val">XCtrack/temp.json</span></div>
+                    <div class="row"><span class="label">Počet hladín:</span><span id="pTempLevels" class="val">--</span></div>
+                </div>
+                <div class="drawer-card">
+                    <h3>Nastavenie fokusu</h3>
+                    <label>Zadaj stred (lat, lon)
+                        <input id="centerInput" type="text" value="46.43000, 11.85000" placeholder="46.43000, 11.85000" style="width:100%">
+                    </label>
+                    <button id="centerApplyButton" type="button">Presunúť mapu na stred (3000 m ASL)</button>
+                </div>
+                <div class="drawer-card full">
+                    <h3>Zdroje TEMP a sieťové nastavenia</h3>
+                    <div class="drawer-grid">
+                        <div class="drawer-card">
+                            <label>Zdroj TEMP
+                                <select id="windTempSourceMode">
+                                    <option value="auto" selected>Auto (Windy → stanica → súbor)</option>
+                                    <option value="windy">Windy.com</option>
+                                    <option value="station">Najbližšia meteo stanica</option>
+                                    <option value="file">Súbor</option>
+                                </select>
+                            </label>
+                            <label>TEMP súbor / URL <input id="windTempSourceUrl" type="text" value="XCtrack/temp.json"></label>
+                        </div>
+                        <div class="drawer-card">
+                            <label>Windy URL / template <input id="windyTempUrl" type="text" placeholder="https://... alebo template s ${lat}/${lon}"></label>
+                            <label>Station index URL <input id="stationIndexUrl" type="text" placeholder="https://... alebo template s ${lat}/${lon}"></label>
+                            <label>Station profile URL template <input id="stationProfileUrlTemplate" type="text" placeholder="https://.../${stationId}.json"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-drawer-section" data-nav-section="analysis">
+            <div class="drawer-grid">
+                <div class="drawer-card">
+                    <h3>Rozsah analýzy</h3>
+                    <label>Polomer kruhu <input id="radiusInput" type="number" min="40" max="20000" step="40" value="400"> m</label>
+                    <label>Rozostup vzoriek <input id="spacingInput" type="number" min="5" max="1000" step="5" value="40"> m</label>
+                </div>
+                <div class="drawer-card wide">
+                    <h3>Analytické vrstvy</h3>
+                    <label><input class="module-toggle" type="checkbox" value="geometry" checked> Geometria reliéfu</label>
+                    <label><input class="module-toggle" type="checkbox" value="contours" checked> Vrstevnice</label>
+                    <label class="future"><input type="checkbox" disabled> Doliny a žľaby – pripravujeme</label>
+                    <label class="future"><input type="checkbox" disabled> Hydrológia – pripravujeme</label>
+                    <label class="future"><input type="checkbox" disabled> Povrchový kryt – pripravujeme</label>
+                    <label class="future"><input type="checkbox" disabled> Geológia – pripravujeme</label>
+                    <label class="future"><input type="checkbox" disabled> Oslnenie – pripravujeme</label>
+                </div>
+                <div class="drawer-card full">
+                    <h3>Výpočet</h3>
+                    <div class="action-row">
+                        <button id="analyzeButton" type="button">Spustiť vybrané analýzy</button>
+                        <button id="clearButton" type="button">Skryť výsledky</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-drawer-section" data-nav-section="display">
+            <div class="drawer-grid">
+                <div class="drawer-card">
+                    <h3>Mapové vrstvy</h3>
+                    <label><input id="geometryVisible" type="checkbox" checked> Zobraziť geometriu reliéfu</label>
+                    <label><input id="contoursVisible" type="checkbox" checked> Zobraziť tmavošedé vrstevnice</label>
+                </div>
+                <div class="drawer-card wide">
+                    <h3>Pomocné okná a zobrazenia</h3>
+                    <div class="action-row">
+                        <button type="button" data-show-window="legend">Legenda</button>
+                        <button type="button" data-show-window="cellDiagnostics">Diagnostika bunky</button>
+                        <button type="button" data-show-window="debugConsole">Debugger</button>
+                    </div>
+                    <p>Legenda, diagnostika a debugger sú samostatné plávajúce okná, presúvateľné a zatvárateľné.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-drawer-section" data-nav-section="wind">
+            <div class="drawer-grid">
+                <div class="drawer-card">
+                    <h3>WIND jadro</h3>
+                    <label><input id="windEnabled" type="checkbox" checked> Zobraziť veterné prúdnice</label>
+                    <label>Výška nad terénom <input id="windAglInput" type="number" min="20" max="5000" step="10" value="300"> m AGL</label>
+                    <label>Rozostup vetra <input id="windSpacingInput" type="number" min="30" max="1200" step="10" value="120"> m</label>
+                    <label>Základná rýchlosť <input id="windSpeedInput" type="number" min="0" max="40" step="0.1" value="4.5"> m/s</label>
+                    <label>Smer toku <input id="windDirInput" type="number" min="0" max="359" step="1" value="230"> °</label>
+                    <label><input id="windUseTempProfile" type="checkbox" checked> Použiť vietor z TEMP profilu</label>
+                </div>
+                <div class="drawer-card wide">
+                    <h3>Vizuál vetra a animácia</h3>
+                    <label>Farebnosť vetra
+                        <select id="windColorMode">
+                            <option value="tempDeltaK" selected>Teplotný kontrast</option>
+                            <option value="speed">Rýchlosť vetra</option>
+                            <option value="convergence">Konvergencia/divergencia</option>
+                            <option value="verticalMotion">Vertikálny pohyb (stúpanie/klesanie)</option>
+                        </select>
+                    </label>
+                    <div id="windColorLegend" style="margin-top:6px;padding:6px 8px;border:1px solid #35505f;border-radius:6px;background:rgba(16,33,43,.45);font-size:12px;color:#cfe3ef"></div>
+                    <label>Téma farieb
+                        <select id="windColorTheme">
+                            <option value="dark" selected>Tmavé pozadie</option>
+                            <option value="light">Svetlé pozadie</option>
+                        </select>
+                    </label>
+                    <label><input id="windAnimate" type="checkbox" checked> Animovať smer toku</label>
+                    <label>Intenzita animácie
+                        <select id="windAnimationIntensity">
+                            <option value="low">Nízka</option>
+                            <option value="medium" selected>Stredná</option>
+                            <option value="high">Vysoká</option>
+                            <option value="auto">Auto (podľa FPS)</option>
+                        </select>
+                    </label>
+                    <div id="windFpsIndicator" style="margin-top:4px;color:#8fa9b8;font-size:12px;">FPS: -- | AUTO profil: --</div>
+                </div>
+                <div class="drawer-card full">
+                    <h3>Generácie vetra a porovnanie</h3>
+                    <div class="wind-generation-radio-group" role="radiogroup" aria-label="Režim generácie vetra">
+                        <label><input type="radio" name="windGenerationModeTest" value="keep" checked> Zachovať poslednú generáciu</label>
+                        <label><input type="radio" name="windGenerationModeTest" value="clear-last"> Vymazať poslednú generáciu</label>
+                        <label><input type="radio" name="windGenerationModeTest" value="clear-all"> Vymazať všetky generácie z mapy</label>
+                    </div>
+                    <div class="action-row">
+                        <button id="windDeleteLastButton" type="button">Zmazať poslednú generáciu</button>
+                        <button id="windDeleteAllButton" type="button">Zmazať všetky generácie</button>
+                        <button id="windClearTodayButtonTest" type="button">Vymazať dnešné GENauto</button>
+                        <button id="windLoadFromFilesButtonTest" type="button">Načítať vietor zo súborov</button>
+                        <button id="mapLoadFromFilesButtonTest" type="button">Načítať mapu zo súborov</button>
+                    </div>
+                    <div class="compare-row">
+                        <span>Porovnať:</span>
+                        <select id="windCompareGenerationTest" class="compare-select" aria-label="Výber WIND generácie na porovnanie">
+                            <option value="">Najprv načítaj uložené WIND generácie</option>
+                        </select>
+                    </div>
+                    <div class="compare-row">
+                        <span>Mapa:</span>
+                        <select id="mapCompareGenerationTest" class="compare-select" aria-label="Výber mapovej generácie na porovnanie">
+                            <option value="">Najprv načítaj uložené mapové generácie</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-drawer-section" data-nav-section="temp">
+            <div class="drawer-grid">
+                <div class="drawer-card full">
+                    <h3>TEMP profil</h3>
+                    <p>V tejto sekcii je vždy viditeľná aktuálna tabuľka TEMP a prehľadový graf. Pri výpočte sa sem zapíše profil použitý tesne pred simuláciou.</p>
+                    <div id="tempProfileSummary" class="temp-data-summary"></div>
+                </div>
+                <div class="drawer-card wide">
+                    <h3>Graf profilu</h3>
+                    <div class="temp-graph-wrap">
+                        <canvas id="tempProfileGraph"></canvas>
+                    </div>
+                </div>
+                <div class="drawer-card wide">
+                    <h3>Tabuľka hladín</h3>
+                    <div id="tempProfileTableWrap" class="temp-table-wrap"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-drawer-section" data-nav-section="record">
+            <div class="drawer-grid">
+                <div class="drawer-card full">
+                    <h3>Záznam videa</h3>
+                    <label>FPS záznamu
+                        <select id="recordFps">
+                            <option value="30" selected>30 fps</option>
+                            <option value="60">60 fps</option>
+                        </select>
+                    </label>
+                    <label>Kvalita
+                        <select id="recordQuality">
+                            <option value="normal" selected>Normal (8 Mbps)</option>
+                            <option value="high">High (16 Mbps)</option>
+                        </select>
+                    </label>
+                    <label><input id="recordAutoHideUi" type="checkbox" checked> Pri zázname skryť legendu a diagnostiku</label>
+                    <div class="record-row">
+                        <button id="recordToggleButton" type="button">Start recording</button>
+                        <span id="recordBadge" class="record-badge" hidden><i class="record-dot"></i><span id="recordElapsed">REC 00:00</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-drawer-section" data-nav-section="windows">
+            <div class="drawer-grid">
+                <div class="drawer-card full">
+                    <h3>Okná a nástroje</h3>
+                    <div class="action-row">
+                        <button type="button" data-show-window="legend">Otvoriť legendu</button>
+                        <button type="button" data-show-window="cellDiagnostics">Otvoriť diagnostiku</button>
+                        <button type="button" data-show-window="debugConsole">Otvoriť debugger</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<nav id="quickToolDock" class="quick-tool-dock" aria-label="Rýchle mapové nástroje">
+    <button type="button" id="quickOpenSourcesButton" title="Zdroje a nastavenia">◎</button>
+    <button type="button" id="quickAnalyzeButton" title="Spustiť analýzu">▶</button>
+    <button type="button" id="quickClearButton" title="Skryť výsledky">■</button>
+    <button type="button" data-show-window="legend" title="Legenda">L</button>
+    <button type="button" data-show-window="debugConsole" title="Debugger">D</button>
+    <button type="button" data-show-window="cellDiagnostics" title="Diagnostika bunky">?</button>
+</nav>
 
 <aside id="legend" class="floating-window" data-window-name="Legenda" aria-label="Legenda geometrie terénu">
     <header class="window-header">
@@ -259,17 +446,33 @@ $assetVersion = '20260712-07';
     </div>
 </section>
 
-<nav id="windowDock" aria-label="Ovládanie okien">
-    <button type="button" data-show-window="panel">Ovládanie</button>
-    <button type="button" data-show-window="legend">Legenda</button>
-    <button type="button" data-show-window="cellDiagnostics">Diagnostika bodu</button>
-</nav>
+<section id="debugConsole" class="floating-window" data-window-name="Debugger">
+    <header class="window-header">
+        <div class="window-title">Debugger · systémový monitor úloh</div>
+        <div class="window-actions">
+            <button id="clearDebugButton" class="window-action" type="button" title="Vyčistiť log">↺</button>
+            <button class="window-action close-window" type="button" title="Zavrieť okno">×</button>
+        </div>
+    </header>
+    <div class="window-body">
+        <div id="status"></div>
+    </div>
+</section>
 
 <script>
     const statusEl = document.getElementById('status');
     const centerText = document.getElementById('centerText');
     const centerInput = document.getElementById('centerInput');
     const centerApplyButton = document.getElementById('centerApplyButton');
+    const loadedIgcName = document.getElementById('loadedIgcName');
+    const navShell = document.getElementById('navShell');
+    const navDrawer = document.getElementById('navDrawer');
+    const navDockMode = document.getElementById('navDockMode');
+    const navCloseDrawerButton = document.getElementById('navCloseDrawerButton');
+    const navTabs = Array.from(document.querySelectorAll('.nav-tab'));
+    const navSections = Array.from(document.querySelectorAll('.nav-drawer-section'));
+    const navHomeButtons = Array.from(document.querySelectorAll('[data-nav-home]'));
+    const navRouteButtons = Array.from(document.querySelectorAll('[data-nav-route]'));
     const radiusInput = document.getElementById('radiusInput');
     const geometryVisible = document.getElementById('geometryVisible');
     const contoursVisible = document.getElementById('contoursVisible');
@@ -306,6 +509,16 @@ $assetVersion = '20260712-07';
     const recordElapsed = document.getElementById('recordElapsed');
     const cellDiagnostics = document.getElementById('cellDiagnostics');
     const cellDiagnosticsBody = document.getElementById('cellDiagnosticsBody');
+    const tempProfileSummary = document.getElementById('tempProfileSummary');
+    const tempProfileTableWrap = document.getElementById('tempProfileTableWrap');
+    const tempProfileGraph = document.getElementById('tempProfileGraph');
+    const quickOpenSourcesButton = document.getElementById('quickOpenSourcesButton');
+    const quickAnalyzeButton = document.getElementById('quickAnalyzeButton');
+    const quickClearButton = document.getElementById('quickClearButton');
+    const igcInput = document.getElementById('igcFileInput');
+    const loadIgcButton = document.getElementById('loadIgcButton');
+    const tempInput = document.getElementById('tempFileInput');
+    const loadTempButton = document.getElementById('loadTempButton');
     let selectedCenter = { lat: 46.43, lon: 11.85 };
     let previewCenter = { ...selectedCenter };
     let highestWindowZ = 20;
@@ -323,9 +536,332 @@ $assetVersion = '20260712-07';
     let recordStartedAtMs = 0;
     let recordTimer = null;
     let recordHiddenTargets = [];
+    let activeNavSection = 'sources';
+    let manualTempProfile = null;
+    let manualTempSourceName = 'XCtrack/temp.json';
 
     function formatCenter(point) {
         return point.lat.toFixed(5) + ', ' + point.lon.toFixed(5);
+    }
+
+    function updateSourceLabels() {
+        if (loadedIgcName && !loadedIgcName.textContent.trim()) {
+            loadedIgcName.textContent = 'bez súboru';
+        }
+        const tempLabel = document.getElementById('pTempFile');
+        if (tempLabel) {
+            tempLabel.textContent = String(manualTempSourceName || 'TEMP');
+            tempLabel.title = String(manualTempSourceName || 'TEMP');
+        }
+    }
+
+    function applyNavDock(mode) {
+        if (!navShell) return;
+        const normalized = ['top', 'bottom', 'left', 'right'].includes(String(mode)) ? String(mode) : 'top';
+        navShell.dataset.dock = normalized;
+        if (navDockMode && navDockMode.value !== normalized) {
+            navDockMode.value = normalized;
+        }
+    }
+
+    function setActiveNavSection(sectionId, forceOpen = true) {
+        activeNavSection = sectionId;
+        navTabs.forEach((button) => {
+            button.classList.toggle('is-active', button.dataset.navSection === sectionId);
+        });
+        navSections.forEach((section) => {
+            section.classList.toggle('is-active', section.dataset.navSection === sectionId);
+        });
+        if (forceOpen && navDrawer) {
+            navDrawer.hidden = false;
+        }
+    }
+
+    function toggleNavDrawer(forceVisible = null) {
+        if (!navDrawer) return;
+        const shouldShow = forceVisible === null ? navDrawer.hidden : Boolean(forceVisible);
+        navDrawer.hidden = !shouldShow;
+    }
+
+    function renderTempProfileViews(profile, sourceLabel = 'TEMP') {
+        const rows = Array.isArray(profile)
+            ? profile.slice().filter((row) => Number.isFinite(Number(row.z_m))).sort((a, b) => Number(a.z_m) - Number(b.z_m))
+            : [];
+        manualTempProfile = rows.length ? rows.slice() : manualTempProfile;
+        manualTempSourceName = sourceLabel || manualTempSourceName;
+        updateSourceLabels();
+
+        if (tempProfileSummary) {
+            if (!rows.length) {
+                tempProfileSummary.innerHTML = '<div class="temp-summary-pill"><strong>Bez dát</strong><span>Načítaj TEMP profil.</span></div>';
+            } else {
+                const first = rows[0];
+                const last = rows[rows.length - 1];
+                const lclInfo = window.MeteoCore?.vypocitajLclDetail?.(rows) || null;
+                tempProfileSummary.innerHTML = [
+                    '<div class="temp-summary-pill"><span>Zdroj</span><strong>' + String(sourceLabel || 'TEMP') + '</strong></div>',
+                    '<div class="temp-summary-pill"><span>Hladiny</span><strong>' + rows.length + '</strong></div>',
+                    '<div class="temp-summary-pill"><span>Rozsah</span><strong>' + Math.round(Number(first.z_m) || 0) + '–' + Math.round(Number(last.z_m) || 0) + ' m</strong></div>',
+                    '<div class="temp-summary-pill"><span>LCL</span><strong>' + (lclInfo ? (Math.round(lclInfo.z_m) + ' m') : '—') + '</strong></div>'
+                ].join('');
+            }
+        }
+
+        if (tempProfileTableWrap) {
+            if (!rows.length) {
+                tempProfileTableWrap.innerHTML = '<div class="temp-empty">TEMP profil zatiaľ nie je načítaný.</div>';
+            } else {
+                const header = '<table class="temp-table"><thead><tr><th>#</th><th>p [hPa]</th><th>z [m]</th><th>T [°C]</th><th>Td [°C]</th><th>dir [°]</th><th>spd [kt]</th><th>u [m/s]</th><th>v [m/s]</th></tr></thead><tbody>';
+                const body = rows.map((row, index) => {
+                    const uv = windUvFromDirSpeed(row.w_dir_deg, row.w_speed_kts);
+                    return '<tr>' +
+                        '<td>' + String(index + 1) + '</td>' +
+                        '<td>' + (Number.isFinite(Number(row.p_hpa)) ? Number(row.p_hpa).toFixed(2) : '—') + '</td>' +
+                        '<td>' + (Number.isFinite(Number(row.z_m)) ? Number(row.z_m).toFixed(1) : '—') + '</td>' +
+                        '<td>' + (Number.isFinite(Number(row.T_c)) ? Number(row.T_c).toFixed(2) : '—') + '</td>' +
+                        '<td>' + (Number.isFinite(Number(row.Td_c)) ? Number(row.Td_c).toFixed(2) : '—') + '</td>' +
+                        '<td>' + (Number.isFinite(Number(row.w_dir_deg)) ? Number(row.w_dir_deg).toFixed(0) : '—') + '</td>' +
+                        '<td>' + (Number.isFinite(Number(row.w_speed_kts)) ? Number(row.w_speed_kts).toFixed(2) : '—') + '</td>' +
+                        '<td>' + (Number.isFinite(uv.u) ? uv.u.toFixed(2) : '—') + '</td>' +
+                        '<td>' + (Number.isFinite(uv.v) ? uv.v.toFixed(2) : '—') + '</td>' +
+                        '</tr>';
+                }).join('');
+                tempProfileTableWrap.innerHTML = header + body + '</tbody></table>';
+            }
+        }
+
+        if (tempProfileGraph instanceof HTMLCanvasElement) {
+            const ctx = tempProfileGraph.getContext('2d');
+            if (!ctx) return;
+            const rect = tempProfileGraph.getBoundingClientRect();
+            const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+            const width = Math.max(300, Math.round(rect.width * dpr));
+            const height = Math.max(180, Math.round(rect.height * dpr));
+            if (tempProfileGraph.width !== width || tempProfileGraph.height !== height) {
+                tempProfileGraph.width = width;
+                tempProfileGraph.height = height;
+            }
+
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, rect.width, rect.height);
+            ctx.fillStyle = '#071017';
+            ctx.fillRect(0, 0, rect.width, rect.height);
+
+            if (!rows.length) {
+                ctx.fillStyle = '#8fa9b8';
+                ctx.font = '14px system-ui';
+                ctx.textAlign = 'center';
+                ctx.fillText('Načítaj TEMP profil', rect.width / 2, rect.height / 2);
+                return;
+            }
+
+            const margin = { top: 20, right: 84, bottom: 28, left: 54 };
+            const plot = {
+                left: margin.left,
+                top: margin.top,
+                right: rect.width - margin.right,
+                bottom: rect.height - margin.bottom
+            };
+            plot.width = plot.right - plot.left;
+            plot.height = plot.bottom - plot.top;
+
+            const zValues = rows.map((row) => Number(row.z_m)).filter(Number.isFinite);
+            const tValues = rows.flatMap((row) => [Number(row.T_c), Number(row.Td_c)]).filter(Number.isFinite);
+            const zMin = Math.min(...zValues);
+            const zMax = Math.max(...zValues);
+            const tMin = Math.floor((Math.min(...tValues) - 2) / 5) * 5;
+            const tMax = Math.ceil((Math.max(...tValues) + 2) / 5) * 5;
+            const yOf = (z) => plot.bottom - ((z - zMin) / Math.max(1, zMax - zMin)) * plot.height;
+            const xOf = (t) => plot.left + ((t - tMin) / Math.max(1, tMax - tMin)) * plot.width;
+
+            ctx.strokeStyle = 'rgba(143,169,184,0.22)';
+            ctx.lineWidth = 1;
+            for (let t = tMin; t <= tMax; t += 5) {
+                const x = xOf(t);
+                ctx.beginPath();
+                ctx.moveTo(x, plot.top);
+                ctx.lineTo(x, plot.bottom);
+                ctx.stroke();
+            }
+            for (let i = 0; i < 6; i += 1) {
+                const z = zMin + ((zMax - zMin) * i / 5);
+                const y = yOf(z);
+                ctx.beginPath();
+                ctx.moveTo(plot.left, y);
+                ctx.lineTo(plot.right, y);
+                ctx.stroke();
+                ctx.fillStyle = '#8fa9b8';
+                ctx.font = '11px system-ui';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(z) + ' m', plot.left - 8, y + 4);
+            }
+
+            const drawLine = (key, color) => {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                rows.forEach((row, index) => {
+                    const x = xOf(Number(row[key]));
+                    const y = yOf(Number(row.z_m));
+                    if (index === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+            };
+
+            drawLine('T_c', '#ff6b6b');
+            drawLine('Td_c', '#55efc4');
+
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillRect(rect.width - 70, 22, 12, 3);
+            ctx.fillStyle = '#eef';
+            ctx.font = '11px system-ui';
+            ctx.textAlign = 'left';
+            ctx.fillText('T', rect.width - 52, 26);
+            ctx.fillStyle = '#55efc4';
+            ctx.fillRect(rect.width - 70, 42, 12, 3);
+            ctx.fillStyle = '#eef';
+            ctx.fillText('Td', rect.width - 52, 46);
+
+            ctx.strokeStyle = '#70e8ff';
+            ctx.fillStyle = '#70e8ff';
+            rows.forEach((row) => {
+                const y = yOf(Number(row.z_m));
+                const speed = Number(row.w_speed_kts) || 0;
+                const dir = Number(row.w_dir_deg) || 0;
+                const len = Math.max(8, Math.min(32, speed * 0.9));
+                const startX = rect.width - 62;
+                const endX = startX + Math.cos((dir - 90) * Math.PI / 180) * len;
+                const endY = y + Math.sin((dir - 90) * Math.PI / 180) * len;
+                ctx.beginPath();
+                ctx.moveTo(startX, y);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+            });
+        }
+    }
+
+    function normalizeTempProfileRows(raw) {
+        if (!Array.isArray(raw)) {
+            throw new Error('TEMP profil musí byť pole výškových hladín.');
+        }
+
+        const aliases = {
+            p_hpa: ['p_hpa', 'pressure', 'pressure_hpa', 'p', 'pres'],
+            z_m: ['z_m', 'height', 'height_m', 'alt', 'altitude', 'gpheight', 'geopotential_height'],
+            T_c: ['T_c', 'temperature', 'temperature_c', 'temp', 't'],
+            Td_c: ['Td_c', 'dewpoint', 'dew_point', 'dewpoint_c', 'td'],
+            w_dir_deg: ['w_dir_deg', 'wind_direction', 'wind_dir', 'direction', 'dd'],
+            w_speed_kts: ['w_speed_kts', 'wind_speed_kts', 'wind_speed', 'speed', 'ff']
+        };
+
+        const pick = (row, names) => {
+            for (const name of names) {
+                if (row && row[name] !== undefined && row[name] !== null && row[name] !== '') {
+                    const value = Number(String(row[name]).trim().replace(',', '.'));
+                    if (Number.isFinite(value)) return value;
+                }
+            }
+            return null;
+        };
+
+        const normalized = raw.map((row) => ({
+            p_hpa: pick(row, aliases.p_hpa),
+            z_m: pick(row, aliases.z_m),
+            T_c: pick(row, aliases.T_c),
+            Td_c: pick(row, aliases.Td_c),
+            w_dir_deg: pick(row, aliases.w_dir_deg),
+            w_speed_kts: pick(row, aliases.w_speed_kts)
+        })).filter((row) =>
+            [row.p_hpa, row.z_m, row.T_c, row.Td_c].every(Number.isFinite)
+        ).sort((a, b) => Number(a.z_m) - Number(b.z_m));
+
+        if (normalized.length < 2) {
+            throw new Error('TEMP neobsahuje aspoň dve platné hladiny p, z, T a Td.');
+        }
+
+        return normalized.map((row) => ({
+            ...row,
+            w_dir_deg: Number.isFinite(Number(row.w_dir_deg)) ? Number(row.w_dir_deg) : 0,
+            w_speed_kts: Number.isFinite(Number(row.w_speed_kts)) ? Number(row.w_speed_kts) : 0
+        }));
+    }
+
+    function parseTempTextLocal(text) {
+        const trimmed = String(text || '').trim();
+        if (!trimmed) {
+            throw new Error('TEMP súbor je prázdny.');
+        }
+
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed?.features) && String(parsed?.type || '') === 'FeatureCollection') {
+                if (!window.WindTempLoader?.convertWindyFeatureCollection) {
+                    throw new Error('WindTempLoader nevie previesť FM94 profil.');
+                }
+                return normalizeTempProfileRows(window.WindTempLoader.convertWindyFeatureCollection(parsed));
+            }
+            const raw = Array.isArray(parsed) ? parsed : (parsed.profile || parsed.levels || parsed.data || parsed.tempProfile || []);
+            return normalizeTempProfileRows(raw);
+        }
+
+        const raw = [];
+        for (const lineRaw of trimmed.split(/\r?\n/)) {
+            const line = lineRaw.trim();
+            if (!line || line.startsWith('#') || line.startsWith('//') || line.startsWith(';')) continue;
+            let tokens;
+            if (line.includes(';')) tokens = line.split(';');
+            else if (line.includes('\t')) tokens = line.split(/\t+/);
+            else if (line.includes(',') && !line.includes(' ')) tokens = line.split(',');
+            else tokens = line.split(/\s+/);
+            const values = tokens.map((value) => Number(String(value).trim().replace(',', '.')));
+            if (values.length < 4 || !values.slice(0, 4).every(Number.isFinite)) continue;
+            raw.push({
+                p_hpa: values[0],
+                z_m: values[1],
+                T_c: values[2],
+                Td_c: values[3],
+                w_dir_deg: Number.isFinite(values[4]) ? values[4] : 0,
+                w_speed_kts: Number.isFinite(values[5]) ? values[5] : 0
+            });
+        }
+
+        return normalizeTempProfileRows(raw);
+    }
+
+    function parseIgcPoint(line) {
+        if (typeof line !== 'string' || !line.startsWith('B') || line.length < 24) return null;
+        const latRaw = line.slice(7, 14);
+        const latHem = line.slice(14, 15);
+        const lonRaw = line.slice(15, 23);
+        const lonHem = line.slice(23, 24);
+        const latDeg = Number(latRaw.slice(0, 2));
+        const latMin = Number(latRaw.slice(2, 7)) / 1000;
+        const lonDeg = Number(lonRaw.slice(0, 3));
+        const lonMin = Number(lonRaw.slice(3, 8)) / 1000;
+        if (![latDeg, latMin, lonDeg, lonMin].every(Number.isFinite)) return null;
+        let lat = latDeg + latMin / 60;
+        let lon = lonDeg + lonMin / 60;
+        if (latHem === 'S') lat *= -1;
+        if (lonHem === 'W') lon *= -1;
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+        return { lat, lon };
+    }
+
+    function parseIgcTextLocal(text) {
+        const points = [];
+        for (const line of String(text || '').split(/\r?\n/)) {
+            const point = parseIgcPoint(line.trim());
+            if (point) points.push(point);
+        }
+        if (!points.length) {
+            throw new Error('IGC neobsahuje žiadne validné B-záznamy.');
+        }
+        const mid = points[Math.floor(points.length / 2)] || points[0];
+        return {
+            points,
+            center: mid
+        };
     }
 
     function formatElapsedRecording(ms) {
@@ -354,7 +890,7 @@ $assetVersion = '20260712-07';
         const targets = [
             document.getElementById('legend'),
             document.getElementById('cellDiagnostics'),
-            document.getElementById('windowDock'),
+            document.getElementById('quickToolDock'),
             document.getElementById('aimHint')
         ].filter(Boolean);
 
@@ -931,6 +1467,27 @@ $assetVersion = '20260712-07';
     }
 
     async function loadAndLogTempProfileFirst(center) {
+        if (Array.isArray(manualTempProfile) && manualTempProfile.length >= 2) {
+            logStatus('TEMP profil: používam ručne načítaný profil „' + manualTempSourceName + '”.', 'info');
+            renderTempProfileViews(manualTempProfile, manualTempSourceName);
+            manualTempProfile.forEach((lvl, index) => {
+                const uv = windUvFromDirSpeed(lvl.w_dir_deg, lvl.w_speed_kts);
+                logStatus(
+                    'TEMP[' + String(index + 1).padStart(3, '0') + ']' +
+                    ' p=' + Number(lvl.p_hpa).toFixed(2) + ' hPa' +
+                    ' | z=' + Number(lvl.z_m).toFixed(1) + ' m' +
+                    ' | T=' + Number(lvl.T_c).toFixed(2) + ' °C' +
+                    ' | Td=' + Number(lvl.Td_c).toFixed(2) + ' °C' +
+                    ' | wind=' + Number(lvl.w_dir_deg).toFixed(0) + '° @ ' + Number(lvl.w_speed_kts).toFixed(2) + ' kt' +
+                    ' (' + (Number.isFinite(uv.speedMs) ? uv.speedMs.toFixed(2) : '--') + ' m/s)' +
+                    ' | u=' + (Number.isFinite(uv.u) ? uv.u.toFixed(2) : '--') + ' m/s' +
+                    ' | v=' + (Number.isFinite(uv.v) ? uv.v.toFixed(2) : '--') + ' m/s',
+                    'info'
+                );
+            });
+            return manualTempProfile.slice();
+        }
+
         const mode = String(windTempSourceMode?.value || 'auto');
         const sourceUrl = String(windTempSourceUrl?.value || '').trim();
         const settings = {
@@ -1165,6 +1722,95 @@ $assetVersion = '20260712-07';
         }
         logStatus('WIND: neboli nájdené žiadne generácie na zmazanie.', 'info');
     });
+    navTabs.forEach((button) => {
+        button.addEventListener('click', () => {
+            const sectionId = String(button.dataset.navSection || 'sources');
+            const sameSectionOpen = activeNavSection === sectionId && navDrawer && !navDrawer.hidden;
+            if (sameSectionOpen) {
+                toggleNavDrawer(false);
+                return;
+            }
+            setActiveNavSection(sectionId, true);
+        });
+    });
+    navHomeButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            window.location.href = 'index.php';
+        });
+    });
+    navRouteButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const route = String(button.dataset.navRoute || '').trim();
+            if (route === 'explorer') {
+                window.location.href = 'explorer.php';
+            }
+        });
+    });
+    navDockMode?.addEventListener('change', () => applyNavDock(navDockMode.value));
+    navCloseDrawerButton?.addEventListener('click', () => toggleNavDrawer(false));
+    quickOpenSourcesButton?.addEventListener('click', () => setActiveNavSection('sources', true));
+    quickAnalyzeButton?.addEventListener('click', () => document.getElementById('analyzeButton')?.click());
+    quickClearButton?.addEventListener('click', () => document.getElementById('clearButton')?.click());
+    document.getElementById('clearDebugButton')?.addEventListener('click', () => {
+        statusEl.replaceChildren();
+        logStatus('Debugger bol vyčistený.');
+    });
+    loadIgcButton?.addEventListener('click', () => igcInput?.click());
+    loadTempButton?.addEventListener('click', () => tempInput?.click());
+    igcInput?.addEventListener('change', async () => {
+        const file = igcInput.files?.[0];
+        if (!file) return;
+
+        loadIgcButton.disabled = true;
+        loadIgcButton.textContent = '... načítavam';
+        try {
+            const igcText = await file.text();
+            const parsed = parseIgcTextLocal(igcText);
+            selectedCenter = parsed.center;
+            previewCenter = { ...parsed.center };
+            selectedPoint.position = Cesium.Cartesian3.fromDegrees(parsed.center.lon, parsed.center.lat);
+            syncCenterUi(parsed.center);
+            loadedIgcName.textContent = file.name;
+            loadedIgcName.title = file.name;
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(parsed.center.lon, parsed.center.lat, 3000),
+                duration: 1.5
+            });
+            logStatus('IGC načítaný: ' + file.name + ', body=' + parsed.points.length + ', nový stred ' + formatCenter(parsed.center) + '.', 'success');
+            setActiveNavSection('analysis', false);
+        } catch (error) {
+            logStatus('IGC súbor sa nepodarilo načítať: ' + (error?.message || String(error)), 'error');
+        } finally {
+            loadIgcButton.disabled = false;
+            loadIgcButton.textContent = 'Načítať IGC';
+            igcInput.value = '';
+        }
+    });
+    tempInput?.addEventListener('change', async () => {
+        const file = tempInput.files?.[0];
+        if (!file) return;
+
+        loadTempButton.disabled = true;
+        loadTempButton.textContent = '... načítavam';
+        try {
+            const text = await file.text();
+            const profile = parseTempTextLocal(text);
+            manualTempProfile = profile.slice();
+            manualTempSourceName = file.name;
+            renderTempProfileViews(profile, file.name);
+            logStatus('TEMP načítaný: ' + file.name + ', hladiny=' + profile.length + '.', 'success');
+            setActiveNavSection('temp', false);
+        } catch (error) {
+            logStatus('TEMP súbor sa nepodarilo načítať: ' + (error?.message || String(error)), 'error');
+        } finally {
+            loadTempButton.disabled = false;
+            loadTempButton.textContent = 'Načítať TEMP';
+            tempInput.value = '';
+        }
+    });
+    applyNavDock(navDockMode?.value || 'top');
+    setActiveNavSection('sources', true);
+    renderTempProfileViews([], manualTempSourceName);
     windClearTodayButtonTest?.addEventListener('click', async () => {
         if (!viewer || viewer.isDestroyed()) {
             logStatus('GENauto: mapa ešte nie je pripravená.', 'error');
@@ -1191,6 +1837,8 @@ $assetVersion = '20260712-07';
                 '; odstránené vrstvy z mapy=' + removedLayers + '.',
                 'success'
             );
+
+            renderTempProfileViews(sorted, resolved?.detail || sourceUrl || mode);
         } catch (error) {
             logStatus('GENauto: mazanie dnešných generácií zlyhalo: ' + error.message, 'error');
         } finally {
@@ -1249,6 +1897,7 @@ $assetVersion = '20260712-07';
             source: 'ODVODENE'
         });
     }
+    updateSourceLabels();
 
     const analysisAim = viewer.entities.add({
         id: 'terrain-analysis-aim',
