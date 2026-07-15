@@ -61,6 +61,10 @@ define('DB_CHARSET', termikaConfigValue($termikaLocalConfig, 'DB_CHARSET', 'db_c
 // Vygeneruj na: https://api.windy.com/keys
 define('WINDY_API_KEY', termikaConfigValue($termikaLocalConfig, 'WINDY_API_KEY', 'windy_api_key', ''));
 
+// API kľúč pre Windy Map Forecast API (frontend embed).
+// Kľúč je viazaný na doménu v Windy dashboarde – nie je tajný ako Point Forecast.
+define('WINDY_MAP_KEY', termikaConfigValue($termikaLocalConfig, 'WINDY_MAP_KEY', 'windy_map_key', ''));
+
 // Funkcia na vytvorenie bezpečného PDO spojenia s databázou
 function getDbConnection() {
     try {

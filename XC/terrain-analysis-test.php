@@ -34,6 +34,12 @@ $assetVersion = '20260715-02';
     <script src="js/tool-communication.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/windy-map-bridge.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/windy-map-adapter.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+<?php if (defined('WINDY_MAP_KEY') && WINDY_MAP_KEY !== ''): ?>
+    <script src="https://api.windy.com/assets/map-forecast/libBoot.js"></script>
+    <script>var TERMIKA_WINDY_MAP_KEY = <?php echo json_encode(WINDY_MAP_KEY); ?>;</script>
+<?php else: ?>
+    <script>var TERMIKA_WINDY_MAP_KEY = null;</script>
+<?php endif; ?>
     <style>
         :root{
             color-scheme:light;
@@ -456,6 +462,7 @@ $assetVersion = '20260715-02';
                         <button type="button" data-show-window="legend">Otvoriť legendu</button>
                         <button type="button" data-show-window="cellDiagnostics">Otvoriť diagnostiku</button>
                         <button type="button" data-show-window="debugConsole">Otvoriť debugger</button>
+                        <button type="button" data-show-window="windyMapWindow">Otvoriť Windy mapu</button>
                     </div>
                 </div>
             </div>
@@ -470,6 +477,7 @@ $assetVersion = '20260715-02';
     <button type="button" data-show-window="legend" title="Legenda">L</button>
     <button type="button" data-show-window="debugConsole" title="Debugger">D</button>
     <button type="button" data-show-window="cellDiagnostics" title="Diagnostika bunky">?</button>
+    <button type="button" data-show-window="windyMapWindow" title="Windy mapa">W</button>
 </nav>
 
 <aside id="legend" class="floating-window" data-window-name="Legenda" aria-label="Legenda geometrie terénu" hidden>
@@ -498,6 +506,22 @@ $assetVersion = '20260715-02';
     </header>
     <div id="cellDiagnosticsBody" class="window-body">
         <p class="diagnostic-intro">Po vykonaní analýzy klikni na farebný bod. Zobrazia sa vstupné metriky, aktuálne pravidlo a dôvody klasifikácie.</p>
+    </div>
+</section>
+
+<section id="windyMapWindow" class="floating-window" data-window-name="Windy mapa" style="width:520px;height:480px;right:20px;top:80px" hidden>
+    <header class="window-header">
+        <div class="window-title">Windy mapa</div>
+        <div class="window-actions">
+            <button class="window-action close-window" type="button" title="Zavrieť okno">×</button>
+        </div>
+    </header>
+    <div class="window-body" style="padding:0;display:flex;flex-direction:column;height:calc(100% - 36px)">
+        <div id="windyMapEmbed" style="flex:1;min-height:0"></div>
+        <div style="padding:8px;display:flex;align-items:center;gap:8px;border-top:1px solid #35505f;background:rgba(7,16,24,.85)">
+            <span id="windyMapFocusLabel" style="flex:1;font-size:12px;color:#8fa9b8">Naviguj na Windy mape...</span>
+            <button id="windyUseFocusButton" type="button" style="padding:6px 14px;background:#0d4a6b;border:1px solid #70e8ff;border-radius:6px;color:#dff7ff;cursor:pointer;font-weight:700">Použiť tento fokus ↗</button>
+        </div>
     </div>
 </section>
 
@@ -2361,6 +2385,101 @@ $assetVersion = '20260715-02';
         }
     }
     refreshWindyAdapterStatus();
+
+    // --- Windy Map Forecast embed ---
+    let windyAPI = null;
+    let windyMapInitialized = false;
+
+    function initWindyMap() {
+        if (windyMapInitialized) return;
+        if (!window.TERMIKA_WINDY_MAP_KEY) {
+            logStatus('Windy Map kľúč nie je nakonfigurovaný.', 'error');
+            return;
+        }
+        if (typeof windyInit !== 'function') {
+            logStatus('Windy libBoot.js sa nepodarilo načítať.', 'error');
+            return;
+        }
+
+        windyMapInitialized = true;
+        const center = selectedCenter || { lat: 46.43, lon: 11.85 };
+
+        windyInit({
+            key: window.TERMIKA_WINDY_MAP_KEY,
+            lat: center.lat,
+            lon: center.lon,
+            zoom: 9,
+        }, function (api) {
+            windyAPI = api;
+            const label = document.getElementById('windyMapFocusLabel');
+
+            // Priebežne ukazuj súradnice stredu mapy
+            api.map.on('move', function () {
+                const c = api.map.getCenter();
+                if (label) {
+                    label.textContent = c.lat.toFixed(5) + ', ' + c.lng.toFixed(5) + '  (zoom ' + api.map.getZoom() + ')';
+                }
+            });
+
+            logStatus('Windy mapa načítaná.', 'success');
+        });
+    }
+
+    // Inicializuj Windy mapu pri prvom otvorení okna
+    const windyMapWindowEl = document.getElementById('windyMapWindow');
+    if (windyMapWindowEl) {
+        const observer = new MutationObserver(() => {
+            if (!windyMapWindowEl.hidden) {
+                initWindyMap();
+            }
+        });
+        observer.observe(windyMapWindowEl, { attributes: true, attributeFilter: ['hidden'] });
+    }
+
+    // Tlačidlo "Použiť tento fokus"
+    document.getElementById('windyUseFocusButton')?.addEventListener('click', async () => {
+        if (!windyAPI) {
+            logStatus('Windy mapa ešte nie je načítaná.', 'error');
+            return;
+        }
+
+        const c = windyAPI.map.getCenter();
+        const zoom = windyAPI.map.getZoom();
+        const point = { lat: Number(c.lat.toFixed(5)), lon: Number(c.lng.toFixed(5)) };
+
+        // Aktualizuj fokus v TermikaXC
+        selectedCenter = point;
+        previewCenter = { ...point };
+        selectedPoint.position = Cesium.Cartesian3.fromDegrees(point.lon, point.lat);
+        syncCenterUi(point);
+
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(point.lon, point.lat, zoomToAltitudeM(zoom))
+        });
+
+        logStatus('Fokus z Windy mapy prenesený: ' + formatCenter(point) + ' (zoom ' + zoom + ').', 'success');
+
+        // Načítaj TEMP pre nový bod
+        loadTempOnPointClick(point);
+
+        // Pošli aj cez komunikačný kanál
+        if (window.TermikaCommunicationTool) {
+            try {
+                await window.TermikaCommunicationTool.send('windy-focus', {
+                    lat: point.lat,
+                    lon: point.lon,
+                    zoom: zoom,
+                    source: 'windy-map-embed',
+                    timestampIso: new Date().toISOString()
+                });
+            } catch (_) { /* non-critical */ }
+        }
+    });
+
+    function zoomToAltitudeM(zoom) {
+        // Orientačný prepočet Leaflet zoom → výška kamery Cesium
+        return Math.max(500, 40000000 / Math.pow(2, zoom));
+    }
 
     function cleanupRuntimeResources() {
         if (runtimeCleanupDone) return;
