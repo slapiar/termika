@@ -915,38 +915,89 @@ $assetVersion = '20260712-07';
     }
     window.logStatus = logStatus;
 
-    function logTempSummaryFirst() {
+    function windUvFromDirSpeed(dirDeg, speedKts) {
+        const dir = Number(dirDeg);
+        const speedMs = Number(speedKts) * 0.514444;
+        if (!Number.isFinite(dir) || !Number.isFinite(speedMs)) {
+            return { u: null, v: null, speedMs: null };
+        }
+
+        const rad = (dir * Math.PI) / 180;
+        return {
+            u: -Math.sin(rad) * speedMs,
+            v: -Math.cos(rad) * speedMs,
+            speedMs
+        };
+    }
+
+    async function loadAndLogTempProfileFirst(center) {
         const mode = String(windTempSourceMode?.value || 'auto');
         const sourceUrl = String(windTempSourceUrl?.value || '').trim();
-        const cachedLevels = Array.isArray(window.WindUI?.state?.lastField?.tempLevels)
-            ? window.WindUI.state.lastField.tempLevels
-            : [];
+        const settings = {
+            sourceMode: mode,
+            tempSourceUrl: sourceUrl,
+            windyTempUrl: String(windyTempUrl?.value || '').trim(),
+            stationIndexUrl: String(stationIndexUrl?.value || '').trim(),
+            stationProfileUrlTemplate: String(stationProfileUrlTemplate?.value || '').trim()
+        };
 
-        if (cachedLevels.length >= 2) {
-            const sorted = cachedLevels
-                .filter((lvl) => Number.isFinite(Number(lvl.z_m)))
-                .sort((a, b) => Number(a.z_m) - Number(b.z_m));
-
-            if (sorted.length >= 2) {
-                const low = sorted[0];
-                const high = sorted[sorted.length - 1];
-                logStatus(
-                    'TEMP profil (cache): ' + sorted.length +
-                    ' hladín, z=' + Math.round(Number(low.z_m) || 0) +
-                    ' až ' + Math.round(Number(high.z_m) || 0) +
-                    ' m, režim „' + mode + '”.',
-                    'info'
-                );
-                return;
-            }
+        if (!window.WindTempLoader?.loadProfile) {
+            throw new Error('WindTempLoader nie je dostupný.');
         }
 
         logStatus(
-            'TEMP profil: režim „' + mode +
-            '“, zdroj „' + (sourceUrl || 'nezadaný') +
-            '”. Profil sa načíta pred výpočtom WIND vrstvy.',
+            'TEMP profil: načítavam pred výpočtom (mode=' + mode + ', source=' + (sourceUrl || 'nezadaný') + ').',
             'info'
         );
+
+        const profile = await window.WindTempLoader.loadProfile(center, settings);
+        const resolved = window.WindTempLoader?.lastResolvedSource || null;
+
+        const sorted = Array.isArray(profile)
+            ? profile.slice().filter((lvl) => Number.isFinite(Number(lvl.z_m))).sort((a, b) => Number(a.z_m) - Number(b.z_m))
+            : [];
+
+        if (sorted.length < 2) {
+            throw new Error('TEMP profil neobsahuje aspoň dve validné hladiny.');
+        }
+
+        const low = sorted[0];
+        const high = sorted[sorted.length - 1];
+        logStatus(
+            'TEMP profil pripravený: ' + sorted.length +
+            ' hladín, z=' + Math.round(Number(low.z_m) || 0) +
+            ' až ' + Math.round(Number(high.z_m) || 0) +
+            ' m, resolved=' + (resolved?.resolvedMode || mode) +
+            (resolved?.detail ? ' (' + resolved.detail + ')' : '') + '.',
+            'success'
+        );
+
+        logStatus('TEMP DETAIL (všetky hladiny):', 'info');
+        sorted.forEach((lvl, index) => {
+            const z = Number(lvl.z_m);
+            const p = Number(lvl.p_hpa);
+            const t = Number(lvl.T_c);
+            const td = Number(lvl.Td_c);
+            const dir = Number(lvl.w_dir_deg);
+            const speedKts = Number(lvl.w_speed_kts);
+            const uv = windUvFromDirSpeed(dir, speedKts);
+
+            logStatus(
+                'TEMP[' + String(index + 1).padStart(3, '0') + ']' +
+                ' p=' + (Number.isFinite(p) ? p.toFixed(2) : '--') + ' hPa' +
+                ' | z=' + (Number.isFinite(z) ? z.toFixed(1) : '--') + ' m' +
+                ' | T=' + (Number.isFinite(t) ? t.toFixed(2) : '--') + ' °C' +
+                ' | Td=' + (Number.isFinite(td) ? td.toFixed(2) : '--') + ' °C' +
+                ' | wind=' + (Number.isFinite(dir) ? dir.toFixed(0) : '--') + '° @ ' +
+                (Number.isFinite(speedKts) ? speedKts.toFixed(2) : '--') + ' kt' +
+                ' (' + (Number.isFinite(uv.speedMs) ? uv.speedMs.toFixed(2) : '--') + ' m/s)' +
+                ' | u=' + (Number.isFinite(uv.u) ? uv.u.toFixed(2) : '--') + ' m/s' +
+                ' | v=' + (Number.isFinite(uv.v) ? uv.v.toFixed(2) : '--') + ' m/s',
+                'info'
+            );
+        });
+
+        return sorted;
     }
 
     function logInputSnapshot(enabledModules) {
@@ -1540,11 +1591,12 @@ $assetVersion = '20260712-07';
 
         button.disabled = true;
         statusEl.replaceChildren();
-        logTempSummaryFirst();
-        logInputSnapshot(enabledModules);
-        logStatus('Spúšťam moduly: ' + enabledModules.join(', ') + '.');
 
         try {
+            const tempProfileBeforeCompute = await loadAndLogTempProfileFirst(selectedCenter);
+            logInputSnapshot(enabledModules);
+            logStatus('Spúšťam moduly: ' + enabledModules.join(', ') + '.');
+
             const result = await TerrainAnalysisCore.analyze(viewer, {
                 center: selectedCenter,
                 radiusM: Number(radiusInput.value),
@@ -1588,7 +1640,10 @@ $assetVersion = '20260712-07';
                 logStatus('Kliknutím na ľubovoľný farebný bod otvoríš jeho číselnú diagnostiku a dôvody klasifikácie.');
             }
 
-            await runWindLayer(selectedCenter, Number(radiusInput.value), geometry || null);
+            await runWindLayer(selectedCenter, Number(radiusInput.value), geometry || null, {
+                tempProfileOverride: tempProfileBeforeCompute,
+                reason: 'preload-temp-before-analysis'
+            });
         } catch (error) {
             logStatus('Chyba: ' + error.message, 'error');
         } finally {
