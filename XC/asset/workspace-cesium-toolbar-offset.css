@@ -3,3 +3,20 @@
 body[data-workspace-nav-dock="top"] .cesium-viewer-toolbar {
     top: calc(var(--workspace-nav-bar-height, 52px) + 8px) !important;
 }
+
+/*
+ * Rýchle nástroje TermikaXC majú vlastný riadok pod ovládaním Cesium.
+ * Výška oboch horných vrstiev sa meria v JavaScripte, takže sa neprekrývajú
+ * ani pri zalomení navigácie alebo inom zväčšení prehliadača.
+ */
+@media (min-width: 761px) {
+    body[data-workspace-nav-dock="top"] .quick-tool-dock {
+        top: calc(
+            var(--workspace-nav-bar-height, 52px)
+            + 8px
+            + var(--workspace-cesium-toolbar-height, 40px)
+            + 8px
+        ) !important;
+        right: 12px !important;
+    }
+}
