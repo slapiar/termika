@@ -6,7 +6,7 @@ Letový režim kamery je univerzálny nástroj TermikaXC na plynulý pohyb v 3D 
 
 Nástroj nevytvára model lietadla, vetroňa ani závesného klzáka. Kamera predstavuje oči pilota. Samotný let má vlastnú orientáciu a smer pohybu; pilot sa môže nezávisle obzerať bez toho, aby tým menil smer letu.
 
-Verzia `1.1.1` oddeľuje dve vrstvy:
+Verzia `1.1.2` oddeľuje dve vrstvy:
 
 1. **riadenie letu** – myš ako knipel pri držanom ľavom tlačidle,
 2. **pohľad pilota** – klávesy `Q/W/A/D/S`.
@@ -20,7 +20,7 @@ Aktuálna verzia je zámerne kinematická. Neobsahuje ešte poláru, klesavosť,
 | ID nástroja | `flight-simulator` |
 | Názov | Letový režim kamery |
 | Stav | `ROZPRACOVANÉ` |
-| Verzia | `1.1.1` |
+| Verzia | `1.1.2` |
 | Jadro | `XC/js/flight-simulator.js` |
 | Ovládanie pracoviska | `XC/js/workspace-flight-toggle.js` |
 | Vizuál | `XC/asset/workspace-flight-simulator.css` |
@@ -59,6 +59,19 @@ Po vypnutí:
 - rýchlosť sa vynuluje,
 - pôvodné ovládanie Cesium sa obnoví,
 - prípadný Pointer Lock sa uvoľní.
+
+### Bezpečné odpojenie kolieskom
+
+Počas aktívneho režimu `LET` slúži **kliknutie kolieskom myši** ako jednosmerné bezpečné odpojenie riadenia.
+
+Okamžite vykoná:
+
+- vypnutie režimu `LET`,
+- vynulovanie aktuálnej aj cieľovej rýchlosti,
+- uvoľnenie Pointer Locku,
+- obnovenie pôvodného ovládania myšou v Cesiu.
+
+Kliknutie kolieskom letový režim nikdy nezapína. Opätovná aktivácia je možná iba vedomým kliknutím na tlačidlo `LET`. Tým sa zabráni nechcenému opätovnému prevzatiu riadenia.
 
 ## 5. Myš ako jeden knipel
 
@@ -218,6 +231,18 @@ Ak je dostupný univerzálny komunikačný modul, publikuje aj:
 flight:state
 ```
 
+Bezpečné odpojenie kolieskom vysiela DOM udalosť:
+
+```text
+termikaxc:flight-emergency-disengage
+```
+
+a cez komunikačný modul aj:
+
+```text
+flight:emergency-disengage
+```
+
 cez:
 
 ```js
@@ -237,13 +262,14 @@ Voliteľné:
 - Kamerový HUD,
 - rozšírenie HUD-u o súradnice,
 - `TermikaCommunicationTool`,
-- spoločná navigácia TermikaXC.
+- spoločná navigácia TermikaXC,
+- bezpečnostný modul `XC/js/flight-emergency-disengage.js`.
 
 Letové jadro nie je závislé od Windy ani od konkrétneho meteorologického zdroja.
 
 ## 14. Obmedzenia aktuálnej verzie
 
-Verzia `1.1.1` ešte nepočíta:
+Verzia `1.1.2` ešte nepočíta:
 
 - aerodynamickú poláru,
 - klesavosť,
@@ -275,6 +301,7 @@ Rýchlosť je zatiaľ riadená rýchlosť virtuálnej kamery.
 ```text
 XC/js/flight-simulator.js
 XC/js/workspace-flight-toggle.js
+XC/js/flight-emergency-disengage.js
 XC/asset/workspace-flight-simulator.css
 XC/js/terrain-camera-hud.js
 XC/js/terrain-camera-hud-coordinates.js
