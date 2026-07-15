@@ -3,7 +3,7 @@
 
     if (window.TermikaFlightSimulator) return;
 
-    const VERSION = '1.1.0';
+    const VERSION = '1.1.1';
     const GRAVITY_MS2 = 9.80665;
     const DEFAULTS = Object.freeze({
         minSpeedMs: 0,
@@ -13,9 +13,9 @@
         accelerationMs2: 4,
         decelerationMs2: 7,
         minimumAglM: 3,
-        rollRateDegS: 34,
-        maximumBankDeg: 72,
+        mouseRollSensitivityDegPx: 0.10,
         mousePitchSensitivityDegPx: 0.075,
+        maximumBankDeg: 72,
         maximumFlightPitchDeg: 55,
         lookRateDegS: 58,
         maximumLookYawDeg: 110,
@@ -35,21 +35,21 @@
     let targetSpeedMs = 0;
     let options = { ...DEFAULTS };
     let statusNode = null;
+    let flightCanvas = null;
+    let controllerState = null;
+
     let keydownHandler = null;
     let keyupHandler = null;
-    let visibilityHandler = null;
-    let blurHandler = null;
     let pointerDownHandler = null;
     let pointerUpHandler = null;
     let pointerMoveHandler = null;
     let contextMenuHandler = null;
     let pointerLockHandler = null;
-    let flightCanvas = null;
-    let controllerState = null;
+    let visibilityHandler = null;
+    let blurHandler = null;
 
     const input = {
-        rollLeft: false,
-        rollRight: false,
+        stickActive: false,
         lookLeft: false,
         lookRight: false,
         lookDown: false,
@@ -65,21 +65,25 @@
         lookRoll: 0
     };
 
-    const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, Number(value) || 0));
+    const clamp = (value, minimum, maximum) =>
+        Math.max(minimum, Math.min(maximum, Number(value) || 0));
+
     const toRadians = (degrees) => Number(degrees || 0) * Math.PI / 180;
     const toDegrees = (radians) => Number(radians || 0) * 180 / Math.PI;
-    const normalizeRadians = (value) => {
+
+    function normalizeRadians(value) {
         let normalized = Number(value) || 0;
         while (normalized > Math.PI) normalized -= Math.PI * 2;
         while (normalized < -Math.PI) normalized += Math.PI * 2;
         return normalized;
-    };
-    const normalizeHeading = (value) => {
+    }
+
+    function normalizeHeading(value) {
         let normalized = Number(value) || 0;
         while (normalized >= Math.PI * 2) normalized -= Math.PI * 2;
         while (normalized < 0) normalized += Math.PI * 2;
         return normalized;
-    };
+    }
 
     function resolveViewer() {
         const candidates = [
@@ -87,6 +91,7 @@
             window.terrainAnalysisViewer,
             window.explorerViewer
         ];
+
         for (const candidate of candidates) {
             if (candidate?.camera && candidate?.scene) return candidate;
         }
@@ -96,12 +101,15 @@
         } catch (_) {
             // Globálny lexikálny binding ešte nemusí byť pripravený.
         }
+
         return null;
     }
 
     function isTypingTarget(target) {
         if (!(target instanceof Element)) return false;
-        return Boolean(target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]'));
+        return Boolean(target.closest(
+            'input, textarea, select, [contenteditable="true"], [contenteditable=""]'
+        ));
     }
 
     function approach(current, target, delta) {
@@ -117,6 +125,7 @@
     function cameraCoordinates() {
         const cartographic = activeViewer?.camera?.positionCartographic;
         if (!cartographic || typeof Cesium === 'undefined') return null;
+
         return {
             lat: Cesium.Math.toDegrees(cartographic.latitude),
             lon: Cesium.Math.toDegrees(cartographic.longitude),
@@ -125,7 +134,6 @@
     }
 
     function snapshot() {
-        const coordinates = cameraCoordinates();
         return {
             version: VERSION,
             active,
@@ -133,7 +141,7 @@
             targetSpeedMs,
             speedKmh: speedMs * 3.6,
             targetSpeedKmh: targetSpeedMs * 3.6,
-            coordinates,
+            coordinates: cameraCoordinates(),
             flight: {
                 headingDeg: (toDegrees(attitude.heading) + 360) % 360,
                 pitchDeg: toDegrees(attitude.pitch),
@@ -151,6 +159,7 @@
     function dispatchState(force = false) {
         const now = performance.now();
         if (!force && now - lastStateEventTime < options.stateEventIntervalMs) return;
+
         lastStateEventTime = now;
         const detail = snapshot();
         document.dispatchEvent(new CustomEvent('termikaxc:flight-state', { detail }));
@@ -159,6 +168,7 @@
 
     function ensureStatusNode() {
         if (statusNode?.isConnected) return statusNode;
+
         statusNode = document.getElementById('termikaFlightStatus');
         if (!statusNode) {
             statusNode = document.createElement('div');
@@ -168,6 +178,7 @@
             statusNode.setAttribute('aria-live', 'polite');
             document.body.appendChild(statusNode);
         }
+
         return statusNode;
     }
 
@@ -180,20 +191,31 @@
             `<span class="termika-flight-speed">${formatSpeed(speedMs)}</span>`,
             `<span class="termika-flight-target">cieľ ${formatSpeed(targetSpeedMs)}</span>`,
             `<span class="termika-flight-attitude">náklon ${Math.round(toDegrees(attitude.roll))}° · pitch ${Math.round(toDegrees(attitude.pitch))}°</span>`,
-            '<span class="termika-flight-help">↑/↓ rýchlosť · myš dopredu/dozadu pitch · L/P tlačidlo náklon · Q/W pohľad bokom · A/D dole/hore · S horizont</span>'
+            '<span class="termika-flight-help">↑/↓ rýchlosť · drž L + myš do strán náklon · myš dopredu/dozadu pitch · Q/W bokom · A/D dole/hore · S horizont</span>'
         ].join('');
     }
 
     function resetInputs() {
-        Object.keys(input).forEach((key) => { input[key] = false; });
+        Object.keys(input).forEach((key) => {
+            input[key] = false;
+        });
     }
 
     function initializeAttitudeFromCamera() {
         const camera = activeViewer?.camera;
         if (!camera) return;
+
         attitude.heading = normalizeHeading(camera.heading);
-        attitude.pitch = clamp(camera.pitch, toRadians(-options.maximumFlightPitchDeg), toRadians(options.maximumFlightPitchDeg));
-        attitude.roll = clamp(normalizeRadians(camera.roll), toRadians(-options.maximumBankDeg), toRadians(options.maximumBankDeg));
+        attitude.pitch = clamp(
+            camera.pitch,
+            toRadians(-options.maximumFlightPitchDeg),
+            toRadians(options.maximumFlightPitchDeg)
+        );
+        attitude.roll = clamp(
+            normalizeRadians(camera.roll),
+            toRadians(-options.maximumBankDeg),
+            toRadians(options.maximumBankDeg)
+        );
         attitude.lookYaw = 0;
         attitude.lookPitch = 0;
         attitude.lookRoll = 0;
@@ -213,26 +235,37 @@
 
     function setCameraPose(destination = null) {
         if (!activeViewer?.camera || typeof Cesium === 'undefined') return;
-        const orientation = cameraOrientation();
+
         activeViewer.camera.setView({
             destination: destination || Cesium.Cartesian3.clone(activeViewer.camera.position),
-            orientation
+            orientation: cameraOrientation()
         });
     }
 
     function terrainSafeDestination(destination) {
-        if (!destination || !activeViewer?.scene?.globe || typeof Cesium === 'undefined') return destination;
+        if (!destination || !activeViewer?.scene?.globe || typeof Cesium === 'undefined') {
+            return destination;
+        }
+
         const cartographic = Cesium.Cartographic.fromCartesian(destination);
         if (!cartographic) return destination;
+
         const terrainHeight = activeViewer.scene.globe.getHeight?.(cartographic);
         if (!Number.isFinite(terrainHeight)) return destination;
+
         const minimumHeight = terrainHeight + options.minimumAglM;
         if (cartographic.height >= minimumHeight) return destination;
-        return Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, minimumHeight);
+
+        return Cesium.Cartesian3.fromRadians(
+            cartographic.longitude,
+            cartographic.latitude,
+            minimumHeight
+        );
     }
 
     function directionInWorld() {
         if (!activeViewer?.camera || typeof Cesium === 'undefined') return null;
+
         const position = activeViewer.camera.position;
         const frame = Cesium.Transforms.eastNorthUpToFixedFrame(position);
         const cosPitch = Math.cos(attitude.pitch);
@@ -241,7 +274,12 @@
             Math.cos(attitude.heading) * cosPitch,
             Math.sin(attitude.pitch)
         );
-        const direction = Cesium.Matrix4.multiplyByPointAsVector(frame, localDirection, new Cesium.Cartesian3());
+        const direction = Cesium.Matrix4.multiplyByPointAsVector(
+            frame,
+            localDirection,
+            new Cesium.Cartesian3()
+        );
+
         return Cesium.Cartesian3.normalize(direction, direction);
     }
 
@@ -250,23 +288,25 @@
             setCameraPose();
             return;
         }
+
         const direction = directionInWorld();
         if (!direction) return;
-        const step = Cesium.Cartesian3.multiplyByScalar(direction, distanceMeters, new Cesium.Cartesian3());
-        const destination = Cesium.Cartesian3.add(activeViewer.camera.position, step, new Cesium.Cartesian3());
+
+        const step = Cesium.Cartesian3.multiplyByScalar(
+            direction,
+            distanceMeters,
+            new Cesium.Cartesian3()
+        );
+        const destination = Cesium.Cartesian3.add(
+            activeViewer.camera.position,
+            step,
+            new Cesium.Cartesian3()
+        );
+
         setCameraPose(terrainSafeDestination(destination));
     }
 
     function updateFlightControls(deltaSeconds) {
-        const rollDirection = (input.rollRight ? 1 : 0) - (input.rollLeft ? 1 : 0);
-        if (rollDirection !== 0) {
-            attitude.roll = clamp(
-                attitude.roll + rollDirection * toRadians(options.rollRateDegS) * deltaSeconds,
-                toRadians(-options.maximumBankDeg),
-                toRadians(options.maximumBankDeg)
-            );
-        }
-
         if (speedMs > 0.5 && Math.abs(attitude.roll) > toRadians(0.1)) {
             const effectiveSpeed = Math.max(options.coordinatedTurnMinimumSpeedMs, speedMs);
             const turnRate = clamp(
@@ -277,9 +317,12 @@
             attitude.heading = normalizeHeading(attitude.heading + turnRate * deltaSeconds);
         }
 
-        const lookYawDirection = (input.lookRight ? 1 : 0) - (input.lookLeft ? 1 : 0);
-        const lookPitchDirection = (input.lookUp ? 1 : 0) - (input.lookDown ? 1 : 0);
+        const lookYawDirection =
+            (input.lookRight ? 1 : 0) - (input.lookLeft ? 1 : 0);
+        const lookPitchDirection =
+            (input.lookUp ? 1 : 0) - (input.lookDown ? 1 : 0);
         const lookRate = toRadians(options.lookRateDegS) * deltaSeconds;
+
         attitude.lookYaw = clamp(
             attitude.lookYaw + lookYawDirection * lookRate,
             toRadians(-options.maximumLookYawDeg),
@@ -302,7 +345,10 @@
         const deltaSeconds = clamp((timestamp - lastFrameTime) / 1000, 0, 0.12);
         lastFrameTime = timestamp;
 
-        const rate = speedMs < targetSpeedMs ? options.accelerationMs2 : options.decelerationMs2;
+        const rate = speedMs < targetSpeedMs
+            ? options.accelerationMs2
+            : options.decelerationMs2;
+
         speedMs = approach(speedMs, targetSpeedMs, rate * deltaSeconds);
         updateFlightControls(deltaSeconds);
         moveAircraft(speedMs * deltaSeconds);
@@ -355,43 +401,53 @@
 
     function handleKeydown(event) {
         if (!active || event.defaultPrevented || isTypingTarget(event.target)) return;
-        const step = event.shiftKey ? options.fastSpeedStepMs : options.speedStepMs;
+
+        const step = event.shiftKey
+            ? options.fastSpeedStepMs
+            : options.speedStepMs;
 
         if (event.key === 'ArrowUp') {
             event.preventDefault();
             adjustSpeedMs(step);
             return;
         }
+
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             adjustSpeedMs(-step);
             return;
         }
+
         if (event.code === 'Space') {
             event.preventDefault();
             stop();
             return;
         }
+
         if (event.code === 'KeyQ') {
             event.preventDefault();
             input.lookLeft = true;
             return;
         }
+
         if (event.code === 'KeyW') {
             event.preventDefault();
             input.lookRight = true;
             return;
         }
+
         if (event.code === 'KeyA') {
             event.preventDefault();
             input.lookDown = true;
             return;
         }
+
         if (event.code === 'KeyD') {
             event.preventDefault();
             input.lookUp = true;
             return;
         }
+
         if (event.code === 'KeyS' && !event.repeat) {
             event.preventDefault();
             resetViewToHorizon();
@@ -411,50 +467,62 @@
     }
 
     function handlePointerDown(event) {
-        if (!active || !isFlightPointerEvent(event)) return;
-        if (event.button !== 0 && event.button !== 2) return;
+        if (!active || !isFlightPointerEvent(event) || event.button !== 0) return;
+
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (event.button === 0) input.rollLeft = true;
-        if (event.button === 2) input.rollRight = true;
+        input.stickActive = true;
+
         if (document.pointerLockElement !== flightCanvas) {
             flightCanvas.requestPointerLock?.();
         }
     }
 
     function handlePointerUp(event) {
-        if (event.button === 0) input.rollLeft = false;
-        if (event.button === 2) input.rollRight = false;
+        if (event.button === 0) input.stickActive = false;
     }
 
     function handlePointerMove(event) {
-        if (!active || !isFlightPointerEvent(event)) return;
+        if (!active || !input.stickActive || !isFlightPointerEvent(event)) return;
+
+        const movementX = Number(event.movementX) || 0;
         const movementY = Number(event.movementY) || 0;
-        if (!movementY) return;
+        if (!movementX && !movementY) return;
+
+        attitude.roll = clamp(
+            attitude.roll + toRadians(
+                movementX * options.mouseRollSensitivityDegPx
+            ),
+            toRadians(-options.maximumBankDeg),
+            toRadians(options.maximumBankDeg)
+        );
+
         attitude.pitch = clamp(
-            attitude.pitch + toRadians(movementY * options.mousePitchSensitivityDegPx),
+            attitude.pitch + toRadians(
+                movementY * options.mousePitchSensitivityDegPx
+            ),
             toRadians(-options.maximumFlightPitchDeg),
             toRadians(options.maximumFlightPitchDeg)
         );
+
         renderStatus();
     }
 
     function handleContextMenu(event) {
-        if (!active || !isFlightPointerEvent(event)) return;
+        if (!active || event.target !== flightCanvas) return;
         event.preventDefault();
-        event.stopImmediatePropagation();
     }
 
     function handlePointerLockChange() {
         if (document.pointerLockElement !== flightCanvas) {
-            input.rollLeft = false;
-            input.rollRight = false;
+            input.stickActive = false;
         }
     }
 
     function saveControllerState() {
         const controller = activeViewer?.scene?.screenSpaceCameraController;
         if (!controller || controllerState) return;
+
         controllerState = {
             enableInputs: controller.enableInputs,
             enableRotate: controller.enableRotate,
@@ -469,6 +537,7 @@
     function restoreControllerState() {
         const controller = activeViewer?.scene?.screenSpaceCameraController;
         if (!controller || !controllerState) return;
+
         Object.entries(controllerState).forEach(([key, value]) => {
             if (key in controller) controller[key] = value;
         });
@@ -484,6 +553,7 @@
 
     function install(viewerInstance = null, installOptions = {}) {
         options = { ...DEFAULTS, ...installOptions };
+
         if (viewerInstance) bindViewer(viewerInstance);
         if (!activeViewer) bindViewer(resolveViewer());
         if (!activeViewer || !flightCanvas) return false;
@@ -499,6 +569,7 @@
         pointerMoveHandler = handlePointerMove;
         contextMenuHandler = handleContextMenu;
         pointerLockHandler = handlePointerLockChange;
+
         visibilityHandler = () => {
             if (document.hidden) {
                 lastFrameTime = 0;
@@ -526,7 +597,10 @@
         if (!installed && !install()) return false;
         if (!activeViewer?.scene || !activeViewer?.camera) return false;
 
-        if (typeof Cesium !== 'undefined' && activeViewer.scene.mode !== Cesium.SceneMode.SCENE3D) {
+        if (
+            typeof Cesium !== 'undefined'
+            && activeViewer.scene.mode !== Cesium.SceneMode.SCENE3D
+        ) {
             activeViewer.scene.morphTo3D?.(0.6);
         }
 
@@ -537,7 +611,10 @@
         startLoop();
         renderStatus();
         dispatchState(true);
-        document.dispatchEvent(new CustomEvent('termikaxc:flight-activated', { detail: snapshot() }));
+        document.dispatchEvent(new CustomEvent(
+            'termikaxc:flight-activated',
+            { detail: snapshot() }
+        ));
         return true;
     }
 
@@ -546,14 +623,22 @@
         stopLoop();
         resetInputs();
         restoreControllerState();
-        if (document.pointerLockElement === flightCanvas) document.exitPointerLock?.();
+
+        if (document.pointerLockElement === flightCanvas) {
+            document.exitPointerLock?.();
+        }
+
         if (!keepSpeed) {
             speedMs = 0;
             targetSpeedMs = 0;
         }
+
         renderStatus();
         dispatchState(true);
-        document.dispatchEvent(new CustomEvent('termikaxc:flight-deactivated', { detail: snapshot() }));
+        document.dispatchEvent(new CustomEvent(
+            'termikaxc:flight-deactivated',
+            { detail: snapshot() }
+        ));
         return true;
     }
 
@@ -563,15 +648,46 @@
 
     function destroy() {
         deactivate();
-        if (keydownHandler) document.removeEventListener('keydown', keydownHandler, { capture: true });
-        if (keyupHandler) document.removeEventListener('keyup', keyupHandler, { capture: true });
-        if (pointerDownHandler) flightCanvas?.removeEventListener('pointerdown', pointerDownHandler, { capture: true });
-        if (pointerUpHandler) document.removeEventListener('pointerup', pointerUpHandler, { capture: true });
-        if (pointerMoveHandler) document.removeEventListener('pointermove', pointerMoveHandler, { capture: true });
-        if (contextMenuHandler) flightCanvas?.removeEventListener('contextmenu', contextMenuHandler, { capture: true });
-        if (pointerLockHandler) document.removeEventListener('pointerlockchange', pointerLockHandler);
-        if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
-        if (blurHandler) window.removeEventListener('blur', blurHandler);
+
+        if (keydownHandler) {
+            document.removeEventListener('keydown', keydownHandler, { capture: true });
+        }
+        if (keyupHandler) {
+            document.removeEventListener('keyup', keyupHandler, { capture: true });
+        }
+        if (pointerDownHandler) {
+            flightCanvas?.removeEventListener(
+                'pointerdown',
+                pointerDownHandler,
+                { capture: true }
+            );
+        }
+        if (pointerUpHandler) {
+            document.removeEventListener('pointerup', pointerUpHandler, { capture: true });
+        }
+        if (pointerMoveHandler) {
+            document.removeEventListener(
+                'pointermove',
+                pointerMoveHandler,
+                { capture: true }
+            );
+        }
+        if (contextMenuHandler) {
+            flightCanvas?.removeEventListener(
+                'contextmenu',
+                contextMenuHandler,
+                { capture: true }
+            );
+        }
+        if (pointerLockHandler) {
+            document.removeEventListener('pointerlockchange', pointerLockHandler);
+        }
+        if (visibilityHandler) {
+            document.removeEventListener('visibilitychange', visibilityHandler);
+        }
+        if (blurHandler) {
+            window.removeEventListener('blur', blurHandler);
+        }
 
         keydownHandler = null;
         keyupHandler = null;
@@ -582,10 +698,12 @@
         pointerLockHandler = null;
         visibilityHandler = null;
         blurHandler = null;
+
         statusNode?.remove();
         statusNode = null;
         flightCanvas = null;
         activeViewer = null;
+        controllerState = null;
         installed = false;
         dispatchState(true);
     }
