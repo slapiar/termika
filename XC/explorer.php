@@ -25,7 +25,7 @@ if (stripos($html, 'asset/explorer-profile.css') === false) {
     $headAssets .= '    <link rel="stylesheet" href="asset/explorer-profile.css?v=20260715-01">' . "\n";
 }
 if (stripos($html, 'asset/workspace-polish.css') === false) {
-    $headAssets .= '    <link rel="stylesheet" href="asset/workspace-polish.css?v=20260715-01">' . "\n";
+    $headAssets .= '    <link rel="stylesheet" href="asset/workspace-polish.css?v=20260715-02">' . "\n";
 }
 
 if ($headAssets !== '') {
@@ -50,6 +50,9 @@ if (stripos($html, 'js/explorer-profile.js') === false) {
 }
 if (stripos($html, 'js/workspace-crosshair.js') === false) {
     $bodyScripts .= '    <script src="js/workspace-crosshair.js?v=20260715-01"></script>' . "\n";
+}
+if (stripos($html, 'js/workspace-hud-toggle.js') === false) {
+    $bodyScripts .= '    <script src="js/workspace-hud-toggle.js?v=20260715-01"></script>' . "\n";
 }
 
 if ($bodyScripts !== '') {
