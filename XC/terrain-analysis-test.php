@@ -32,9 +32,39 @@ $assetVersion = '20260712-07';
     <script src="js/wind-render.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-ui.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <style>
-        :root{color-scheme:dark}
+        :root{
+            color-scheme:light;
+            --nav-shell-bg:rgba(255,255,255,.84);
+            --nav-shell-border:#cfd8e3;
+            --nav-shell-text:#1f3443;
+            --nav-shell-muted:#557180;
+            --nav-tab-bg:rgba(245,250,255,.9);
+            --nav-tab-border:#a9bfcd;
+            --nav-tab-text:#1f3443;
+            --nav-tab-active-bg:#e4f3ff;
+            --nav-tab-active-border:#4ea5cf;
+            --nav-drawer-bg:rgba(255,255,255,.95);
+            --nav-card-bg:rgba(245,250,255,.88);
+            --nav-card-border:#c7d7e2;
+        }
+        body[data-theme="dark"]{
+            color-scheme:dark;
+            --nav-shell-bg:rgba(7,16,24,.94);
+            --nav-shell-border:#426277;
+            --nav-shell-text:#dff7ff;
+            --nav-shell-muted:#8fa9b8;
+            --nav-tab-bg:#10212b;
+            --nav-tab-border:#54778a;
+            --nav-tab-text:#dff7ff;
+            --nav-tab-active-bg:#1c3b4b;
+            --nav-tab-active-border:#70e8ff;
+            --nav-drawer-bg:rgba(7,16,24,.97);
+            --nav-card-bg:rgba(16,33,43,.62);
+            --nav-card-border:#35505f;
+        }
         html,body,#cesiumContainer{width:100%;height:100%;margin:0;overflow:hidden;background:#071018}
         #cesiumContainer{cursor:crosshair}
+        .cesium-viewer-toolbar{z-index:40}
         [hidden]{display:none!important}
         .floating-window{position:absolute;z-index:20;display:flex;flex-direction:column;min-width:250px;min-height:120px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);background:rgba(7,16,24,.94);color:#eef;font:14px/1.4 system-ui;border:1px solid #426277;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.38);resize:both;overflow:hidden}
         #panel{top:12px;left:12px;width:420px;height:620px}
@@ -87,29 +117,29 @@ $assetVersion = '20260712-07';
         .compare-row{display:flex;align-items:center;gap:8px;margin-top:8px}
         .compare-row span{min-width:64px;color:#8fa9b8;font-size:12px}
         .compare-select{width:100%;padding:4px 6px;background:#10212b;color:#eef;border:1px solid #426277;border-radius:4px;font-size:12px}
-        .nav-shell{position:absolute;left:12px;right:12px;top:12px;z-index:34;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+        .nav-shell{position:absolute;left:0;right:0;top:0;z-index:34;display:flex;flex-direction:column;gap:0;pointer-events:none}
         .nav-shell[data-dock="bottom"]{top:auto;bottom:12px}
-        .nav-shell[data-dock="left"]{top:12px;bottom:12px;right:auto;width:min(420px,calc(100vw - 24px))}
-        .nav-shell[data-dock="right"]{top:12px;bottom:12px;left:auto;width:min(420px,calc(100vw - 24px))}
+        .nav-shell[data-dock="left"]{top:0;bottom:12px;right:auto;width:min(420px,calc(100vw - 12px))}
+        .nav-shell[data-dock="right"]{top:0;bottom:12px;left:auto;width:min(420px,calc(100vw - 12px))}
         .nav-bar,.nav-drawer,.quick-tool-dock{pointer-events:auto}
-        .nav-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid #426277;border-radius:10px;background:rgba(7,16,24,.94);box-shadow:0 10px 24px rgba(0,0,0,.38);backdrop-filter:blur(8px)}
+        .nav-bar{display:flex;align-items:center;justify-content:flex-start;gap:10px;padding:8px 10px 8px 12px;border:1px solid var(--nav-shell-border);border-radius:0;background:var(--nav-shell-bg);box-shadow:0 8px 22px rgba(0,0,0,.24);backdrop-filter:blur(6px)}
         .nav-brand{display:flex;flex-direction:column;gap:2px;min-width:0}
-        .nav-brand strong{font-size:13px;color:#70e8ff;letter-spacing:.4px}
-        .nav-brand span{font-size:11px;color:#8fa9b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .nav-primary{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;flex:1}
-        .nav-tab{padding:7px 10px;border:1px solid #54778a;border-radius:8px;background:#10212b;color:#dff7ff;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap}
-        .nav-tab.is-active,.nav-tab:hover{background:#1c3b4b;border-color:#70e8ff}
-        .nav-meta{display:flex;align-items:center;gap:8px}
-        .nav-dock-picker{display:flex;align-items:center;gap:6px;font-size:11px;color:#8fa9b8}
-        .nav-dock-picker select,.nav-close-button,.drawer-card input[type="text"],.drawer-card input[type="number"],.drawer-card select{background:#10212b;color:#eef;border:1px solid #426277;border-radius:6px}
-        .nav-dock-picker select{padding:5px 8px}
-        .nav-close-button{width:30px;height:30px;cursor:pointer;font-weight:700}
-        .nav-drawer{border:1px solid #426277;border-radius:12px;background:rgba(7,16,24,.97);box-shadow:0 12px 24px rgba(0,0,0,.42);max-height:min(62vh,720px);overflow:auto}
+        .nav-brand strong{font-size:13px;color:var(--nav-shell-text);letter-spacing:.4px}
+        .nav-brand span{font-size:11px;color:var(--nav-shell-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .nav-primary{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-start;flex:0 1 auto}
+        .nav-tab{padding:7px 10px;border:1px solid var(--nav-tab-border);border-radius:7px;background:var(--nav-tab-bg);color:var(--nav-tab-text);cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap}
+        .nav-tab.is-active,.nav-tab:hover{background:var(--nav-tab-active-bg);border-color:var(--nav-tab-active-border)}
+        .nav-meta{display:flex;align-items:center;gap:6px;margin-left:4px}
+        .nav-dock-picker{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--nav-shell-muted)}
+        .nav-dock-picker select,.nav-close-button,.nav-theme-toggle,.drawer-card input[type="text"],.drawer-card input[type="number"],.drawer-card select{background:var(--nav-tab-bg);color:var(--nav-tab-text);border:1px solid var(--nav-tab-border);border-radius:7px}
+        .nav-dock-picker select{padding:7px 10px;font-size:12px;font-weight:700;line-height:1}
+        .nav-close-button,.nav-theme-toggle{padding:7px 10px;min-width:38px;height:auto;cursor:pointer;font-size:12px;font-weight:700;line-height:1}
+        .nav-drawer{border:1px solid var(--nav-shell-border);border-top:0;border-radius:0 0 10px 10px;background:var(--nav-drawer-bg);box-shadow:0 12px 24px rgba(0,0,0,.28);max-height:min(62vh,720px);overflow:auto}
         .nav-shell[data-dock="left"] .nav-drawer,.nav-shell[data-dock="right"] .nav-drawer{height:100%;max-height:none}
         .nav-drawer-section{display:none;padding:14px}
         .nav-drawer-section.is-active{display:block}
         .drawer-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
-        .drawer-card{grid-column:span 4;padding:12px;border:1px solid #35505f;border-radius:10px;background:rgba(16,33,43,.62)}
+        .drawer-card{grid-column:span 4;padding:12px;border:1px solid var(--nav-card-border);border-radius:10px;background:var(--nav-card-bg)}
         .drawer-card.wide{grid-column:span 8}
         .drawer-card.full{grid-column:1 / -1}
         .drawer-card h3{margin:0 0 10px;color:#70e8ff;font-size:13px}
@@ -135,7 +165,7 @@ $assetVersion = '20260712-07';
         #debugConsole{left:12px;bottom:12px;width:560px;height:260px}
         #status{max-height:none;height:100%;overflow:auto;white-space:pre-wrap;color:#d7e7ef;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
         @media (max-width:1200px){.drawer-card,.drawer-card.wide{grid-column:span 6}.temp-data-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
-        @media (max-width:760px){.nav-shell{left:8px;right:8px;top:8px}.nav-shell[data-dock="bottom"]{bottom:8px}.nav-shell[data-dock="left"],.nav-shell[data-dock="right"]{width:calc(100vw - 16px)}.nav-bar{align-items:flex-start;flex-direction:column}.nav-primary{justify-content:flex-start}.nav-meta{width:100%;justify-content:space-between}.drawer-card,.drawer-card.wide{grid-column:1 / -1}.quick-tool-dock{top:auto;right:8px;bottom:72px;flex-wrap:wrap;width:46px;padding:5px;gap:5px}.quick-tool-dock button{width:30px;height:30px;font-size:12px}.temp-data-summary{grid-template-columns:1fr 1fr}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}}
+        @media (max-width:760px){.nav-shell{left:0;right:0;top:0}.nav-shell[data-dock="bottom"]{bottom:8px}.nav-shell[data-dock="left"],.nav-shell[data-dock="right"]{width:100vw}.nav-bar{align-items:flex-start;flex-direction:column}.nav-primary{justify-content:flex-start}.nav-meta{width:100%;justify-content:space-between}.drawer-card,.drawer-card.wide{grid-column:1 / -1}.quick-tool-dock{top:auto;right:8px;bottom:72px;flex-wrap:wrap;width:46px;padding:5px;gap:5px}.quick-tool-dock button{width:30px;height:30px;font-size:12px}.temp-data-summary{grid-template-columns:1fr 1fr}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}}
     </style>
 </head>
 <body>
@@ -167,6 +197,7 @@ $assetVersion = '20260712-07';
                     <option value="right">Vpravo</option>
                 </select>
             </label>
+            <button id="navThemeToggleButton" class="nav-theme-toggle" type="button" title="Prepnúť svetlý/tmavý režim">☀</button>
             <button id="navCloseDrawerButton" class="nav-close-button" type="button" title="Zavrieť vysúvateľný panel">×</button>
         </div>
     </div>
@@ -468,6 +499,7 @@ $assetVersion = '20260712-07';
     const navShell = document.getElementById('navShell');
     const navDrawer = document.getElementById('navDrawer');
     const navDockMode = document.getElementById('navDockMode');
+    const navThemeToggleButton = document.getElementById('navThemeToggleButton');
     const navCloseDrawerButton = document.getElementById('navCloseDrawerButton');
     const navTabs = Array.from(document.querySelectorAll('.nav-tab'));
     const navSections = Array.from(document.querySelectorAll('.nav-drawer-section'));
@@ -562,6 +594,35 @@ $assetVersion = '20260712-07';
         if (navDockMode && navDockMode.value !== normalized) {
             navDockMode.value = normalized;
         }
+    }
+
+    function applyUiTheme(mode) {
+        const normalized = mode === 'dark' ? 'dark' : 'light';
+        document.body.dataset.theme = normalized;
+        if (navThemeToggleButton) {
+            navThemeToggleButton.textContent = normalized === 'dark' ? '☾' : '☀';
+            navThemeToggleButton.title = normalized === 'dark'
+                ? 'Prepnúť na svetlý režim'
+                : 'Prepnúť na tmavý režim';
+        }
+        try {
+            localStorage.setItem('terrainAnalysisTheme', normalized);
+        } catch (_) {
+            // No-op when storage is unavailable.
+        }
+    }
+
+    function initUiTheme() {
+        let stored = 'light';
+        try {
+            const value = localStorage.getItem('terrainAnalysisTheme');
+            if (value === 'dark' || value === 'light') {
+                stored = value;
+            }
+        } catch (_) {
+            // No-op when storage is unavailable.
+        }
+        applyUiTheme(stored);
     }
 
     function setActiveNavSection(sectionId, forceOpen = true) {
@@ -1747,6 +1808,10 @@ $assetVersion = '20260712-07';
         });
     });
     navDockMode?.addEventListener('change', () => applyNavDock(navDockMode.value));
+    navThemeToggleButton?.addEventListener('click', () => {
+        const current = document.body.dataset.theme === 'dark' ? 'dark' : 'light';
+        applyUiTheme(current === 'dark' ? 'light' : 'dark');
+    });
     navCloseDrawerButton?.addEventListener('click', () => toggleNavDrawer(false));
     quickOpenSourcesButton?.addEventListener('click', () => setActiveNavSection('sources', true));
     quickAnalyzeButton?.addEventListener('click', () => document.getElementById('analyzeButton')?.click());
@@ -1809,6 +1874,7 @@ $assetVersion = '20260712-07';
         }
     });
     applyNavDock(navDockMode?.value || 'top');
+    initUiTheme();
     setActiveNavSection('sources', false);
     toggleNavDrawer(false);
     renderTempProfileViews([], manualTempSourceName);
