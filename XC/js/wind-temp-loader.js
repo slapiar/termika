@@ -9,7 +9,7 @@ window.WindTempLoader = {
 
     defaultSettings: {
         sourceMode: "auto",
-        tempSourceUrl: "XCtrack/temp.json",
+        tempSourceUrl: "XCtrack/temptest.json",
         windyTempUrl: "",
         windyTempUrlTemplate: "",
         stationTempUrl: "",
