@@ -12,11 +12,19 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - `Zachovať poslednú generáciu`,
   - `Vymazať poslednú generáciu`,
   - `Vymazať všetky generácie z mapy`.
-- Automatické ukladanie každého výpočtu do lokálneho úložiska `GENauto/`.
-  - nový endpoint `XC/genauto.php` pri prvom použití automaticky vytvorí adresáre `XC/GENauto/map` a `XC/GENauto/wind`,
+- Automatické ukladanie každého výpočtu do lokálneho úložiska `GENauto/` v koreňi projektu.
+  - nový endpoint `XC/genauto.php` pri prvom použití automaticky vytvorí adresáre `GENauto/map` a `GENauto/wind`,
   - každá generácia sa zapisuje samostatne pre mapu a vietor,
   - názov súboru obsahuje UTC dátum a čas generácie aj súradnice stredu fokusu,
   - obsah súboru nesie metadáta stredu a payload danej generácie.
+- WIND generácie už ukladajú aj WebM cache pod rovnakým basename ako JSON.
+  - WebM súbor má rovnaký názov ako JSON záznam, len s príponou `.webm`,
+  - cache sa ukladá mimo `XC/` do koreňového `GENauto/wind`,
+  - prehranie cache ide cez serverový stream endpoint `XC/genauto.php?action=getWebm`.
+- V paneli pribudli porovnávacie prepínače pre uložené generácie.
+  - WIND selector prepína medzi uloženými WIND cache a pri existujúcom WebM prehrá uložený vizuál,
+  - map selector prepína medzi uloženými mapovými generáciami,
+  - obidva prepínače pracujú nad dnešným `GENauto/` zoznamom bez nutnosti prepočtu všetkého naraz.
 - Nové ručné operácie pre denný workflow generácií.
   - tlačidlo `Vymazať dnešné GENauto` maže dnešné mapové aj veterné záznamy a zároveň čistí vrstvy z mapy,
   - tlačidlo `Načítať vietor zo súborov` obnoví dnešné veterné generácie z `GENauto/wind` späť do scény,

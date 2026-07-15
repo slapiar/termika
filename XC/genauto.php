@@ -56,6 +56,39 @@ function load_payload(): array {
     return $data;
 }
 
+function resolve_webm_path(string $root, string $kind, string $jsonFile): ?string {
+    $kind = sanitize_kind($kind);
+    if ($kind !== 'wind') return null;
+
+    $baseName = basename($jsonFile, '.json');
+    if ($baseName === '' || $baseName === basename($jsonFile)) return null;
+
+    $path = $root . '/' . $kind . '/' . $baseName . '.webm';
+    if (!is_file($path)) return null;
+    return $path;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $action = isset($_GET['action']) ? (string)$_GET['action'] : '';
+    if ($action === 'getWebm') {
+        $kind = isset($_GET['kind']) ? (string)$_GET['kind'] : 'wind';
+        $jsonFile = isset($_GET['json_file']) ? (string)$_GET['json_file'] : '';
+        $root = dirname(__DIR__) . '/GENauto';
+        $path = resolve_webm_path($root, $kind, $jsonFile);
+        if ($path === null) {
+            respond(404, ["status" => "error", "message" => "WebM cache nebola nájdená."]);
+        }
+
+        header('Content-Type: video/webm');
+        header('Content-Length: ' . filesize($path));
+        header('Cache-Control: no-store, max-age=0');
+        readfile($path);
+        exit;
+    }
+
+    respond(400, ["status" => "error", "message" => "Neznáma GET akcia."]);
+}
+
 function generation_filename(string $kind, float $lat, float $lon, string $timestamp): string {
     $latTag = str_replace(['+', '-'], ['p', 'm'], sprintf('%.5f', $lat));
     $lonTag = str_replace(['+', '-'], ['p', 'm'], sprintf('%.5f', $lon));
@@ -103,11 +136,16 @@ function list_records_for_kind_today(string $root, string $kind, int $limit): ar
         $decoded = json_decode($raw, true);
         if (!is_array($decoded)) continue;
 
+        $baseName = basename($path, '.json');
+        $webmFile = 'GENauto/' . $kind . '/' . $baseName . '.webm';
+
         $records[] = [
             'file' => 'GENauto/' . $kind . '/' . basename($path),
             'generated_at_utc' => (string)($decoded['generated_at_utc'] ?? ''),
             'center' => is_array($decoded['center'] ?? null) ? $decoded['center'] : null,
-            'payload' => is_array($decoded['payload'] ?? null) ? $decoded['payload'] : null
+            'payload' => is_array($decoded['payload'] ?? null) ? $decoded['payload'] : null,
+            'webm_file' => $webmFile,
+            'webm_exists' => is_file($root . '/' . $kind . '/' . $baseName . '.webm')
         ];
     }
 
@@ -117,7 +155,7 @@ function list_records_for_kind_today(string $root, string $kind, int $limit): ar
 $payload = load_payload();
 $action = isset($payload['action']) ? (string)$payload['action'] : '';
 
-$root = __DIR__ . '/GENauto';
+$root = dirname(__DIR__) . '/GENauto';
 ensure_dir($root);
 ensure_dir($root . '/map');
 ensure_dir($root . '/wind');
@@ -164,7 +202,44 @@ if ($action === 'saveGeneration') {
     respond(200, [
         "status" => "success",
         "message" => "Generácia bola uložená.",
-        "file" => 'GENauto/' . $kind . '/' . $filename
+        "file" => 'GENauto/' . $kind . '/' . $filename,
+        "webm_file" => $kind === 'wind' ? ('GENauto/' . $kind . '/' . basename($filename, '.json') . '.webm') : null
+    ]);
+}
+
+if ($action === 'saveWebm') {
+    $kindRaw = isset($payload['kind']) ? (string)$payload['kind'] : 'wind';
+    $kind = sanitize_kind($kindRaw);
+    if ($kind !== 'wind') {
+        respond(400, ["status" => "error", "message" => "WebM cache sa ukladá iba pre wind generácie."]);
+    }
+
+    $jsonFile = isset($payload['json_file']) ? (string)$payload['json_file'] : '';
+    $baseName = basename($jsonFile, '.json');
+    if ($baseName === '' || $baseName === basename($jsonFile)) {
+        respond(400, ["status" => "error", "message" => "Neplatný názov JSON súboru."]);
+    }
+
+    $base64 = isset($payload['webm_base64']) ? (string)$payload['webm_base64'] : '';
+    if (trim($base64) === '') {
+        respond(400, ["status" => "error", "message" => "Chýba base64 obsah WebM."]);
+    }
+
+    $binary = base64_decode($base64, true);
+    if ($binary === false || $binary === '') {
+        respond(400, ["status" => "error", "message" => "Nepodarilo sa dekódovať WebM obsah."]);
+    }
+
+    $filePath = $root . '/wind/' . $baseName . '.webm';
+    $bytes = @file_put_contents($filePath, $binary, LOCK_EX);
+    if ($bytes === false) {
+        respond(500, ["status" => "error", "message" => "Nepodarilo sa uložiť WebM cache."]);
+    }
+
+    respond(200, [
+        "status" => "success",
+        "message" => "WebM cache bola uložená.",
+        "file" => 'GENauto/wind/' . $baseName . '.webm'
     ]);
 }
 
@@ -211,6 +286,12 @@ if ($action === 'clearToday') {
         foreach ($files as $path) {
             if (@unlink($path)) {
                 $deleted[$kind] += 1;
+            }
+            if ($kind === 'wind') {
+                $webmPath = preg_replace('/\.json$/', '.webm', $path);
+                if (is_string($webmPath) && is_file($webmPath)) {
+                    @unlink($webmPath);
+                }
             }
         }
     }

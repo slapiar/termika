@@ -120,6 +120,13 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             </div>
 
             <div id="cesiumContainer" aria-label="3D mapa letu"></div>
+            <section id="windCachePreview" class="wind-cache-preview" hidden aria-label="Wind WebM cache preview">
+                <div class="wind-cache-preview-bar">
+                    <span id="windCachePreviewLabel">WIND cache</span>
+                    <button id="closeWindCachePreviewButton" type="button" title="Skryť náhľad cache">×</button>
+                </div>
+                <video id="windCacheVideo" class="wind-cache-video" muted playsinline controls></video>
+            </section>
 
             <section id="flightControls" class="flight-controls" aria-label="Ovládanie prehrávania letu">
                 <div class="playback-buttons">
@@ -182,6 +189,18 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                     <button id="windLoadFromFilesButtonMain" type="button" title="Načítať vietor zo súborov GENauto/wind">Načítať vietor zo súborov</button>
                     <button id="mapLoadFromFilesButtonMain" type="button" title="Načítať mapové generácie zo súborov GENauto/map">Načítať mapu zo súborov</button>
                 </div>
+                <div class="row wind-compare-row">
+                    <span class="label">Porovnať:</span>
+                    <select id="windCompareGenerationMain" class="wind-compare-select" aria-label="Výber WIND generácie na porovnanie">
+                        <option value="">Najprv načítaj uložené WIND generácie</option>
+                    </select>
+                </div>
+                <div class="row map-compare-row">
+                    <span class="label">Mapa:</span>
+                    <select id="mapCompareGenerationMain" class="map-compare-select" aria-label="Výber mapovej generácie na porovnanie">
+                        <option value="">Najprv načítaj uložené mapové generácie</option>
+                    </select>
+                </div>
             </div>
         </aside>
 
@@ -226,11 +245,20 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
         let windLoadingFromFiles = false;
         let mapLoadingFromFiles = false;
         let genAutoMapLayer = null;
+        let windWebmExportBusy = false;
+        let windLoadedRecords = [];
+        let mapLoadedRecords = [];
 
         const windGenerationModeMainInputs = Array.from(document.querySelectorAll('input[name="windGenerationModeMain"]'));
         const windClearTodayButtonMain = document.getElementById("windClearTodayButtonMain");
         const windLoadFromFilesButtonMain = document.getElementById("windLoadFromFilesButtonMain");
         const mapLoadFromFilesButtonMain = document.getElementById("mapLoadFromFilesButtonMain");
+        const windCompareGenerationMain = document.getElementById("windCompareGenerationMain");
+        const mapCompareGenerationMain = document.getElementById("mapCompareGenerationMain");
+        const windCachePreview = document.getElementById("windCachePreview");
+        const windCachePreviewLabel = document.getElementById("windCachePreviewLabel");
+        const windCacheVideo = document.getElementById("windCacheVideo");
+        const closeWindCachePreviewButton = document.getElementById("closeWindCachePreviewButton");
 
         function getWindGenerationModeMain() {
             const checked = windGenerationModeMainInputs.find((input) => input.checked);
@@ -292,13 +320,283 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             }
 
             try {
-                await genAutoRequest("saveGeneration", {
+                return await genAutoRequest("saveGeneration", {
                     kind,
                     center,
                     payload
                 });
             } catch (error) {
                 logStatus("GENauto zapis pre " + kind + " zlyhal: " + error.message, "error");
+            }
+        }
+
+        function selectWindWebmMimeType() {
+            if (!window.MediaRecorder || typeof MediaRecorder.isTypeSupported !== "function") {
+                return "";
+            }
+
+            const candidates = [
+                "video/webm;codecs=vp9",
+                "video/webm;codecs=vp8",
+                "video/webm"
+            ];
+
+            for (const type of candidates) {
+                if (MediaRecorder.isTypeSupported(type)) return type;
+            }
+
+            return "";
+        }
+
+        function blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const result = String(reader.result || "");
+                    const commaIndex = result.indexOf(",");
+                    resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+                };
+                reader.onerror = () => reject(new Error("Nepodarilo sa previesť WebM blob na base64."));
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        function captureCanvasWebmBlob(viewerInstance, durationMs = 1800, fps = 12) {
+            return new Promise((resolve, reject) => {
+                const canvas = viewerInstance?.scene?.canvas;
+                if (!canvas || typeof canvas.captureStream !== "function") {
+                    reject(new Error("Canvas captureStream nie je dostupný."));
+                    return;
+                }
+                if (!window.MediaRecorder) {
+                    reject(new Error("MediaRecorder nie je dostupný."));
+                    return;
+                }
+
+                const stream = canvas.captureStream(Math.max(1, Number(fps) || 12));
+                const mimeType = selectWindWebmMimeType();
+                const options = { videoBitsPerSecond: 3500000 };
+                if (mimeType) options.mimeType = mimeType;
+
+                let recorder = null;
+                const chunks = [];
+                const cleanup = () => {
+                    stream.getTracks().forEach((track) => {
+                        try { track.stop(); } catch (_) {}
+                    });
+                    recorder = null;
+                };
+
+                try {
+                    recorder = new MediaRecorder(stream, options);
+                } catch (error) {
+                    cleanup();
+                    reject(error);
+                    return;
+                }
+
+                recorder.ondataavailable = (event) => {
+                    if (event.data && event.data.size > 0) chunks.push(event.data);
+                };
+                recorder.onerror = (event) => {
+                    cleanup();
+                    reject(event?.error || new Error("Neznáma chyba pri zázname WebM."));
+                };
+                recorder.onstop = () => {
+                    const mime = recorder?.mimeType || mimeType || "video/webm";
+                    cleanup();
+                    resolve(new Blob(chunks, { type: mime }));
+                };
+
+                recorder.start(1000);
+                window.setTimeout(() => {
+                    if (recorder && recorder.state === "recording") {
+                        try {
+                            recorder.stop();
+                        } catch (error) {
+                            cleanup();
+                            reject(error);
+                        }
+                    }
+                }, Math.max(800, Number(durationMs) || 1800));
+            });
+        }
+
+        function showWindCachePreview(webmUrl, labelText = "WIND cache") {
+            if (!windCachePreview || !windCacheVideo) return;
+
+            windCachePreview.hidden = false;
+            if (windCachePreviewLabel) windCachePreviewLabel.textContent = labelText;
+            windCacheVideo.pause();
+            windCacheVideo.removeAttribute("src");
+            windCacheVideo.load();
+            windCacheVideo.src = webmUrl + "?v=" + Date.now();
+            windCacheVideo.loop = true;
+            windCacheVideo.play().catch(() => {});
+        }
+
+        function hideWindCachePreview() {
+            if (!windCachePreview || !windCacheVideo) return;
+            windCacheVideo.pause();
+            windCacheVideo.removeAttribute("src");
+            windCacheVideo.load();
+            windCachePreview.hidden = true;
+        }
+
+        function formatWindCompareLabel(record, index) {
+            const time = record?.generated_at_utc ? String(record.generated_at_utc).slice(11, 19) : "--:--:--";
+            const mode = String(record?.payload?.generationMode || "-");
+            const hasWebm = record?.webm_exists === true ? "webm" : "json";
+            return String(index + 1) + " · " + time + " · " + mode + " · " + hasWebm;
+        }
+
+        function populateWindCompareSelector(records) {
+            if (!windCompareGenerationMain) return;
+
+            windCompareGenerationMain.replaceChildren();
+
+            const emptyOption = document.createElement("option");
+            emptyOption.value = "";
+            emptyOption.textContent = records.length ? "Vyber WIND generáciu" : "Najprv načítaj uložené WIND generácie";
+            windCompareGenerationMain.appendChild(emptyOption);
+
+            records.forEach((record, index) => {
+                const option = document.createElement("option");
+                option.value = String(record.file || "");
+                option.textContent = formatWindCompareLabel(record, index);
+                windCompareGenerationMain.appendChild(option);
+            });
+
+            if (records.length) {
+                windCompareGenerationMain.value = String(records[records.length - 1]?.file || "");
+            } else {
+                windCompareGenerationMain.value = "";
+            }
+        }
+
+        function getSelectedWindRecord() {
+            const selectedFile = String(windCompareGenerationMain?.value || "");
+            if (!selectedFile) return null;
+            return windLoadedRecords.find((record) => String(record.file || "") === selectedFile) || null;
+        }
+
+        function selectWindCompareRecordByFile(file) {
+            if (!windCompareGenerationMain) return;
+            windCompareGenerationMain.value = String(file || "");
+        }
+
+        async function showSelectedWindRecord() {
+            const record = getSelectedWindRecord();
+            if (!record) {
+                hideWindCachePreview();
+                return;
+            }
+
+            const webmUrl = record.file ? makeGenAutoWebmUrl(record.file) : "";
+            if (record.webm_exists === true && webmUrl) {
+                showWindCachePreview(webmUrl, formatWindCompareLabel(record, windLoadedRecords.indexOf(record)));
+                return;
+            }
+
+            hideWindCachePreview();
+
+            const payload = record.payload && typeof record.payload === "object" ? record.payload : {};
+            await renderWindLayer("porovnanie: " + (record.file || "GENauto"), {
+                centerOverride: payload.focusCenter || record.center,
+                tempProfileOverride: Array.isArray(payload.tempProfile) ? payload.tempProfile : null,
+                windOverrides: payload.windSettings && typeof payload.windSettings === "object" ? payload.windSettings : {},
+                generationConfigOverride: { mode: "keep", preservePrevious: true, clearMode: "none", label: "porovnanie" },
+                skipAutoRecord: true
+            });
+        }
+
+        function formatMapCompareLabel(record, index) {
+            const time = record?.generated_at_utc ? String(record.generated_at_utc).slice(11, 19) : "--:--:--";
+            const mode = String(record?.payload?.generationMode || "-");
+            return String(index + 1) + " · " + time + " · " + mode;
+        }
+
+        function populateMapCompareSelector(records) {
+            if (!mapCompareGenerationMain) return;
+
+            mapCompareGenerationMain.replaceChildren();
+
+            const emptyOption = document.createElement("option");
+            emptyOption.value = "";
+            emptyOption.textContent = records.length ? "Vyber mapovú generáciu" : "Najprv načítaj uložené mapové generácie";
+            mapCompareGenerationMain.appendChild(emptyOption);
+
+            records.forEach((record, index) => {
+                const option = document.createElement("option");
+                option.value = String(record.file || "");
+                option.textContent = formatMapCompareLabel(record, index);
+                mapCompareGenerationMain.appendChild(option);
+            });
+
+            mapCompareGenerationMain.value = records.length ? String(records[records.length - 1]?.file || "") : "";
+        }
+
+        function getSelectedMapRecord() {
+            const selectedFile = String(mapCompareGenerationMain?.value || "");
+            if (!selectedFile) return null;
+            return mapLoadedRecords.find((record) => String(record.file || "") === selectedFile) || null;
+        }
+
+        async function showSelectedMapRecord() {
+            const record = getSelectedMapRecord();
+            if (!record) {
+                clearGenAutoMapLayer();
+                return;
+            }
+
+            const center = record?.center || record?.payload?.focusCenter || null;
+            const payload = record.payload && typeof record.payload === "object" ? record.payload : {};
+            await renderMapGenerationsInScene([{
+                ...record,
+                center: center,
+                payload
+            }]);
+        }
+
+        function makeGenAutoWebmUrl(jsonFile) {
+            const safeFile = String(jsonFile || "").trim();
+            if (!safeFile) return "";
+            return "genauto.php?action=getWebm&kind=wind&json_file=" + encodeURIComponent(safeFile);
+        }
+
+        async function persistWindWebmAuto(jsonFile, center, meta = {}) {
+            if (windWebmExportBusy) return null;
+            if (!jsonFile || String(jsonFile).trim() === "") return null;
+            if (!viewer || viewer.isDestroyed()) return null;
+
+            if (!window.MediaRecorder || typeof viewer.scene?.canvas?.captureStream !== "function") {
+                logStatus("WIND WebM cache: prehliadač nepodporuje záznam canvasu.", "info");
+                return null;
+            }
+
+            windWebmExportBusy = true;
+            try {
+                const blob = await captureCanvasWebmBlob(viewer, 1800, 12);
+                if (!blob || blob.size < 256) {
+                    throw new Error("WebM záznam je prázdny alebo príliš malý.");
+                }
+
+                const base64 = await blobToBase64(blob);
+                const response = await genAutoRequest("saveWebm", {
+                    kind: "wind",
+                    json_file: jsonFile,
+                    center,
+                    generation: meta,
+                    webm_base64: base64
+                });
+
+                logStatus("WIND WebM cache uložená: " + String(response.file || jsonFile.replace(/\.json$/i, ".webm")) + ".", "success");
+                return response;
+            } catch (error) {
+                logStatus("WIND WebM cache sa nepodarilo uložiť: " + error.message, "error");
+                return null;
+            } finally {
+                windWebmExportBusy = false;
             }
         }
 
@@ -500,7 +798,21 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                     };
 
                     await persistGenerationAuto("map", center, mapPayload);
-                    await persistGenerationAuto("wind", center, windPayload);
+                    const windSaveResult = await persistGenerationAuto("wind", center, windPayload);
+
+                    if (windSaveResult?.file) {
+                        const webmMeta = {
+                            rendered,
+                            seeds,
+                            generationId,
+                            generationMode: generationCfg.mode,
+                            activeLayers
+                        };
+                        const webmSaveResult = await persistWindWebmAuto(windSaveResult.file, center, webmMeta);
+                        if (webmSaveResult?.file) {
+                            logStatus("WIND cache pripravená: " + webmSaveResult.file + ".", "info");
+                        }
+                    }
                 }
 
                 return windResult;
@@ -524,39 +836,26 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             windLoadFromFilesButtonMain.disabled = true;
             const originalButtonText = windLoadFromFilesButtonMain.textContent;
             windLoadFromFilesButtonMain.textContent = "… načítavam";
+            hideWindCachePreview();
 
             try {
                 const response = await genAutoRequest("listWindToday", { limit: 300 });
                 const records = Array.isArray(response.records) ? response.records : [];
 
                 if (!records.length) {
+                    windLoadedRecords = [];
+                    populateWindCompareSelector([]);
                     logStatus("GENauto: pre dnešok nie sú uložené žiadne WIND súbory.", "info");
                     return;
                 }
 
+                windLoadedRecords = records.slice();
+                populateWindCompareSelector(windLoadedRecords);
                 window.WindRender?.clear?.(viewer, "all");
-                logStatus("GENauto: načítavam " + records.length + " WIND generácií zo súborov.", "info");
+                logStatus("GENauto: načítaných WIND generácií " + records.length + ".", "info");
 
-                for (let i = 0; i < records.length; i += 1) {
-                    const rec = records[i] || {};
-                    const payload = rec.payload && typeof rec.payload === "object" ? rec.payload : {};
-                    const center = payload.focusCenter || rec.center;
-                    const tempProfile = Array.isArray(payload.tempProfile) ? payload.tempProfile : null;
-                    const windSettings = payload.windSettings && typeof payload.windSettings === "object"
-                        ? payload.windSettings
-                        : {};
-
-                    const generationConfigOverride = i === 0
-                        ? { mode: "clear-all", preservePrevious: false, clearMode: "all", label: "zmazať všetko" }
-                        : { mode: "keep", preservePrevious: true, clearMode: "none", label: "zachovať predošlé" };
-
-                    await renderWindLayer("GENauto súbor " + (i + 1) + "/" + records.length, {
-                        centerOverride: center,
-                        tempProfileOverride: tempProfile,
-                        windOverrides: windSettings,
-                        generationConfigOverride,
-                        skipAutoRecord: true
-                    });
+                if (windCompareGenerationMain?.value) {
+                    await showSelectedWindRecord();
                 }
 
                 logStatus("GENauto: načítanie súborov dokončené.", "success");
@@ -689,12 +988,16 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                 const response = await genAutoRequest("listMapToday", { limit: 1000 });
                 const records = Array.isArray(response.records) ? response.records : [];
                 if (!records.length) {
+                    mapLoadedRecords = [];
+                    populateMapCompareSelector([]);
                     clearGenAutoMapLayer();
                     logStatus("GENauto: pre dnešok nie sú uložené žiadne mapové generácie.", "info");
                     return;
                 }
 
-                await renderMapGenerationsInScene(records);
+                mapLoadedRecords = records.slice();
+                populateMapCompareSelector(mapLoadedRecords);
+                await showSelectedMapRecord();
                 logStatus("GENauto: načítaných mapových generácií " + records.length + ".", "success");
             } catch (error) {
                 logStatus("GENauto: načítanie mapových generácií zlyhalo: " + error.message, "error");
@@ -765,9 +1068,25 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             await loadWindFromGenAutoFiles();
         });
 
+        windCompareGenerationMain?.addEventListener("change", async () => {
+            if (!windLoadedRecords.length) return;
+            await showSelectedWindRecord();
+        });
+
+        mapCompareGenerationMain?.addEventListener("change", async () => {
+            if (!mapLoadedRecords.length) return;
+            await showSelectedMapRecord();
+        });
+
         mapLoadFromFilesButtonMain?.addEventListener("click", async () => {
             await loadMapFromGenAutoFiles();
         });
+
+        closeWindCachePreviewButton?.addEventListener("click", () => {
+            hideWindCachePreview();
+        });
+
+        hideWindCachePreview();
 
         document.getElementById("hideDebugButton").addEventListener("click", () => {
             window.WorkspacePanels?.toggleDebug(false);

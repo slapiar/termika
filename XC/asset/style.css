@@ -241,6 +241,38 @@ input:focus-visible {
     background: #222014;
 }
 
+.wind-compare-row {
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.wind-compare-select {
+    width: 100%;
+    border: 1px solid #50616e;
+    border-radius: 6px;
+    padding: 4px 6px;
+    background: #111a21;
+    color: #eef4f7;
+    font-size: 11px;
+}
+
+.map-compare-row {
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.map-compare-select {
+    width: 100%;
+    border: 1px solid #50616e;
+    border-radius: 6px;
+    padding: 4px 6px;
+    background: #111a21;
+    color: #eef4f7;
+    font-size: 11px;
+}
+
 .chart-wrap {
     position: relative;
     height: 185px;
@@ -429,6 +461,53 @@ input:focus-visible {
 #cesiumContainer canvas {
     width: 100%;
     height: 100%;
+}
+
+.wind-cache-preview {
+    position: absolute;
+    right: 12px;
+    bottom: 90px;
+    z-index: 5;
+    width: min(420px, calc(100vw - 24px));
+    border: 1px solid rgba(112, 232, 255, 0.45);
+    border-radius: 10px;
+    background: rgba(7, 13, 18, 0.96);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.wind-cache-preview[hidden] {
+    display: none !important;
+}
+
+.wind-cache-preview-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px 5px 10px;
+    border-bottom: 1px solid rgba(112, 232, 255, 0.18);
+    font-size: 11px;
+    letter-spacing: 0.4px;
+    color: #bdf7ff;
+}
+
+.wind-cache-preview-bar button {
+    border: 1px solid #4d6672;
+    border-radius: 6px;
+    background: #111a21;
+    color: #eef4f7;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    padding: 2px 8px 3px;
+}
+
+.wind-cache-video {
+    display: block;
+    width: 100%;
+    max-height: 240px;
+    background: #000;
 }
 
 .flight-controls {
@@ -701,6 +780,14 @@ input:focus-visible {
     }
 
     .wind-generation-mini-actions button {
+        font-size: 10px;
+    }
+
+    .wind-compare-select {
+        font-size: 10px;
+    }
+
+    .map-compare-select {
         font-size: 10px;
     }
 
