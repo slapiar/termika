@@ -221,3 +221,34 @@ Pred realnym letovym testom spustit v testovacej stranke `XC/terrain-analysis-te
 2. Skontrolovat status badge + source badge + cas posledneho update.
 3. Overit, ci bezi iba jedna instancia adaptera a bridge bootstrapu.
 4. Az po stabilnom smoku vratit scenar do letoveho testu.
+
+### API kľúče Windy
+Map Forecast
+
+mPvyfWaJ2kFngdEITyhg1BYzZlCijvlG
+
+Issued on 24. 2. 2019
+
+Point Forecast
+
+iqdFujsB7b7FhkKAg4CK8aIvABrntb89
+
+Issued on 15. 7. 2026
+
+Map Forecast
+
+WHXfj9GBOmQtF0uhLyWqxa06C4NtpUIw
+
+Issued on 15. 7. 2026
+
+Webcams
+
+sGQwIUnY7lq8PHgCQsFMszyAcFkAUPF8
+
+Issued on 15. 7. 2026
+
+Plugins
+
+pdy26NObTWzKkrXzbpKbrJuP3cVSoBKx
+
+Issued on 15. 7. 2026
