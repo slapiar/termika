@@ -43,17 +43,14 @@
         if (pending) {
             button.title = 'Pripájam letový režim…';
             button.setAttribute('aria-label', 'Pripájam letový režim');
-            return;
-        }
-
-        if (active) {
+        } else if (active) {
             const speed = formatSpeed(current.speedMs);
             const target = formatSpeed(current.targetSpeedMs);
             button.title = `Letový režim je zapnutý · ${speed} · cieľ ${target} · kliknutím vypnúť`;
             button.setAttribute('aria-label', `Letový režim je zapnutý. Aktuálna rýchlosť ${speed}. Kliknutím vypnúť.`);
         } else {
-            button.title = 'Zapnúť letový režim · myš riadi pohľad, šípka hore zrýchľuje a šípka dole brzdí';
-            button.setAttribute('aria-label', 'Zapnúť letový režim. Myš riadi pohľad, šípka hore zrýchľuje a šípka dole brzdí.');
+            button.title = 'Zapnúť letový režim · myš ovláda let a klávesy ovládajú rýchlosť a pohľad pilota';
+            button.setAttribute('aria-label', 'Zapnúť letový režim. Myš ovláda let a klávesy ovládajú rýchlosť a pohľad pilota.');
         }
     }
 
@@ -92,20 +89,22 @@
         installing = true;
         updateButton(null, true);
 
-        simulator = window.TermikaFlightSimulator || null;
-        if (!simulator) throw new Error('Modul TermikaFlightSimulator nie je načítaný.');
+        try {
+            simulator = window.TermikaFlightSimulator || null;
+            if (!simulator) throw new Error('Modul TermikaFlightSimulator nie je načítaný.');
 
-        for (let attempt = 0; attempt < MAX_INSTALL_ATTEMPTS; attempt += 1) {
-            if (simulator.install?.() === true || simulator.viewer) {
-                installing = false;
-                updateButton(simulator.getState?.());
-                return simulator;
+            for (let attempt = 0; attempt < MAX_INSTALL_ATTEMPTS; attempt += 1) {
+                if (simulator.install?.() === true || simulator.viewer) {
+                    updateButton(simulator.getState?.());
+                    return simulator;
+                }
+                await delay(100);
             }
-            await delay(100);
+            throw new Error('Letový režim nenašiel pripravený Cesium viewer.');
+        } finally {
+            installing = false;
+            if (button?.disabled) updateButton(simulator?.getState?.() || { active: false, speedMs: 0, targetSpeedMs: 0 });
         }
-
-        installing = false;
-        throw new Error('Letový režim nenašiel pripravený Cesium viewer.');
     }
 
     async function toggleFlight() {
