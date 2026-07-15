@@ -31,6 +31,9 @@ $assetVersion = '20260712-07';
     <script src="js/wind-effect-surface.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-render.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-ui.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/tool-communication.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/windy-map-bridge.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/windy-map-adapter.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <style>
         :root{
             color-scheme:light;
@@ -350,6 +353,27 @@ $assetVersion = '20260712-07';
                     <div id="windFpsIndicator" style="margin-top:4px;color:#8fa9b8;font-size:12px;">FPS: -- | AUTO profil: --</div>
                 </div>
                 <div class="drawer-card full">
+                    <h3>Komunikácia fokusu (windy-focus)</h3>
+                    <p>Univerzálny komunikačný kanál pre prenos fokusu medzi nástrojmi. Týmto sa mapové integrácie prepájajú bez pevnej väzby na konkrétny panel.</p>
+                    <div class="row" style="margin:6px 0 10px;">
+                        <span class="label">Windy adapter:</span>
+                        <span id="windyAdapterStatusBadge" class="val">OFFLINE</span>
+                    </div>
+                    <div class="row" style="margin:0 0 10px;">
+                        <span class="label">Posledný update:</span>
+                        <span id="windyAdapterLastUpdateBadge" class="val">--</span>
+                    </div>
+                    <div class="row" style="margin:0 0 10px;">
+                        <span class="label">Zdroj:</span>
+                        <span id="windyAdapterSourceBadge" class="val">--</span>
+                    </div>
+                    <div class="action-row">
+                        <button id="windyAdapterConnectButton" type="button">Skúsiť pripojiť Windy adapter</button>
+                        <button id="windBroadcastFocusButton" type="button">Poslať aktuálny fokus</button>
+                        <button id="windSimulateIncomingFocusButton" type="button">Simulovať príchod fokusu</button>
+                    </div>
+                </div>
+                <div class="drawer-card full">
                     <h3>Generácie vetra a porovnanie</h3>
                     <div class="wind-generation-radio-group" role="radiogroup" aria-label="Režim generácie vetra">
                         <label><input type="radio" name="windGenerationModeTest" value="keep" checked> Zachovať poslednú generáciu</label>
@@ -531,6 +555,12 @@ $assetVersion = '20260712-07';
     const windClearTodayButtonTest = document.getElementById('windClearTodayButtonTest');
     const windLoadFromFilesButtonTest = document.getElementById('windLoadFromFilesButtonTest');
     const mapLoadFromFilesButtonTest = document.getElementById('mapLoadFromFilesButtonTest');
+    const windyAdapterConnectButton = document.getElementById('windyAdapterConnectButton');
+    const windyAdapterStatusBadge = document.getElementById('windyAdapterStatusBadge');
+    const windyAdapterLastUpdateBadge = document.getElementById('windyAdapterLastUpdateBadge');
+    const windyAdapterSourceBadge = document.getElementById('windyAdapterSourceBadge');
+    const windBroadcastFocusButton = document.getElementById('windBroadcastFocusButton');
+    const windSimulateIncomingFocusButton = document.getElementById('windSimulateIncomingFocusButton');
     const windCompareGenerationTest = document.getElementById('windCompareGenerationTest');
     const mapCompareGenerationTest = document.getElementById('mapCompareGenerationTest');
     const recordFps = document.getElementById('recordFps');
@@ -1992,6 +2022,153 @@ $assetVersion = '20260712-07';
         }
     });
 
+    function zoomToAltitudeM(zoomValue) {
+        const zoom = Number(zoomValue);
+        if (!Number.isFinite(zoom)) return 3000;
+        const clamped = Math.min(16, Math.max(1, zoom));
+        return Math.max(700, Math.round(22000000 / Math.pow(2, clamped)));
+    }
+
+    function altitudeMToZoom(altitudeM) {
+        const altitude = Number(altitudeM);
+        if (!Number.isFinite(altitude) || altitude <= 0) return 9;
+        const estimate = Math.log2(22000000 / altitude);
+        return Math.min(16, Math.max(1, Math.round(estimate)));
+    }
+
+    function applyIncomingFocus(payload, sourceLabel = 'kanál windy-focus') {
+        if (!payload || typeof payload !== 'object') {
+            logStatus('Komunikácia: prišiel neplatný payload fokusu.', 'error');
+            return;
+        }
+
+        const lat = Number(payload.lat);
+        const lon = Number(payload.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+            logStatus('Komunikácia: payload fokusu nemá platné lat/lon.', 'error');
+            return;
+        }
+
+        const point = { lat, lon };
+        const destinationHeightM = zoomToAltitudeM(payload.zoom);
+
+        selectedCenter = point;
+        previewCenter = { ...point };
+        selectedPoint.position = Cesium.Cartesian3.fromDegrees(point.lon, point.lat);
+        syncCenterUi(point);
+
+        viewer.camera.flyTo({
+            destination: Cesium.Cartesian3.fromDegrees(point.lon, point.lat, destinationHeightM),
+            duration: 1.3
+        });
+
+        const zoomLabel = Number.isFinite(Number(payload.zoom)) ? String(Math.round(Number(payload.zoom))) : 'auto';
+        logStatus(
+            'Komunikácia: fokus prijatý zo zdroja ' + sourceLabel +
+            ' -> ' + formatCenter(point) + ' (zoom ' + zoomLabel + ').',
+            'success'
+        );
+    }
+
+    function setWindyAdapterStatusBadge(status, message) {
+        if (!windyAdapterStatusBadge) return;
+
+        const normalized = String(status || 'offline').toLowerCase();
+        windyAdapterStatusBadge.textContent = normalized.toUpperCase();
+        windyAdapterStatusBadge.title = String(message || '');
+
+        if (normalized === 'ready') {
+            windyAdapterStatusBadge.style.color = '#59d68b';
+            return;
+        }
+        if (normalized === 'error') {
+            windyAdapterStatusBadge.style.color = '#ff8a80';
+            return;
+        }
+        windyAdapterStatusBadge.style.color = '#8fa9b8';
+    }
+
+    function formatTimestampLocal(isoString) {
+        const timestamp = String(isoString || '').trim();
+        if (!timestamp) return '--';
+        const date = new Date(timestamp);
+        if (Number.isNaN(date.getTime())) return '--';
+        return date.toLocaleString('sk-SK');
+    }
+
+    function setWindyAdapterLastUpdateBadge(timestampIso, sourceLabel = '') {
+        if (!windyAdapterLastUpdateBadge) return;
+        const timeText = formatTimestampLocal(timestampIso);
+        windyAdapterLastUpdateBadge.textContent = timeText;
+        windyAdapterLastUpdateBadge.title = String(timestampIso || '');
+    }
+
+    function setWindyAdapterSourceBadge(sourceLabel = '') {
+        if (!windyAdapterSourceBadge) return;
+        const source = String(sourceLabel || '').trim();
+        if (!source) {
+            windyAdapterSourceBadge.textContent = '--';
+            windyAdapterSourceBadge.style.color = '#8fa9b8';
+            return;
+        }
+
+        windyAdapterSourceBadge.textContent = source;
+
+        if (/windyapi\.map|windymap|windy-map-bridge/i.test(source)) {
+            windyAdapterSourceBadge.style.color = '#59d68b';
+            return;
+        }
+        if (/local-event-bus|leaflet|mock/i.test(source)) {
+            windyAdapterSourceBadge.style.color = '#8fd0ff';
+            return;
+        }
+        if (/error|unknown/i.test(source)) {
+            windyAdapterSourceBadge.style.color = '#ff8a80';
+            return;
+        }
+        windyAdapterSourceBadge.style.color = '#b6c7d1';
+    }
+
+    function refreshWindyAdapterStatus() {
+        const fallbackMessage = 'Windy adapter nie je načítaný.';
+        if (!window.WindyMapAdapterTool?.getStatus) {
+            setWindyAdapterStatusBadge('offline', fallbackMessage);
+            setWindyAdapterLastUpdateBadge('', '');
+            setWindyAdapterSourceBadge('');
+            return;
+        }
+
+        const status = window.WindyMapAdapterTool.getStatus();
+        setWindyAdapterStatusBadge(status.status, status.message);
+        setWindyAdapterLastUpdateBadge(status.lastStatusAtIso || status?.lastFocus?.timestampIso, status.bridgeName || 'adapter');
+        setWindyAdapterSourceBadge(status.bridgeName || 'adapter');
+    }
+
+    if (window.TermikaCommunicationTool) {
+        window.TermikaCommunicationTool.on('channel:windy-focus', ({ payload, context }) => {
+            const adapterId = String(context?.adapterId || 'unknown');
+            applyIncomingFocus(payload, adapterId);
+            setWindyAdapterLastUpdateBadge(payload?.timestampIso, adapterId);
+            setWindyAdapterSourceBadge(adapterId);
+        });
+        window.TermikaCommunicationTool.on('windy-map-adapter:status', ({ status, message, updatedAtIso, bridgeName, heartbeat }) => {
+            setWindyAdapterStatusBadge(status, message);
+            setWindyAdapterLastUpdateBadge(updatedAtIso, bridgeName || 'adapter');
+            setWindyAdapterSourceBadge((heartbeat ? 'heartbeat · ' : '') + String(bridgeName || 'adapter'));
+        });
+        window.TermikaCommunicationTool.on('windy-map-adapter:focus', ({ focus, bridgeName, updatedAtIso }) => {
+            setWindyAdapterLastUpdateBadge(updatedAtIso || focus?.timestampIso, bridgeName || focus?.source || 'adapter');
+            setWindyAdapterSourceBadge(bridgeName || focus?.source || 'adapter');
+        });
+        window.TermikaCommunicationTool.on('windy-map-bridge:ready', ({ name, timestampIso }) => {
+            setWindyAdapterLastUpdateBadge(timestampIso, String(name || 'bridge-ready'));
+            setWindyAdapterSourceBadge(String(name || 'bridge-ready'));
+            logStatus('Windy bridge pripravený: ' + String(name || 'unknown') + '.', 'success');
+        });
+    } else {
+        logStatus('Komunikačný modul nie je načítaný. Kanál windy-focus je neaktívny.', 'error');
+    }
+
     function pickTerrainPosition(screenPosition) {
         const cartesian = viewer.scene.pickPosition(screenPosition) || viewer.camera.pickEllipsoid(screenPosition);
         if (!cartesian) return null;
@@ -2049,6 +2226,86 @@ $assetVersion = '20260712-07';
         event.preventDefault();
         centerApplyButton.click();
     });
+
+    windBroadcastFocusButton?.addEventListener('click', async () => {
+        if (!window.TermikaCommunicationTool) {
+            logStatus('Komunikačný modul nie je dostupný.', 'error');
+            return;
+        }
+
+        try {
+            const currentHeightM = Number(viewer.camera.positionCartographic?.height);
+            const payload = {
+                lat: selectedCenter.lat,
+                lon: selectedCenter.lon,
+                zoom: altitudeMToZoom(currentHeightM),
+                source: 'terrain-analysis-test',
+                timestampIso: new Date().toISOString()
+            };
+
+            await window.TermikaCommunicationTool.send('windy-focus', payload, {
+                meta: { origin: 'terrain-analysis-test' }
+            });
+
+            logStatus('Komunikácia: odoslaný windy-focus payload ' + formatCenter(selectedCenter) + '.', 'success');
+        } catch (error) {
+            logStatus('Komunikácia: odoslanie windy-focus zlyhalo: ' + (error?.message || String(error)), 'error');
+        }
+    });
+
+    windSimulateIncomingFocusButton?.addEventListener('click', async () => {
+        if (!window.TermikaCommunicationTool) {
+            logStatus('Komunikačný modul nie je dostupný.', 'error');
+            return;
+        }
+
+        try {
+            const samplePayload = {
+                lat: Number((selectedCenter.lat + 0.035).toFixed(5)),
+                lon: Number((selectedCenter.lon + 0.045).toFixed(5)),
+                zoom: 10,
+                source: 'windy-map-mock',
+                timestampIso: new Date().toISOString()
+            };
+
+            await window.TermikaCommunicationTool.send('windy-focus', samplePayload, {
+                meta: { origin: 'windy-map-mock' }
+            });
+        } catch (error) {
+            logStatus('Komunikácia: simulácia windy-focus zlyhala: ' + (error?.message || String(error)), 'error');
+        }
+    });
+
+    windyAdapterConnectButton?.addEventListener('click', () => {
+        if (!window.WindyMapAdapterTool) {
+            logStatus('Windy adapter modul nie je načítaný.', 'error');
+            refreshWindyAdapterStatus();
+            return;
+        }
+
+        try {
+            const connected = Boolean(window.WindyMapAdapterTool.enable());
+            const status = window.WindyMapAdapterTool.getStatus?.();
+            refreshWindyAdapterStatus();
+            if (connected && status?.status === 'ready') {
+                logStatus('Windy adapter je pripravený: ' + String(status.bridgeName || 'bridge') + '.', 'success');
+                return;
+            }
+            logStatus('Windy adapter je zapnutý, ale bridge zatiaľ nie je dostupný.', 'info');
+        } catch (error) {
+            logStatus('Windy adapter sa nepodarilo zapnúť: ' + (error?.message || String(error)), 'error');
+            refreshWindyAdapterStatus();
+        }
+    });
+
+    if (window.WindyMapAdapterTool) {
+        try {
+            window.WindyMapAdapterTool.enable();
+        } catch (_) {
+            // Ignore boot errors and keep manual connect available.
+        }
+    }
+    refreshWindyAdapterStatus();
 
     geometryVisible.addEventListener('change', () => {
         TerrainAnalysisCore.setLayerVisible('geometry', geometryVisible.checked);

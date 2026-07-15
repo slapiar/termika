@@ -83,9 +83,20 @@ Minimalne povinne polia pre prenos: `lat`, `lon`, `zoom`.
 Navrh novych suborov:
 
 - `XC/js/tool-communication.js` - univerzalny komunikacny nastroj (kanaly + adaptery),
-- `XC/js/windy-map-bridge.js` - inicializacia Windy pluginu a udalosti,
+- `XC/js/windy-map-bridge.js` - bootstrap + inicializacia bridge vrstvy pre dostupnu Windy mapu,
+- `XC/js/windy-map-adapter.js` - skeleton adaptera pre `windy-map`,
 - `XC/js/windy-focus-transfer.js` - prevod fokusu na kameru TermikaXC,
 - `XC/js/windy-session-state.js` - localStorage stav posledneho Windy vyberu.
+
+Aktualny stav:
+
+- `tool-communication.js` je implementovany,
+- `windy-map-adapter.js` je implementovany so statusmi `ready/offline/error` a pokusom o auto-connect,
+- `terrain-analysis-test.php` ma zapojene test tlacidla pre send/receive kanala `windy-focus`.
+- `terrain-analysis-test.php` zobrazuje stav adaptera a tlacidlo na rucny pokus o pripojenie.
+- `terrain-analysis-test.php` zobrazuje odznak posledneho update s casom a zdrojom.
+- adapter publikuje heartbeat status pocas stavu `ready`,
+- UI zobrazuje samostatny odznak zdroja (source pill) oddelene od casu posledneho update.
 
 Navrh UI miest:
 

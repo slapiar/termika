@@ -105,6 +105,13 @@ Pre Windy mapovy most sa odporuca:
 - adapter `windy-map` pre API plugin,
 - fallback na `local-event-bus`, ked externy adapter nie je dostupny.
 
+Aktualny stav v kode:
+
+- testovacia stranka ma zapojeny kanal `windy-focus`,
+- pripraveny je skeleton adapter `windy-map` v `XC/js/windy-map-adapter.js`,
+- adapter publikuje stav cez event `windy-map-adapter:status` (`ready/offline/error`),
+- testovacia stranka zobrazuje stav adaptera v sekcii Vietor.
+
 ## 8. Obmedzenia aktualnej verzie
 
 1. Modul neriesi perzistenciu sprav (len runtime komunikacia).
@@ -124,4 +131,5 @@ Pre Windy mapovy most sa odporuca:
 - [`../TOOLS.md`](../TOOLS.md)
 - [`WINDY.md`](WINDY.md)
 - [`../XC/js/tool-communication.js`](../XC/js/tool-communication.js)
+- [`../XC/js/windy-map-adapter.js`](../XC/js/windy-map-adapter.js)
 - [`../XC/terrain-analysis-test.php`](../XC/terrain-analysis-test.php)
