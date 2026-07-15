@@ -33,6 +33,9 @@ if (stripos($html, 'js/flight-simulator.js') === false) {
 if (stripos($html, 'js/workspace-flight-toggle.js') === false) {
     $bodyScripts .= '    <script src="js/workspace-flight-toggle.js?v=20260715-02" data-workspace-flight-toggle="true"></script>' . "\n";
 }
+if (stripos($html, 'js/flight-emergency-disengage.js') === false) {
+    $bodyScripts .= '    <script src="js/flight-emergency-disengage.js?v=20260715-01" data-flight-emergency-disengage="true"></script>' . "\n";
+}
 if (stripos($html, 'js/explorer-analysis-bridge.js') === false) {
     $bodyScripts .= '    <script src="js/explorer-analysis-bridge.js?v=20260715-02" data-explorer-analysis-bridge="true"></script>' . "\n";
 }
