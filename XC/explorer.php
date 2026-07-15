@@ -61,7 +61,7 @@ if (stripos($html, 'js/workspace-hud-toggle.js') === false) {
     $bodyScripts .= '    <script src="js/workspace-hud-toggle.js?v=20260715-01"></script>' . "\n";
 }
 if (stripos($html, 'js/explorer-analysis-bridge.js') === false) {
-    $bodyScripts .= '    <script src="js/explorer-analysis-bridge.js?v=20260715-01"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/explorer-analysis-bridge.js?v=20260715-02"></script>' . "\n";
 }
 
 if ($bodyScripts !== '') {
