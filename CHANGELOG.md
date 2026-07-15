@@ -4,6 +4,28 @@ Tento súbor zachytáva významné používateľské, analytické a architektoni
 
 Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie zatiaľ nie sú spätne rekonštruované, aby sa do histórie nedopĺňali neoverené údaje.
 
+## v2.6.19
+
+### Pridané
+
+- Integrované automatické načítanie TEMP profilu pri kliknutí na bod mapy v testovacej stránke.
+  - pri kliknutí na bod sa automaticky natiahne TEMP profil z Windy (alebo fallback z meteo stanice/súboru),
+  - TEMP panel sa aktualizuje s tabuľkou hladín, grafom a zhrnutím (počet hladín, rozsah výšky, LCL),
+  - nastavenia TEMP zdroja sa berú z formulára v sekcii "Zdroje TEMP a sieťové nastavenia",
+  - fallback reťazec: `Windy → Meteo stanica → Lokálny súbor` pri režime "auto",
+  - nová funkcia `loadTempOnPointClick()` s podrobným debug logom pre diagnostiku,
+  - výchozí súbor TEMP bol opravený na `XCtrack/temptest.json` (existujúci súbor namiesto neexistujúceho `temp.json`).
+
+### Opravené
+
+- Opravené default TEMP URL v `wind-temp-loader.js` a testovacej stránke.
+  - pôvodný default `XCtrack/temp.json` bol nahradený na `XCtrack/temptest.json`, ktorý naozaj existuje,
+  - všetky default hodnoty v `XC/terrain-analysis-test.php` sú teraz konzistentné so skutočnými súbormi v projekte.
+
+### Overené používateľom
+
+- TEMP profil sa úspešne načítava pri kliknutí na ľubovoľný bod testovacej 3D mapy.
+
 ## Nezaradené do release
 
 ### Pridané

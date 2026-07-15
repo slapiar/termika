@@ -21,7 +21,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
 }
 
 // Zmena verzie prinúti prehliadač načítať nové JS/CSS namiesto starej cache.
-$assetVersion = '20260711-07';
+$assetVersion = '20260715-02';
 
 $jsDirectory = __DIR__ . '/js';
 $jsPriority = [

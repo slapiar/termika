@@ -9,7 +9,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     http_response_code(500);
     exit('Chýba CESIUM_ACCESS_TOKEN.');
 }
-$assetVersion = '20260712-07';
+$assetVersion = '20260715-02';
 ?>
 <!doctype html>
 <html lang="sk">
