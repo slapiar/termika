@@ -6,6 +6,7 @@ window.WindyMapBridgeBootstrap = {
     detectIntervalMs: 1500,
     timerId: null,
     activeBridgeName: "",
+    installedBridgeRef: null,
 
     createLeafletBridge: function (map, name) {
         return {
@@ -101,10 +102,18 @@ window.WindyMapBridgeBootstrap = {
         if (!detected || !detected.bridge) return false;
 
         window.WindyMapBridge = detected.bridge;
+        this.installedBridgeRef = detected.bridge;
         if (this.activeBridgeName !== detected.name) {
             this.activeBridgeName = detected.name;
             this.publishReady(detected.name);
         }
+        return true;
+    },
+
+    stopAutoDetect: function () {
+        if (!this.timerId) return false;
+        clearInterval(this.timerId);
+        this.timerId = null;
         return true;
     },
 
@@ -122,6 +131,20 @@ window.WindyMapBridgeBootstrap = {
             }
         }, this.detectIntervalMs);
         return false;
+    },
+
+    destroy: function () {
+        this.stopAutoDetect();
+        if (window.WindyMapBridge && this.installedBridgeRef && window.WindyMapBridge === this.installedBridgeRef) {
+            try {
+                delete window.WindyMapBridge;
+            } catch (_) {
+                window.WindyMapBridge = null;
+            }
+        }
+        this.installedBridgeRef = null;
+        this.activeBridgeName = "";
+        return true;
     }
 };
 

@@ -96,6 +96,21 @@ window.TermikaCommunicationTool.registerAdapter({
 4. Spracovat timeout a fallback spravanie.
 5. Logovat `send:start`, `send:success`, `request:start`, `request:success`.
 
+### Smoke test utility
+
+Komunikacny modul obsahuje rychly smoke test:
+
+```js
+const report = await window.TermikaCommunicationTool.runSmokeTest();
+console.log(report);
+```
+
+Smoke test overi:
+
+- odoslanie `windy-focus`,
+- request `windy-focus:get`,
+- request `windy-map:status`.
+
 ## 7. Prepojenie s Windy navrhom
 
 Pre Windy mapovy most sa odporuca:
@@ -121,10 +136,10 @@ Aktualny stav v kode:
 
 ## 9. Plan rozvoja
 
-1. Pridat korelacne ID pre request/response tracing.
-2. Pridat standardizovany error objekt.
-3. Pridat volitelny debug panel komunikacie v testovacej stranke.
-4. Pridat adapter pre backend proxy endpointy.
+1. Dokoncit standardizovany error objekt pre adaptery (partially done, unify schema).
+2. Pridat volitelny debug panel komunikacie v testovacej stranke.
+3. Pridat adapter pre backend proxy endpointy.
+4. Rozsirit smoke test o scenare vypadku adaptera a timeoutu.
 
 ## 10. Suvisiace subory
 

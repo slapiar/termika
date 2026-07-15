@@ -18,7 +18,7 @@ Windy vrstva je doplnok, nie nahrada hlavnej mapy TermikaXC.
 |---|---|
 | ID nastroja | `windy-map-bridge` |
 | Nazov | Windy mapovy most (Map Forecast API) |
-| Stav | `NAVRH` |
+| Stav | `ROZPRACOVANE` |
 | Prednostne prostredie | testovacia analyza + hlavna mapa TermikaXC |
 | Typ | vizualny a workflow doplnok |
 | Zavislost | Windy Map Forecast API (Professional pre produkciu) |
@@ -194,3 +194,30 @@ MVP je splnene, ak plati:
 - [`../XC/js/tool-communication.js`](../XC/js/tool-communication.js)
 - [`../XC/js/wind-ui.js`](../XC/js/wind-ui.js)
 - [`../XC/js/wind-render.js`](../XC/js/wind-render.js)
+
+## 11. Go/No-Go checklist pre letovy test
+
+Pred realnym letovym testom spustit v testovacej stranke `XC/terrain-analysis-test.php` tento rychly checklist.
+
+### Go podmienky
+
+1. Badge stavu adaptera je `ready` aspon 30 sekund bez prepadu do `error`.
+2. Odznak posledneho update sa obnovuje pravidelne (heartbeat) bez zamrznutia casu.
+3. Tlacidlo "Pouzit tento fokus" prenesie fokus do Cesium mapy v jednej akcii.
+4. Preneseny fokus sedi vizualne v tolerancii bezneho zoom roundingu.
+5. Pri reload stranky nevznikaju duplicity listenerov ani duplicitne status logy.
+
+### No-Go podmienky
+
+1. Adapter sa opakovane prepina `ready -> error -> ready` bez zjavnej priciny.
+2. Posledny update ostane dlhsie ako 60 s bez heartbeat pri stale aktivnom adapteri.
+3. Focus transfer prebehne len obcas alebo vyzaduje viacnasobne kliknutie.
+4. Po odpojeni Windy zamrzne UI alebo prestane reagovat analyza.
+5. Konzola obsahuje opakovane chyby validacie payloadu `windy-focus`.
+
+### Operacny postup pri No-Go
+
+1. Spustit `window.TermikaCommunicationTool.runSmokeTest()` v konzole a ulozit report.
+2. Skontrolovat status badge + source badge + cas posledneho update.
+3. Overit, ci bezi iba jedna instancia adaptera a bridge bootstrapu.
+4. Az po stabilnom smoku vratit scenar do letoveho testu.

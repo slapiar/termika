@@ -43,8 +43,38 @@ window.WindyMapAdapterTool = {
         }
     },
 
+    validateFocusPayload: function (focusPayload) {
+        if (!focusPayload || typeof focusPayload !== "object") {
+            return { ok: false, reason: "Focus payload must be an object." };
+        }
+
+        const rawLat = focusPayload.lat ?? focusPayload.latitude ?? focusPayload?.center?.lat;
+        const rawLon = focusPayload.lon ?? focusPayload.lng ?? focusPayload.longitude ?? focusPayload?.center?.lon ?? focusPayload?.center?.lng;
+        const rawZoom = focusPayload.zoom ?? focusPayload?.view?.zoom ?? focusPayload?.camera?.zoom;
+        const lat = Number(rawLat);
+        const lon = Number(rawLon);
+        const zoom = Number(rawZoom);
+
+        if (!Number.isFinite(lat) || Math.abs(lat) > 90) {
+            return { ok: false, reason: "Focus payload has invalid lat." };
+        }
+        if (!Number.isFinite(lon) || Math.abs(lon) > 180) {
+            return { ok: false, reason: "Focus payload has invalid lon." };
+        }
+        if (rawZoom !== undefined && (!Number.isFinite(zoom) || zoom < 1 || zoom > 24)) {
+            return { ok: false, reason: "Focus payload has invalid zoom." };
+        }
+
+        return { ok: true };
+    },
+
     normalizeFocusPayload: function (focusPayload) {
         if (!focusPayload || typeof focusPayload !== "object") {
+            return null;
+        }
+
+        const validation = this.validateFocusPayload(focusPayload);
+        if (!validation.ok) {
             return null;
         }
 
@@ -65,7 +95,9 @@ window.WindyMapAdapterTool = {
             lon,
             zoom: Number.isFinite(zoom) ? zoom : 9,
             source: String(focusPayload.source || "windy-map-adapter"),
-            timestampIso: new Date().toISOString()
+            timestampIso: Number.isNaN(Date.parse(String(focusPayload.timestampIso || "")))
+                ? new Date().toISOString()
+                : new Date(String(focusPayload.timestampIso)).toISOString()
         };
     },
 
@@ -350,6 +382,19 @@ window.WindyMapAdapterTool = {
         this.disconnectBridge();
         this.publishStatus("offline", "Adapter disabled.");
         return this.state.enabled;
+    },
+
+    destroy: function (options = {}) {
+        const silent = options && options.silent === true;
+        this.disable();
+        if (this.state.registered && window.TermikaCommunicationTool?.unregisterAdapter) {
+            window.TermikaCommunicationTool.unregisterAdapter("windy-map");
+            this.state.registered = false;
+        }
+        if (!silent) {
+            this.publishStatus("offline", "Adapter destroyed.", { destroyed: true });
+        }
+        return true;
     }
 };
 

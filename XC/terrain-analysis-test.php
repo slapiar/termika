@@ -601,6 +601,9 @@ $assetVersion = '20260712-07';
     let activeNavSection = 'sources';
     let manualTempProfile = null;
     let manualTempSourceName = 'XCtrack/temp.json';
+    const communicationDisposers = [];
+    let runtimeCleanupDone = false;
+    let sceneInputHandler = null;
 
     function formatCenter(point) {
         return point.lat.toFixed(5) + ', ' + point.lon.toFixed(5);
@@ -2145,26 +2148,26 @@ $assetVersion = '20260712-07';
     }
 
     if (window.TermikaCommunicationTool) {
-        window.TermikaCommunicationTool.on('channel:windy-focus', ({ payload, context }) => {
+        communicationDisposers.push(window.TermikaCommunicationTool.on('channel:windy-focus', ({ payload, context }) => {
             const adapterId = String(context?.adapterId || 'unknown');
             applyIncomingFocus(payload, adapterId);
             setWindyAdapterLastUpdateBadge(payload?.timestampIso, adapterId);
             setWindyAdapterSourceBadge(adapterId);
-        });
-        window.TermikaCommunicationTool.on('windy-map-adapter:status', ({ status, message, updatedAtIso, bridgeName, heartbeat }) => {
+        }));
+        communicationDisposers.push(window.TermikaCommunicationTool.on('windy-map-adapter:status', ({ status, message, updatedAtIso, bridgeName, heartbeat }) => {
             setWindyAdapterStatusBadge(status, message);
             setWindyAdapterLastUpdateBadge(updatedAtIso, bridgeName || 'adapter');
             setWindyAdapterSourceBadge((heartbeat ? 'heartbeat · ' : '') + String(bridgeName || 'adapter'));
-        });
-        window.TermikaCommunicationTool.on('windy-map-adapter:focus', ({ focus, bridgeName, updatedAtIso }) => {
+        }));
+        communicationDisposers.push(window.TermikaCommunicationTool.on('windy-map-adapter:focus', ({ focus, bridgeName, updatedAtIso }) => {
             setWindyAdapterLastUpdateBadge(updatedAtIso || focus?.timestampIso, bridgeName || focus?.source || 'adapter');
             setWindyAdapterSourceBadge(bridgeName || focus?.source || 'adapter');
-        });
-        window.TermikaCommunicationTool.on('windy-map-bridge:ready', ({ name, timestampIso }) => {
+        }));
+        communicationDisposers.push(window.TermikaCommunicationTool.on('windy-map-bridge:ready', ({ name, timestampIso }) => {
             setWindyAdapterLastUpdateBadge(timestampIso, String(name || 'bridge-ready'));
             setWindyAdapterSourceBadge(String(name || 'bridge-ready'));
             logStatus('Windy bridge pripravený: ' + String(name || 'unknown') + '.', 'success');
-        });
+        }));
     } else {
         logStatus('Komunikačný modul nie je načítaný. Kanál windy-focus je neaktívny.', 'error');
     }
@@ -2179,13 +2182,62 @@ $assetVersion = '20260712-07';
         };
     }
 
-    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-    handler.setInputAction((event) => {
+    // Funkcia na načítanie TEMP pri kliknutí na bod mapy
+    async function loadTempOnPointClick(point) {
+        if (!window.WindTempLoader) {
+            logStatus('WindTempLoader modul nie je načítaný.', 'error');
+            return;
+        }
+
+        try {
+            logStatus('Načítavám TEMP profil pre bod ' + formatCenter(point) + '...', 'info');
+
+            // Zberu settings z formulára
+            const sourceMode = document.getElementById('windTempSourceMode')?.value || 'auto';
+            const windyTempUrl = document.getElementById('windyTempUrl')?.value?.trim() || '';
+            const tempSourceUrl = document.getElementById('windTempSourceUrl')?.value?.trim() || 'XCtrack/temp.json';
+            const stationIndexUrl = document.getElementById('stationIndexUrl')?.value?.trim() || '';
+            const stationProfileUrlTemplate = document.getElementById('stationProfileUrlTemplate')?.value?.trim() || '';
+
+            const settings = {
+                sourceMode: sourceMode,
+                windyTempUrl: windyTempUrl,
+                windyTempUrlTemplate: windyTempUrl,
+                tempSourceUrl: tempSourceUrl,
+                stationIndexUrl: stationIndexUrl,
+                stationProfileUrlTemplate: stationProfileUrlTemplate
+            };
+
+            // Konfiguruj loader
+            window.WindTempLoader.configure(settings);
+
+            // Načítaj profil
+            const profile = await window.WindTempLoader.loadProfile(point, settings);
+            const resolvedSource = window.WindTempLoader?.lastResolvedSource;
+
+            // Zobraziť výsledok v TEMP paneli
+            renderTempProfileViews(profile, resolvedSource?.resolvedMode || 'TEMP');
+
+            // Aktualizuj label zdroja
+            if (document.getElementById('pTempFile')) {
+                const sourceDetail = resolvedSource?.detail || sourceMode;
+                document.getElementById('pTempFile').textContent = sourceDetail;
+            }
+
+            logStatus('TEMP profil úspešne načítaný z ' + (resolvedSource?.resolvedMode || sourceMode) + ' pre bod ' + formatCenter(point) + '.', 'success');
+        } catch (error) {
+            logStatus('Chyba pri načítaní TEMP profilu: ' + (error?.message || String(error)), 'error');
+            renderTempProfileViews([], 'CHYBA');
+        }
+    }
+
+    sceneInputHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+    sceneInputHandler.setInputAction((event) => {
         const point = pickTerrainPosition(event.endPosition);
         if (point) previewCenter = point;
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
-    handler.setInputAction((event) => {
+    sceneInputHandler.setInputAction((event) => {
         const picked = viewer.scene.pick(event.position);
         const pickedId = picked?.id;
         if (pickedId?.type === 'terrain-analysis-cell' && pickedId.cell) {
@@ -2200,6 +2252,9 @@ $assetVersion = '20260712-07';
         selectedPoint.position = Cesium.Cartesian3.fromDegrees(point.lon, point.lat);
         syncCenterUi(point);
         logStatus('Vybraný nový stred kruhovej analýzy.');
+        
+        // Automaticky načítaj TEMP profil z Windy pre tento bod
+        loadTempOnPointClick(point);
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
     centerApplyButton.addEventListener('click', () => {
@@ -2306,6 +2361,44 @@ $assetVersion = '20260712-07';
         }
     }
     refreshWindyAdapterStatus();
+
+    function cleanupRuntimeResources() {
+        if (runtimeCleanupDone) return;
+        runtimeCleanupDone = true;
+
+        while (communicationDisposers.length) {
+            const dispose = communicationDisposers.pop();
+            try {
+                if (typeof dispose === 'function') dispose();
+            } catch (_) {
+                // Ignore listener cleanup errors.
+            }
+        }
+
+        if (sceneInputHandler && typeof sceneInputHandler.destroy === 'function' && !sceneInputHandler.isDestroyed?.()) {
+            try {
+                sceneInputHandler.destroy();
+            } catch (_) {
+                // Ignore scene handler cleanup errors.
+            }
+        }
+        sceneInputHandler = null;
+
+        try {
+            window.WindyMapAdapterTool?.destroy?.({ silent: true });
+        } catch (_) {
+            // Ignore adapter cleanup errors.
+        }
+
+        try {
+            window.WindyMapBridgeBootstrap?.destroy?.();
+        } catch (_) {
+            // Ignore bridge bootstrap cleanup errors.
+        }
+    }
+
+    window.addEventListener('beforeunload', cleanupRuntimeResources, { once: true });
+    window.addEventListener('pagehide', cleanupRuntimeResources, { once: true });
 
     geometryVisible.addEventListener('change', () => {
         TerrainAnalysisCore.setLayerVisible('geometry', geometryVisible.checked);
