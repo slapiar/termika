@@ -21,6 +21,9 @@ if (stripos($html, 'asset/explorer-theme-runtime.css') === false) {
 if (stripos($html, 'asset/explorer-import.css') === false) {
     $headAssets .= '    <link rel="stylesheet" href="asset/explorer-import.css?v=20260715-01">' . "\n";
 }
+if (stripos($html, 'asset/explorer-profile.css') === false) {
+    $headAssets .= '    <link rel="stylesheet" href="asset/explorer-profile.css?v=20260715-01">' . "\n";
+}
 
 if ($headAssets !== '') {
     $headEnd = stripos($html, '</head>');
@@ -31,13 +34,16 @@ if ($headAssets !== '') {
 
 $bodyScripts = '';
 if (stripos($html, 'js/explorer-nav.js') === false) {
-    $bodyScripts .= '    <script src="js/explorer-nav.js?v=20260715-01"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/explorer-nav.js?v=20260715-02"></script>' . "\n";
 }
 if (stripos($html, 'js/explorer-theme.js') === false) {
     $bodyScripts .= '    <script src="js/explorer-theme.js?v=20260715-01"></script>' . "\n";
 }
 if (stripos($html, 'js/explorer-import.js') === false) {
     $bodyScripts .= '    <script src="js/explorer-import.js?v=20260715-01"></script>' . "\n";
+}
+if (stripos($html, 'js/explorer-profile.js') === false) {
+    $bodyScripts .= '    <script src="js/explorer-profile.js?v=20260715-01"></script>' . "\n";
 }
 
 if ($bodyScripts !== '') {
