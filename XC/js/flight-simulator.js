@@ -3,7 +3,8 @@
 
     if (window.TermikaFlightSimulator) return;
 
-    const VERSION = '1.0.0';
+    const VERSION = '1.1.0';
+    const GRAVITY_MS2 = 9.80665;
     const DEFAULTS = Object.freeze({
         minSpeedMs: 0,
         maxSpeedMs: 100,
@@ -12,6 +13,15 @@
         accelerationMs2: 4,
         decelerationMs2: 7,
         minimumAglM: 3,
+        rollRateDegS: 34,
+        maximumBankDeg: 72,
+        mousePitchSensitivityDegPx: 0.075,
+        maximumFlightPitchDeg: 55,
+        lookRateDegS: 58,
+        maximumLookYawDeg: 110,
+        maximumLookPitchDeg: 82,
+        maximumTurnRateDegS: 38,
+        coordinatedTurnMinimumSpeedMs: 9,
         stateEventIntervalMs: 100
     });
 
@@ -26,9 +36,50 @@
     let options = { ...DEFAULTS };
     let statusNode = null;
     let keydownHandler = null;
+    let keyupHandler = null;
     let visibilityHandler = null;
+    let blurHandler = null;
+    let pointerDownHandler = null;
+    let pointerUpHandler = null;
+    let pointerMoveHandler = null;
+    let contextMenuHandler = null;
+    let pointerLockHandler = null;
+    let flightCanvas = null;
+    let controllerState = null;
+
+    const input = {
+        rollLeft: false,
+        rollRight: false,
+        lookLeft: false,
+        lookRight: false,
+        lookDown: false,
+        lookUp: false
+    };
+
+    const attitude = {
+        heading: 0,
+        pitch: 0,
+        roll: 0,
+        lookYaw: 0,
+        lookPitch: 0,
+        lookRoll: 0
+    };
 
     const clamp = (value, minimum, maximum) => Math.max(minimum, Math.min(maximum, Number(value) || 0));
+    const toRadians = (degrees) => Number(degrees || 0) * Math.PI / 180;
+    const toDegrees = (radians) => Number(radians || 0) * 180 / Math.PI;
+    const normalizeRadians = (value) => {
+        let normalized = Number(value) || 0;
+        while (normalized > Math.PI) normalized -= Math.PI * 2;
+        while (normalized < -Math.PI) normalized += Math.PI * 2;
+        return normalized;
+    };
+    const normalizeHeading = (value) => {
+        let normalized = Number(value) || 0;
+        while (normalized >= Math.PI * 2) normalized -= Math.PI * 2;
+        while (normalized < 0) normalized += Math.PI * 2;
+        return normalized;
+    };
 
     function resolveViewer() {
         const candidates = [
@@ -83,6 +134,16 @@
             speedKmh: speedMs * 3.6,
             targetSpeedKmh: targetSpeedMs * 3.6,
             coordinates,
+            flight: {
+                headingDeg: (toDegrees(attitude.heading) + 360) % 360,
+                pitchDeg: toDegrees(attitude.pitch),
+                rollDeg: toDegrees(attitude.roll)
+            },
+            view: {
+                yawOffsetDeg: toDegrees(attitude.lookYaw),
+                pitchOffsetDeg: toDegrees(attitude.lookPitch),
+                rollOffsetDeg: toDegrees(attitude.lookRoll)
+            },
             timestamp: Date.now()
         };
     }
@@ -118,31 +179,117 @@
             '<strong>LETOVÝ REŽIM</strong>',
             `<span class="termika-flight-speed">${formatSpeed(speedMs)}</span>`,
             `<span class="termika-flight-target">cieľ ${formatSpeed(targetSpeedMs)}</span>`,
-            '<span class="termika-flight-help">↑ zrýchliť · ↓ brzdiť · Shift = väčší krok · medzerník = stop</span>'
+            `<span class="termika-flight-attitude">náklon ${Math.round(toDegrees(attitude.roll))}° · pitch ${Math.round(toDegrees(attitude.pitch))}°</span>`,
+            '<span class="termika-flight-help">↑/↓ rýchlosť · myš dopredu/dozadu pitch · L/P tlačidlo náklon · Q/W pohľad bokom · A/D dole/hore · S horizont</span>'
         ].join('');
     }
 
-    function ensureMinimumTerrainClearance() {
-        if (!activeViewer?.camera || !activeViewer?.scene?.globe || typeof Cesium === 'undefined') return;
-        const cartographic = activeViewer.camera.positionCartographic;
-        if (!cartographic) return;
-        const terrainHeight = activeViewer.scene.globe.getHeight?.(cartographic);
-        if (!Number.isFinite(terrainHeight)) return;
-        const minimumHeight = terrainHeight + options.minimumAglM;
-        if (!(cartographic.height < minimumHeight)) return;
+    function resetInputs() {
+        Object.keys(input).forEach((key) => { input[key] = false; });
+    }
 
-        const heading = activeViewer.camera.heading;
-        const pitch = activeViewer.camera.pitch;
-        const roll = activeViewer.camera.roll;
-        activeViewer.camera.setView({
-            destination: Cesium.Cartesian3.fromRadians(
-                cartographic.longitude,
-                cartographic.latitude,
-                minimumHeight
+    function initializeAttitudeFromCamera() {
+        const camera = activeViewer?.camera;
+        if (!camera) return;
+        attitude.heading = normalizeHeading(camera.heading);
+        attitude.pitch = clamp(camera.pitch, toRadians(-options.maximumFlightPitchDeg), toRadians(options.maximumFlightPitchDeg));
+        attitude.roll = clamp(normalizeRadians(camera.roll), toRadians(-options.maximumBankDeg), toRadians(options.maximumBankDeg));
+        attitude.lookYaw = 0;
+        attitude.lookPitch = 0;
+        attitude.lookRoll = 0;
+    }
+
+    function cameraOrientation() {
+        return {
+            heading: normalizeHeading(attitude.heading + attitude.lookYaw),
+            pitch: clamp(
+                attitude.pitch + attitude.lookPitch,
+                toRadians(-89),
+                toRadians(89)
             ),
-            orientation: { heading, pitch, roll }
+            roll: normalizeRadians(attitude.roll + attitude.lookRoll)
+        };
+    }
+
+    function setCameraPose(destination = null) {
+        if (!activeViewer?.camera || typeof Cesium === 'undefined') return;
+        const orientation = cameraOrientation();
+        activeViewer.camera.setView({
+            destination: destination || Cesium.Cartesian3.clone(activeViewer.camera.position),
+            orientation
         });
-        speedMs = Math.min(speedMs, targetSpeedMs);
+    }
+
+    function terrainSafeDestination(destination) {
+        if (!destination || !activeViewer?.scene?.globe || typeof Cesium === 'undefined') return destination;
+        const cartographic = Cesium.Cartographic.fromCartesian(destination);
+        if (!cartographic) return destination;
+        const terrainHeight = activeViewer.scene.globe.getHeight?.(cartographic);
+        if (!Number.isFinite(terrainHeight)) return destination;
+        const minimumHeight = terrainHeight + options.minimumAglM;
+        if (cartographic.height >= minimumHeight) return destination;
+        return Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, minimumHeight);
+    }
+
+    function directionInWorld() {
+        if (!activeViewer?.camera || typeof Cesium === 'undefined') return null;
+        const position = activeViewer.camera.position;
+        const frame = Cesium.Transforms.eastNorthUpToFixedFrame(position);
+        const cosPitch = Math.cos(attitude.pitch);
+        const localDirection = new Cesium.Cartesian3(
+            Math.sin(attitude.heading) * cosPitch,
+            Math.cos(attitude.heading) * cosPitch,
+            Math.sin(attitude.pitch)
+        );
+        const direction = Cesium.Matrix4.multiplyByPointAsVector(frame, localDirection, new Cesium.Cartesian3());
+        return Cesium.Cartesian3.normalize(direction, direction);
+    }
+
+    function moveAircraft(distanceMeters) {
+        if (!(distanceMeters > 0) || !activeViewer?.camera || typeof Cesium === 'undefined') {
+            setCameraPose();
+            return;
+        }
+        const direction = directionInWorld();
+        if (!direction) return;
+        const step = Cesium.Cartesian3.multiplyByScalar(direction, distanceMeters, new Cesium.Cartesian3());
+        const destination = Cesium.Cartesian3.add(activeViewer.camera.position, step, new Cesium.Cartesian3());
+        setCameraPose(terrainSafeDestination(destination));
+    }
+
+    function updateFlightControls(deltaSeconds) {
+        const rollDirection = (input.rollRight ? 1 : 0) - (input.rollLeft ? 1 : 0);
+        if (rollDirection !== 0) {
+            attitude.roll = clamp(
+                attitude.roll + rollDirection * toRadians(options.rollRateDegS) * deltaSeconds,
+                toRadians(-options.maximumBankDeg),
+                toRadians(options.maximumBankDeg)
+            );
+        }
+
+        if (speedMs > 0.5 && Math.abs(attitude.roll) > toRadians(0.1)) {
+            const effectiveSpeed = Math.max(options.coordinatedTurnMinimumSpeedMs, speedMs);
+            const turnRate = clamp(
+                GRAVITY_MS2 * Math.tan(attitude.roll) / effectiveSpeed,
+                toRadians(-options.maximumTurnRateDegS),
+                toRadians(options.maximumTurnRateDegS)
+            );
+            attitude.heading = normalizeHeading(attitude.heading + turnRate * deltaSeconds);
+        }
+
+        const lookYawDirection = (input.lookRight ? 1 : 0) - (input.lookLeft ? 1 : 0);
+        const lookPitchDirection = (input.lookUp ? 1 : 0) - (input.lookDown ? 1 : 0);
+        const lookRate = toRadians(options.lookRateDegS) * deltaSeconds;
+        attitude.lookYaw = clamp(
+            attitude.lookYaw + lookYawDirection * lookRate,
+            toRadians(-options.maximumLookYawDeg),
+            toRadians(options.maximumLookYawDeg)
+        );
+        attitude.lookPitch = clamp(
+            attitude.lookPitch + lookPitchDirection * lookRate,
+            toRadians(-options.maximumLookPitchDeg),
+            toRadians(options.maximumLookPitchDeg)
+        );
     }
 
     function frame(timestamp) {
@@ -157,13 +304,10 @@
 
         const rate = speedMs < targetSpeedMs ? options.accelerationMs2 : options.decelerationMs2;
         speedMs = approach(speedMs, targetSpeedMs, rate * deltaSeconds);
+        updateFlightControls(deltaSeconds);
+        moveAircraft(speedMs * deltaSeconds);
 
-        if (speedMs > 0.001 && deltaSeconds > 0) {
-            activeViewer.camera.moveForward(speedMs * deltaSeconds);
-            ensureMinimumTerrainClearance();
-            activeViewer.scene?.requestRender?.();
-        }
-
+        activeViewer.scene?.requestRender?.();
         renderStatus();
         dispatchState();
         animationFrame = window.requestAnimationFrame(frame);
@@ -196,6 +340,19 @@
         return setTargetSpeedMs(0);
     }
 
+    function resetViewToHorizon() {
+        attitude.lookYaw = 0;
+        attitude.lookPitch = clamp(
+            -attitude.pitch,
+            toRadians(-options.maximumLookPitchDeg),
+            toRadians(options.maximumLookPitchDeg)
+        );
+        attitude.lookRoll = normalizeRadians(-attitude.roll);
+        setCameraPose();
+        renderStatus();
+        dispatchState(true);
+    }
+
     function handleKeydown(event) {
         if (!active || event.defaultPrevented || isTypingTarget(event.target)) return;
         const step = event.shiftKey ? options.fastSpeedStepMs : options.speedStepMs;
@@ -213,12 +370,115 @@
         if (event.code === 'Space') {
             event.preventDefault();
             stop();
+            return;
         }
+        if (event.code === 'KeyQ') {
+            event.preventDefault();
+            input.lookLeft = true;
+            return;
+        }
+        if (event.code === 'KeyW') {
+            event.preventDefault();
+            input.lookRight = true;
+            return;
+        }
+        if (event.code === 'KeyA') {
+            event.preventDefault();
+            input.lookDown = true;
+            return;
+        }
+        if (event.code === 'KeyD') {
+            event.preventDefault();
+            input.lookUp = true;
+            return;
+        }
+        if (event.code === 'KeyS' && !event.repeat) {
+            event.preventDefault();
+            resetViewToHorizon();
+        }
+    }
+
+    function handleKeyup(event) {
+        if (event.code === 'KeyQ') input.lookLeft = false;
+        if (event.code === 'KeyW') input.lookRight = false;
+        if (event.code === 'KeyA') input.lookDown = false;
+        if (event.code === 'KeyD') input.lookUp = false;
+    }
+
+    function isFlightPointerEvent(event) {
+        if (!flightCanvas) return false;
+        return document.pointerLockElement === flightCanvas || event.target === flightCanvas;
+    }
+
+    function handlePointerDown(event) {
+        if (!active || !isFlightPointerEvent(event)) return;
+        if (event.button !== 0 && event.button !== 2) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (event.button === 0) input.rollLeft = true;
+        if (event.button === 2) input.rollRight = true;
+        if (document.pointerLockElement !== flightCanvas) {
+            flightCanvas.requestPointerLock?.();
+        }
+    }
+
+    function handlePointerUp(event) {
+        if (event.button === 0) input.rollLeft = false;
+        if (event.button === 2) input.rollRight = false;
+    }
+
+    function handlePointerMove(event) {
+        if (!active || !isFlightPointerEvent(event)) return;
+        const movementY = Number(event.movementY) || 0;
+        if (!movementY) return;
+        attitude.pitch = clamp(
+            attitude.pitch + toRadians(movementY * options.mousePitchSensitivityDegPx),
+            toRadians(-options.maximumFlightPitchDeg),
+            toRadians(options.maximumFlightPitchDeg)
+        );
+        renderStatus();
+    }
+
+    function handleContextMenu(event) {
+        if (!active || !isFlightPointerEvent(event)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }
+
+    function handlePointerLockChange() {
+        if (document.pointerLockElement !== flightCanvas) {
+            input.rollLeft = false;
+            input.rollRight = false;
+        }
+    }
+
+    function saveControllerState() {
+        const controller = activeViewer?.scene?.screenSpaceCameraController;
+        if (!controller || controllerState) return;
+        controllerState = {
+            enableInputs: controller.enableInputs,
+            enableRotate: controller.enableRotate,
+            enableTranslate: controller.enableTranslate,
+            enableZoom: controller.enableZoom,
+            enableTilt: controller.enableTilt,
+            enableLook: controller.enableLook
+        };
+        controller.enableInputs = false;
+    }
+
+    function restoreControllerState() {
+        const controller = activeViewer?.scene?.screenSpaceCameraController;
+        if (!controller || !controllerState) return;
+        Object.entries(controllerState).forEach(([key, value]) => {
+            if (key in controller) controller[key] = value;
+        });
+        controllerState = null;
     }
 
     function bindViewer(viewerInstance) {
         if (!viewerInstance?.camera || !viewerInstance?.scene) return false;
         activeViewer = viewerInstance;
+        flightCanvas = viewerInstance.scene.canvas;
         return true;
     }
 
@@ -226,20 +486,37 @@
         options = { ...DEFAULTS, ...installOptions };
         if (viewerInstance) bindViewer(viewerInstance);
         if (!activeViewer) bindViewer(resolveViewer());
-        if (!activeViewer) return false;
+        if (!activeViewer || !flightCanvas) return false;
         if (installed) return true;
 
         installed = true;
         ensureStatusNode();
-        keydownHandler = handleKeydown;
-        document.addEventListener('keydown', keydownHandler, { capture: true });
 
+        keydownHandler = handleKeydown;
+        keyupHandler = handleKeyup;
+        pointerDownHandler = handlePointerDown;
+        pointerUpHandler = handlePointerUp;
+        pointerMoveHandler = handlePointerMove;
+        contextMenuHandler = handleContextMenu;
+        pointerLockHandler = handlePointerLockChange;
         visibilityHandler = () => {
             if (document.hidden) {
                 lastFrameTime = 0;
+                resetInputs();
             }
         };
+        blurHandler = resetInputs;
+
+        document.addEventListener('keydown', keydownHandler, { capture: true });
+        document.addEventListener('keyup', keyupHandler, { capture: true });
+        flightCanvas.addEventListener('pointerdown', pointerDownHandler, { capture: true });
+        document.addEventListener('pointerup', pointerUpHandler, { capture: true });
+        document.addEventListener('pointermove', pointerMoveHandler, { capture: true });
+        flightCanvas.addEventListener('contextmenu', contextMenuHandler, { capture: true });
+        document.addEventListener('pointerlockchange', pointerLockHandler);
         document.addEventListener('visibilitychange', visibilityHandler);
+        window.addEventListener('blur', blurHandler);
+
         renderStatus();
         dispatchState(true);
         return true;
@@ -253,6 +530,9 @@
             activeViewer.scene.morphTo3D?.(0.6);
         }
 
+        initializeAttitudeFromCamera();
+        resetInputs();
+        saveControllerState();
         active = true;
         startLoop();
         renderStatus();
@@ -264,6 +544,9 @@
     function deactivate({ keepSpeed = false } = {}) {
         active = false;
         stopLoop();
+        resetInputs();
+        restoreControllerState();
+        if (document.pointerLockElement === flightCanvas) document.exitPointerLock?.();
         if (!keepSpeed) {
             speedMs = 0;
             targetSpeedMs = 0;
@@ -281,11 +564,27 @@
     function destroy() {
         deactivate();
         if (keydownHandler) document.removeEventListener('keydown', keydownHandler, { capture: true });
+        if (keyupHandler) document.removeEventListener('keyup', keyupHandler, { capture: true });
+        if (pointerDownHandler) flightCanvas?.removeEventListener('pointerdown', pointerDownHandler, { capture: true });
+        if (pointerUpHandler) document.removeEventListener('pointerup', pointerUpHandler, { capture: true });
+        if (pointerMoveHandler) document.removeEventListener('pointermove', pointerMoveHandler, { capture: true });
+        if (contextMenuHandler) flightCanvas?.removeEventListener('contextmenu', contextMenuHandler, { capture: true });
+        if (pointerLockHandler) document.removeEventListener('pointerlockchange', pointerLockHandler);
         if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
+        if (blurHandler) window.removeEventListener('blur', blurHandler);
+
         keydownHandler = null;
+        keyupHandler = null;
+        pointerDownHandler = null;
+        pointerUpHandler = null;
+        pointerMoveHandler = null;
+        contextMenuHandler = null;
+        pointerLockHandler = null;
         visibilityHandler = null;
+        blurHandler = null;
         statusNode?.remove();
         statusNode = null;
+        flightCanvas = null;
         activeViewer = null;
         installed = false;
         dispatchState(true);
@@ -301,6 +600,7 @@
         toggle,
         destroy,
         stop,
+        resetViewToHorizon,
         setTargetSpeedMs,
         adjustSpeedMs,
         getState: snapshot,
