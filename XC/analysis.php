@@ -28,7 +28,7 @@ if (stripos($html, 'js/terrain-camera-hud-coordinates.js') === false) {
     $bodyScripts .= '    <script src="js/terrain-camera-hud-coordinates.js?v=20260715-01" data-terrain-camera-hud-coordinates="true"></script>' . "\n";
 }
 if (stripos($html, 'js/flight-simulator.js') === false) {
-    $bodyScripts .= '    <script src="js/flight-simulator.js?v=20260715-02" data-flight-simulator="true"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/flight-simulator.js?v=20260715-03" data-flight-simulator="true"></script>' . "\n";
 }
 if (stripos($html, 'js/workspace-flight-toggle.js') === false) {
     $bodyScripts .= '    <script src="js/workspace-flight-toggle.js?v=20260715-02" data-workspace-flight-toggle="true"></script>' . "\n";
