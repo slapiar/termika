@@ -10,7 +10,7 @@ if (stripos($html, 'asset/workspace-cesium-toolbar-offset.css') === false) {
     $headAssets .= '    <link rel="stylesheet" href="asset/workspace-cesium-toolbar-offset.css?v=20260715-02" data-workspace-cesium-toolbar-offset="true">' . "\n";
 }
 if (stripos($html, 'asset/workspace-flight-simulator.css') === false) {
-    $headAssets .= '    <link rel="stylesheet" href="asset/workspace-flight-simulator.css?v=20260715-01" data-workspace-flight-simulator="true">' . "\n";
+    $headAssets .= '    <link rel="stylesheet" href="asset/workspace-flight-simulator.css?v=20260715-02" data-workspace-flight-simulator="true">' . "\n";
 }
 
 if ($headAssets !== '') {
@@ -28,10 +28,10 @@ if (stripos($html, 'js/terrain-camera-hud-coordinates.js') === false) {
     $bodyScripts .= '    <script src="js/terrain-camera-hud-coordinates.js?v=20260715-01" data-terrain-camera-hud-coordinates="true"></script>' . "\n";
 }
 if (stripos($html, 'js/flight-simulator.js') === false) {
-    $bodyScripts .= '    <script src="js/flight-simulator.js?v=20260715-01" data-flight-simulator="true"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/flight-simulator.js?v=20260715-02" data-flight-simulator="true"></script>' . "\n";
 }
 if (stripos($html, 'js/workspace-flight-toggle.js') === false) {
-    $bodyScripts .= '    <script src="js/workspace-flight-toggle.js?v=20260715-01" data-workspace-flight-toggle="true"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/workspace-flight-toggle.js?v=20260715-02" data-workspace-flight-toggle="true"></script>' . "\n";
 }
 if (stripos($html, 'js/explorer-analysis-bridge.js') === false) {
     $bodyScripts .= '    <script src="js/explorer-analysis-bridge.js?v=20260715-02" data-explorer-analysis-bridge="true"></script>' . "\n";
