@@ -8,6 +8,27 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 
 ### Pridané
 
+- Hlavný panel aplikácie (`XC/index.php`) má kompaktné režimy generácií vetra cez tri radio voľby.
+  - `Zachovať poslednú generáciu`,
+  - `Vymazať poslednú generáciu`,
+  - `Vymazať všetky generácie z mapy`.
+- Automatické ukladanie každého výpočtu do lokálneho úložiska `GENauto/`.
+  - nový endpoint `XC/genauto.php` pri prvom použití automaticky vytvorí adresáre `XC/GENauto/map` a `XC/GENauto/wind`,
+  - každá generácia sa zapisuje samostatne pre mapu a vietor,
+  - názov súboru obsahuje UTC dátum a čas generácie aj súradnice stredu fokusu,
+  - obsah súboru nesie metadáta stredu a payload danej generácie.
+- Nové ručné operácie pre denný workflow generácií.
+  - tlačidlo `Vymazať dnešné GENauto` maže dnešné mapové aj veterné záznamy a zároveň čistí vrstvy z mapy,
+  - tlačidlo `Načítať vietor zo súborov` obnoví dnešné veterné generácie z `GENauto/wind` späť do scény,
+  - tlačidlo `Načítať mapu zo súborov` načíta dnešné mapové generácie z `GENauto/map`.
+- Vizualizácia historických mapových generácií v scéne Cesium.
+  - načítané mapové generácie sa vykresľujú ako body so stručným časovým popisom a režimom generácie,
+  - medzi bodmi sa kreslí spojnicová trasa fokusov,
+  - render je oddelený v samostatnej vrstve `GENAUTO_MAP_POINTS`.
+- Automatické zaostrenie kamery po importe mapových generácií.
+  - pri viacerých bodoch sa použije `flyToBoundingSphere` na celý rozsah dát,
+  - pri jedinom bode sa použije `flyTo` na daný fokus s bezpečnou výškou.
+
 - Nový režim farbenia vetra podľa vertikálneho pohybu.
   - `XC/js/wind-render.js` podporuje nový `colorMode = verticalMotion`,
   - v `XC/terrain-analysis-test.php` pribudla voľba `Vertikálny pohyb (stúpanie/klesanie)`.
