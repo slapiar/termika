@@ -3,7 +3,7 @@
 // Supports configurable sources: Windy, nearest station, or file/URL.
 
 window.WindTempLoader = {
-    VERSION: "2.6.13-wind-temp-loader.1",
+    VERSION: "2.6.14-wind-temp-loader-fm94.1",
 
     lastResolvedSource: null,
 
@@ -26,11 +26,68 @@ window.WindTempLoader = {
     extractPayloadProfile: function (payload) {
         if (Array.isArray(payload)) return payload;
         if (!payload || typeof payload !== "object") return null;
+        if (String(payload.type || "") === "FeatureCollection" && Array.isArray(payload.features)) {
+            return this.convertWindyFeatureCollection(payload);
+        }
         if (Array.isArray(payload.profile)) return payload.profile;
         if (Array.isArray(payload.levels)) return payload.levels;
         if (Array.isArray(payload.data)) return payload.data;
         if (Array.isArray(payload.tempProfile)) return payload.tempProfile;
         return null;
+    },
+
+    kelvinToCelsiusSafe: function (value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return null;
+        return n > 170 ? (n - 273.15) : n;
+    },
+
+    convertWindyFeatureCollection: function (payload) {
+        if (!payload || String(payload.type || "") !== "FeatureCollection") return [];
+        if (!Array.isArray(payload.features) || payload.features.length < 2) return [];
+
+        const rows = [];
+
+        payload.features.forEach((feature) => {
+            const props = feature?.properties && typeof feature.properties === "object"
+                ? feature.properties
+                : {};
+            const coords = Array.isArray(feature?.geometry?.coordinates)
+                ? feature.geometry.coordinates
+                : [];
+
+            const z_m = Number(props.gpheight ?? props.height ?? coords[2]);
+            const p_hpa = Number(props.pressure ?? props.p_hpa);
+            const T_c = this.kelvinToCelsiusSafe(props.temp ?? props.temperature ?? props.t);
+            const Td_c = this.kelvinToCelsiusSafe(props.dewpoint ?? props.td ?? props.dewpoint_c);
+            const u_ms = Number(props.wind_u ?? props.u_ms ?? props.u);
+            const v_ms = Number(props.wind_v ?? props.v_ms ?? props.v);
+
+            const speedMs = Number.isFinite(u_ms) && Number.isFinite(v_ms)
+                ? Math.hypot(u_ms, v_ms)
+                : null;
+            const w_speed_kts = Number.isFinite(speedMs) ? (speedMs * 1.9438444924406) : null;
+            const w_dir_deg = Number.isFinite(u_ms) && Number.isFinite(v_ms)
+                ? this.wrapDegrees((Math.atan2(-u_ms, -v_ms) * 180) / Math.PI)
+                : null;
+
+            rows.push({
+                z_m: Number.isFinite(z_m) ? z_m : null,
+                p_hpa: Number.isFinite(p_hpa) ? p_hpa : null,
+                T_c: Number.isFinite(T_c) ? T_c : null,
+                Td_c: Number.isFinite(Td_c) ? Td_c : null,
+                w_dir_deg: Number.isFinite(w_dir_deg) ? w_dir_deg : null,
+                w_speed_kts: Number.isFinite(w_speed_kts) ? w_speed_kts : null
+            });
+        });
+
+        return rows;
+    },
+
+    wrapDegrees: function (value) {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return 0;
+        return ((n % 360) + 360) % 360;
     },
 
     pickValue: function (row, keys) {
