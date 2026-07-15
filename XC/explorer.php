@@ -5,12 +5,26 @@ ob_start();
 require __DIR__ . '/explorer-core.php';
 $html = (string)ob_get_clean();
 
+$headAssets = '';
 if (stripos($html, 'asset/explorer.css') === false) {
-    $stylesheet = '    <link rel="stylesheet" href="asset/explorer.css?v=20260715-02">' . "\n";
-    $headEnd = stripos($html, '</head>');
+    $headAssets .= '    <link rel="stylesheet" href="asset/explorer.css?v=20260715-02">' . "\n";
+}
+if (stripos($html, 'asset/explorer-nav.css') === false) {
+    $headAssets .= '    <link rel="stylesheet" href="asset/explorer-nav.css?v=20260715-01">' . "\n";
+}
 
+if ($headAssets !== '') {
+    $headEnd = stripos($html, '</head>');
     if ($headEnd !== false) {
-        $html = substr_replace($html, $stylesheet, $headEnd, 0);
+        $html = substr_replace($html, $headAssets, $headEnd, 0);
+    }
+}
+
+if (stripos($html, 'js/explorer-nav.js') === false) {
+    $script = '    <script src="js/explorer-nav.js?v=20260715-01"></script>' . "\n";
+    $bodyEnd = stripos($html, '</body>');
+    if ($bodyEnd !== false) {
+        $html = substr_replace($html, $script, $bodyEnd, 0);
     }
 }
 
