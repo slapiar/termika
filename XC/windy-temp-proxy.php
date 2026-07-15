@@ -46,7 +46,7 @@ $requestBody = json_encode([
     'lat'        => $lat,
     'lon'        => $lon,
     'model'      => 'gfs',
-    'parameters' => ['temp', 'dewpoint', 'wind_u', 'wind_v', 'gh'],
+    'parameters' => ['temp', 'dewpoint', 'wind', 'gh'],
     'levels'     => $levels,
     'key'        => WINDY_API_KEY,
 ]);
