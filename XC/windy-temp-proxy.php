@@ -40,7 +40,7 @@ if ($lat < -90.0 || $lat > 90.0 || $lon < -180.0 || $lon > 180.0) {
 // --- Windy Point Forecast API – požiadavka ---
 $windyEndpoint = 'https://api.windy.com/api/point-forecast/v2';
 
-$levels = ['surface', '950h', '925h', '900h', '850h', '800h', '750h', '700h', '650h', '600h', '500h', '400h', '300h', '200h'];
+$levels = ['surface', '1000h', '950h', '925h', '900h', '850h', '800h', '700h', '600h', '500h', '400h', '300h', '200h', '150h'];
 
 $requestBody = json_encode([
     'lat'        => $lat,
@@ -103,10 +103,10 @@ if (isset($data['message'])) {
 // Windy vracia polia hodnôt po timestampoch; berieme index 0 (aktuálny čas).
 
 $levelPressures = [
-    'surface' => null,  // odhadne sa z teploty a nadmorskej výšky neskôr
-    '950h' => 950, '925h' => 925, '900h' => 900, '850h' => 850,
-    '800h' => 800, '750h' => 750, '700h' => 700, '650h' => 650,
-    '600h' => 600, '500h' => 500, '400h' => 400, '300h' => 300, '200h' => 200,
+    'surface' => null,
+    '1000h' => 1000, '950h' => 950, '925h' => 925, '900h' => 900, '850h' => 850,
+    '800h' => 800, '700h' => 700, '600h' => 600, '500h' => 500,
+    '400h' => 400, '300h' => 300, '200h' => 200, '150h' => 150,
 ];
 
 $profile = [];
