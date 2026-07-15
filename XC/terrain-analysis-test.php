@@ -80,6 +80,13 @@ $assetVersion = '20260712-07';
         .record-badge{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border:1px solid #a33;border-radius:999px;background:rgba(120,0,0,.35);color:#ffd7d7;font-size:12px;font-weight:700;letter-spacing:.2px}
         .record-dot{width:8px;height:8px;border-radius:50%;background:#ff6b6b;box-shadow:0 0 8px rgba(255,107,107,.8)}
         #recordToggleButton.recording{background:#50191f;color:#ffdfe2;border-color:#aa4c57}
+        .wind-generation-radio-group{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+        .wind-generation-radio-group label{display:flex;align-items:center;gap:8px;margin:0;font-size:12px;color:#d7e7ef}
+        .wind-generation-mini-actions{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px}
+        .wind-generation-mini-actions button{width:100%;padding:6px 8px;font-size:12px}
+        .compare-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+        .compare-row span{min-width:64px;color:#8fa9b8;font-size:12px}
+        .compare-select{width:100%;padding:4px 6px;background:#10212b;color:#eef;border:1px solid #426277;border-radius:4px;font-size:12px}
         @media (max-width:760px){#panel{width:calc(100vw - 24px);height:60vh}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}#windowDock{bottom:6px}}
     </style>
 </head>
@@ -168,16 +175,31 @@ $assetVersion = '20260712-07';
                 </select>
             </label>
             <div id="windFpsIndicator" style="margin-top:4px;color:#8fa9b8;font-size:12px;">FPS: -- | AUTO profil: --</div>
-            <label>Práca s generáciami vetra
-                <select id="windGenerationMode">
-                    <option value="replace" selected>Nahradiť (zmazať všetko a vykresliť novú)</option>
-                    <option value="keep">Zachovať predošlé generácie</option>
-                    <option value="clear-last">Zmazať poslednú a vykresliť novú</option>
-                </select>
-            </label>
+            <div class="wind-generation-radio-group" role="radiogroup" aria-label="Režim generácie vetra">
+                <label><input type="radio" name="windGenerationModeTest" value="keep" checked> Zachovať poslednú generáciu</label>
+                <label><input type="radio" name="windGenerationModeTest" value="clear-last"> Vymazať poslednú generáciu</label>
+                <label><input type="radio" name="windGenerationModeTest" value="clear-all"> Vymazať všetky generácie z mapy</label>
+            </div>
             <div class="record-row">
                 <button id="windDeleteLastButton" type="button">Zmazať poslednú generáciu</button>
                 <button id="windDeleteAllButton" type="button">Zmazať všetky generácie</button>
+            </div>
+            <div class="wind-generation-mini-actions">
+                <button id="windClearTodayButtonTest" type="button" title="Ručne vymazať všetky dnešné generácie z GENauto a z mapy">Vymazať dnešné GENauto</button>
+                <button id="windLoadFromFilesButtonTest" type="button" title="Načítať vietor zo súborov GENauto/wind">Načítať vietor zo súborov</button>
+                <button id="mapLoadFromFilesButtonTest" type="button" title="Načítať mapové generácie zo súborov GENauto/map">Načítať mapu zo súborov</button>
+            </div>
+            <div class="compare-row">
+                <span>Porovnať:</span>
+                <select id="windCompareGenerationTest" class="compare-select" aria-label="Výber WIND generácie na porovnanie">
+                    <option value="">Najprv načítaj uložené WIND generácie</option>
+                </select>
+            </div>
+            <div class="compare-row">
+                <span>Mapa:</span>
+                <select id="mapCompareGenerationTest" class="compare-select" aria-label="Výber mapovej generácie na porovnanie">
+                    <option value="">Najprv načítaj uložené mapové generácie</option>
+                </select>
             </div>
 
             <fieldset>
@@ -268,9 +290,14 @@ $assetVersion = '20260712-07';
     const windAnimate = document.getElementById('windAnimate');
     const windAnimationIntensity = document.getElementById('windAnimationIntensity');
     const windFpsIndicator = document.getElementById('windFpsIndicator');
-    const windGenerationMode = document.getElementById('windGenerationMode');
+    const windGenerationModeInputs = Array.from(document.querySelectorAll('input[name="windGenerationModeTest"]'));
     const windDeleteLastButton = document.getElementById('windDeleteLastButton');
     const windDeleteAllButton = document.getElementById('windDeleteAllButton');
+    const windClearTodayButtonTest = document.getElementById('windClearTodayButtonTest');
+    const windLoadFromFilesButtonTest = document.getElementById('windLoadFromFilesButtonTest');
+    const mapLoadFromFilesButtonTest = document.getElementById('mapLoadFromFilesButtonTest');
+    const windCompareGenerationTest = document.getElementById('windCompareGenerationTest');
+    const mapCompareGenerationTest = document.getElementById('mapCompareGenerationTest');
     const recordFps = document.getElementById('recordFps');
     const recordQuality = document.getElementById('recordQuality');
     const recordAutoHideUi = document.getElementById('recordAutoHideUi');
@@ -285,6 +312,11 @@ $assetVersion = '20260712-07';
     let windFpsEstimate = 60;
     let windAutoActiveProfile = 'medium';
     let windAutoRerenderBusy = false;
+    let windLoadingFromFiles = false;
+    let mapLoadingFromFiles = false;
+    let genAutoMapLayer = null;
+    let windLoadedRecords = [];
+    let mapLoadedRecords = [];
     let activeRecorder = null;
     let activeRecordStream = null;
     let activeRecordChunks = [];
@@ -500,8 +532,13 @@ $assetVersion = '20260712-07';
         windFpsIndicator.textContent = 'FPS: ' + fpsText + ' | AUTO profil: ' + autoText;
     }
 
+    function getWindGenerationMode() {
+        const checked = windGenerationModeInputs.find((input) => input.checked);
+        return String(checked?.value || 'keep');
+    }
+
     function resolveWindGenerationConfig() {
-        const mode = String(windGenerationMode?.value || 'replace');
+        const mode = getWindGenerationMode();
         if (mode === 'keep') {
             return {
                 mode,
@@ -519,11 +556,306 @@ $assetVersion = '20260712-07';
             };
         }
         return {
-            mode: 'replace',
+            mode: 'clear-all',
             preservePrevious: false,
             clearMode: 'all',
             label: 'zmazať všetko'
         };
+    }
+
+    async function genAutoRequest(action, payload = {}) {
+        const response = await fetch('genauto.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, ...payload })
+        });
+
+        let data = null;
+        try {
+            data = await response.json();
+        } catch (_) {
+            throw new Error('GENauto endpoint vrátil neplatný JSON.');
+        }
+
+        if (!response.ok || data?.status !== 'success') {
+            throw new Error(String(data?.message || 'GENauto operácia zlyhala.'));
+        }
+
+        return data;
+    }
+
+    async function persistGenerationAuto(kind, center, payload) {
+        if (!center || !Number.isFinite(Number(center.lat)) || !Number.isFinite(Number(center.lon))) {
+            return null;
+        }
+
+        try {
+            return await genAutoRequest('saveGeneration', {
+                kind,
+                center,
+                payload
+            });
+        } catch (error) {
+            logStatus('GENauto zápis pre ' + kind + ' zlyhal: ' + error.message, 'error');
+            return null;
+        }
+    }
+
+    function formatWindCompareLabel(record, index) {
+        const time = record?.generated_at_utc ? String(record.generated_at_utc).slice(11, 19) : '--:--:--';
+        const mode = String(record?.payload?.generationMode || '-');
+        const hasWebm = record?.webm_exists === true ? 'webm' : 'json';
+        return String(index + 1) + ' · ' + time + ' · ' + mode + ' · ' + hasWebm;
+    }
+
+    function populateWindCompareSelector(records) {
+        if (!windCompareGenerationTest) return;
+
+        windCompareGenerationTest.replaceChildren();
+
+        const emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = records.length ? 'Vyber WIND generáciu' : 'Najprv načítaj uložené WIND generácie';
+        windCompareGenerationTest.appendChild(emptyOption);
+
+        records.forEach((record, index) => {
+            const option = document.createElement('option');
+            option.value = String(record.file || '');
+            option.textContent = formatWindCompareLabel(record, index);
+            windCompareGenerationTest.appendChild(option);
+        });
+
+        windCompareGenerationTest.value = records.length ? String(records[records.length - 1]?.file || '') : '';
+    }
+
+    function getSelectedWindRecord() {
+        const selectedFile = String(windCompareGenerationTest?.value || '');
+        if (!selectedFile) return null;
+        return windLoadedRecords.find((record) => String(record.file || '') === selectedFile) || null;
+    }
+
+    async function showSelectedWindRecord() {
+        const record = getSelectedWindRecord();
+        if (!record) return;
+
+        const payload = record.payload && typeof record.payload === 'object' ? record.payload : {};
+        const center = payload.focusCenter || record.center || selectedCenter;
+        await runWindLayer(
+            {
+                lat: Number(center?.lat),
+                lon: Number(center?.lon)
+            },
+            Number(payload?.windSettings?.radiusM) || Number(radiusInput.value),
+            null,
+            {
+                tempProfileOverride: Array.isArray(payload.tempProfile) ? payload.tempProfile : null,
+                windOverrides: payload.windSettings && typeof payload.windSettings === 'object' ? payload.windSettings : {},
+                generationConfigOverride: { mode: 'keep', preservePrevious: true, clearMode: 'none', label: 'porovnanie' },
+                skipAutoRecord: true,
+                reason: 'porovnanie: ' + (record.file || 'GENauto')
+            }
+        );
+    }
+
+    function clearGenAutoMapLayer() {
+        if (!viewer || viewer.isDestroyed()) return;
+        if (!genAutoMapLayer) return;
+        viewer.dataSources.remove(genAutoMapLayer, true);
+        genAutoMapLayer = null;
+    }
+
+    function formatMapCompareLabel(record, index) {
+        const time = record?.generated_at_utc ? String(record.generated_at_utc).slice(11, 19) : '--:--:--';
+        const mode = String(record?.payload?.generationMode || '-');
+        return String(index + 1) + ' · ' + time + ' · ' + mode;
+    }
+
+    function populateMapCompareSelector(records) {
+        if (!mapCompareGenerationTest) return;
+
+        mapCompareGenerationTest.replaceChildren();
+
+        const emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = records.length ? 'Vyber mapovú generáciu' : 'Najprv načítaj uložené mapové generácie';
+        mapCompareGenerationTest.appendChild(emptyOption);
+
+        records.forEach((record, index) => {
+            const option = document.createElement('option');
+            option.value = String(record.file || '');
+            option.textContent = formatMapCompareLabel(record, index);
+            mapCompareGenerationTest.appendChild(option);
+        });
+
+        mapCompareGenerationTest.value = records.length ? String(records[records.length - 1]?.file || '') : '';
+    }
+
+    function getSelectedMapRecord() {
+        const selectedFile = String(mapCompareGenerationTest?.value || '');
+        if (!selectedFile) return null;
+        return mapLoadedRecords.find((record) => String(record.file || '') === selectedFile) || null;
+    }
+
+    async function renderMapGenerationsInScene(records) {
+        if (!viewer || viewer.isDestroyed() || !window.Cesium) return;
+
+        clearGenAutoMapLayer();
+
+        const ds = new Cesium.CustomDataSource('GENAUTO_MAP_POINTS_TEST');
+        const positions = [];
+
+        records.forEach((record, index) => {
+            const center = record?.center || record?.payload?.focusCenter || null;
+            const lat = Number(center?.lat);
+            const lon = Number(center?.lon);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+            const cart = Cesium.Cartesian3.fromDegrees(lon, lat, 26);
+            positions.push(cart);
+
+            ds.entities.add({
+                position: cart,
+                point: {
+                    pixelSize: 7,
+                    color: Cesium.Color.fromCssColorString('#FFD166'),
+                    outlineColor: Cesium.Color.fromCssColorString('#2A1A00'),
+                    outlineWidth: 1
+                },
+                label: {
+                    text: String(index + 1) + ' · ' + formatMapCompareLabel(record, index),
+                    font: '11px monospace',
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    fillColor: Cesium.Color.fromCssColorString('#FFF5D6'),
+                    outlineColor: Cesium.Color.fromCssColorString('#1D1D1D'),
+                    outlineWidth: 2,
+                    pixelOffset: new Cesium.Cartesian2(14, -10),
+                    horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+                    verticalOrigin: Cesium.VerticalOrigin.CENTER,
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY
+                }
+            });
+        });
+
+        if (positions.length >= 2) {
+            ds.entities.add({
+                polyline: {
+                    positions,
+                    width: 2,
+                    material: Cesium.Color.fromCssColorString('#FFD166').withAlpha(0.75)
+                }
+            });
+        }
+
+        genAutoMapLayer = ds;
+        await viewer.dataSources.add(ds);
+
+        if (positions.length >= 2) {
+            const bounds = Cesium.BoundingSphere.fromPoints(positions);
+            viewer.camera.flyToBoundingSphere(bounds, {
+                duration: 1.8,
+                offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-38), Math.max(900, bounds.radius * 2.2))
+            });
+            return;
+        }
+
+        if (positions.length === 1) {
+            const cartographic = Cesium.Cartographic.fromCartesian(positions[0]);
+            if (cartographic) {
+                viewer.camera.flyTo({
+                    destination: Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, 2600),
+                    duration: 1.5
+                });
+            }
+        }
+    }
+
+    async function showSelectedMapRecord() {
+        const record = getSelectedMapRecord();
+        if (!record) {
+            clearGenAutoMapLayer();
+            return;
+        }
+        await renderMapGenerationsInScene([record]);
+    }
+
+    async function loadWindFromGenAutoFiles() {
+        if (!viewer || viewer.isDestroyed()) {
+            logStatus('WIND: mapa ešte nie je pripravená na načítanie zo súborov.', 'error');
+            return;
+        }
+        if (windLoadingFromFiles) {
+            logStatus('WIND: načítanie zo súborov už prebieha.', 'info');
+            return;
+        }
+
+        windLoadingFromFiles = true;
+        windLoadFromFilesButtonTest.disabled = true;
+        const originalButtonText = windLoadFromFilesButtonTest.textContent;
+        windLoadFromFilesButtonTest.textContent = '... načítavam';
+
+        try {
+            const response = await genAutoRequest('listWindToday', { limit: 300 });
+            const records = Array.isArray(response.records) ? response.records : [];
+
+            if (!records.length) {
+                windLoadedRecords = [];
+                populateWindCompareSelector([]);
+                logStatus('GENauto: pre dnešok nie sú uložené žiadne WIND súbory.', 'info');
+                return;
+            }
+
+            windLoadedRecords = records.slice();
+            populateWindCompareSelector(windLoadedRecords);
+            window.WindRender?.clear?.(viewer, 'all');
+            await showSelectedWindRecord();
+            logStatus('GENauto: načítaných WIND generácií ' + records.length + '.', 'success');
+        } catch (error) {
+            logStatus('GENauto: načítanie vetra zo súborov zlyhalo: ' + error.message, 'error');
+        } finally {
+            windLoadingFromFiles = false;
+            windLoadFromFilesButtonTest.disabled = false;
+            windLoadFromFilesButtonTest.textContent = originalButtonText;
+        }
+    }
+
+    async function loadMapFromGenAutoFiles() {
+        if (!viewer || viewer.isDestroyed()) {
+            logStatus('MAPA: scéna ešte nie je pripravená.', 'error');
+            return;
+        }
+        if (mapLoadingFromFiles) {
+            logStatus('MAPA: načítanie mapových generácií už prebieha.', 'info');
+            return;
+        }
+
+        mapLoadingFromFiles = true;
+        mapLoadFromFilesButtonTest.disabled = true;
+        const originalButtonText = mapLoadFromFilesButtonTest.textContent;
+        mapLoadFromFilesButtonTest.textContent = '... načítavam';
+
+        try {
+            const response = await genAutoRequest('listMapToday', { limit: 1000 });
+            const records = Array.isArray(response.records) ? response.records : [];
+
+            if (!records.length) {
+                mapLoadedRecords = [];
+                populateMapCompareSelector([]);
+                clearGenAutoMapLayer();
+                logStatus('GENauto: pre dnešok nie sú uložené žiadne mapové generácie.', 'info');
+                return;
+            }
+
+            mapLoadedRecords = records.slice();
+            populateMapCompareSelector(mapLoadedRecords);
+            await showSelectedMapRecord();
+            logStatus('GENauto: načítaných mapových generácií ' + records.length + '.', 'success');
+        } catch (error) {
+            logStatus('GENauto: načítanie mapových generácií zlyhalo: ' + error.message, 'error');
+        } finally {
+            mapLoadingFromFiles = false;
+            mapLoadFromFilesButtonTest.disabled = false;
+            mapLoadFromFilesButtonTest.textContent = originalButtonText;
+        }
     }
 
     function windLegendSwatch(color, label, note) {
@@ -781,6 +1113,53 @@ $assetVersion = '20260712-07';
         }
         logStatus('WIND: neboli nájdené žiadne generácie na zmazanie.', 'info');
     });
+    windClearTodayButtonTest?.addEventListener('click', async () => {
+        if (!viewer || viewer.isDestroyed()) {
+            logStatus('GENauto: mapa ešte nie je pripravená.', 'error');
+            return;
+        }
+
+        windClearTodayButtonTest.disabled = true;
+        const originalText = windClearTodayButtonTest.textContent;
+        windClearTodayButtonTest.textContent = '... mažem';
+
+        try {
+            const removedLayers = Number(window.WindRender?.clear?.(viewer, 'all') || 0);
+            clearGenAutoMapLayer();
+            const response = await genAutoRequest('clearToday', { kinds: ['map', 'wind'] });
+            const deletedMap = Number(response.deleted?.map || 0);
+            const deletedWind = Number(response.deleted?.wind || 0);
+            windLoadedRecords = [];
+            mapLoadedRecords = [];
+            populateWindCompareSelector([]);
+            populateMapCompareSelector([]);
+
+            logStatus(
+                'GENauto: zmazané dnešné súbory map=' + deletedMap + ', wind=' + deletedWind +
+                '; odstránené vrstvy z mapy=' + removedLayers + '.',
+                'success'
+            );
+        } catch (error) {
+            logStatus('GENauto: mazanie dnešných generácií zlyhalo: ' + error.message, 'error');
+        } finally {
+            windClearTodayButtonTest.disabled = false;
+            windClearTodayButtonTest.textContent = originalText;
+        }
+    });
+    windLoadFromFilesButtonTest?.addEventListener('click', async () => {
+        await loadWindFromGenAutoFiles();
+    });
+    mapLoadFromFilesButtonTest?.addEventListener('click', async () => {
+        await loadMapFromGenAutoFiles();
+    });
+    windCompareGenerationTest?.addEventListener('change', async () => {
+        if (!windLoadedRecords.length) return;
+        await showSelectedWindRecord();
+    });
+    mapCompareGenerationTest?.addEventListener('change', async () => {
+        if (!mapLoadedRecords.length) return;
+        await showSelectedMapRecord();
+    });
     recordToggleButton.addEventListener('click', () => {
         if (activeRecorder && activeRecorder.state === 'recording') {
             stopRecording();
@@ -922,7 +1301,7 @@ $assetVersion = '20260712-07';
         }
     }
 
-    async function runWindLayer(center, radiusM, geometry) {
+    async function runWindLayer(center, radiusM, geometry, options = {}) {
         if (!window.WindUI || !window.WindRender || !window.WindField || !window.WindEffectsCore) {
             throw new Error('WIND moduly nie sú načítané.');
         }
@@ -966,8 +1345,16 @@ $assetVersion = '20260712-07';
         const activeIntensity = requestedIntensity === 'auto' ? resolveAutoProfile() : requestedIntensity;
         windAutoActiveProfile = activeIntensity;
         const animationCfg = animationProfiles[activeIntensity] || animationProfiles.medium;
-        const generationCfg = resolveWindGenerationConfig();
+        const generationCfg = options.generationConfigOverride || resolveWindGenerationConfig();
+        const skipAutoRecord = options.skipAutoRecord === true;
+        const windOverrides = options.windOverrides && typeof options.windOverrides === 'object'
+            ? options.windOverrides
+            : {};
         refreshWindFpsIndicator();
+
+        const tempProfile = Array.isArray(options.tempProfileOverride)
+            ? options.tempProfileOverride
+            : null;
 
         const windResult = await window.WindUI.runDemo(viewer, center, {
             aglM: Number(windAglInput.value),
@@ -993,7 +1380,9 @@ $assetVersion = '20260712-07';
             maxVerticalRatio: 0.35,
             coolingZones: [],
             ...animationCfg,
+            ...windOverrides,
             surfaceAltM,
+            tempProfile,
             seedEvery: 3,
             maxSteps: 42,
             stepMeters: 90
@@ -1038,6 +1427,48 @@ $assetVersion = '20260712-07';
 
         if ((Number(windResult.stats.rendered) || 0) < 1) {
             logStatus('WIND: nebola vykreslená žiadna prúdnica. Skontroluj rýchlosť vetra alebo zvýš hustotu výpočtu.', 'error');
+        }
+
+        if (!skipAutoRecord) {
+            const rendered = Number(windResult?.stats?.rendered) || 0;
+            const seeds = Number(windResult?.stats?.streamlines) || 0;
+            const activeLayers = Number(windResult?.stats?.activeLayers) || 0;
+            const generationId = Number(windResult?.stats?.generationId) || 0;
+
+            const mapPayload = {
+                reason: options.reason || 'terrain-analysis-test',
+                generationMode: generationCfg.mode,
+                generationId,
+                rendered,
+                activeLayers,
+                focusCenter: center
+            };
+
+            const windPayload = {
+                reason: options.reason || 'terrain-analysis-test',
+                generationMode: generationCfg.mode,
+                generationId,
+                rendered,
+                seeds,
+                activeLayers,
+                focusCenter: center,
+                windSettings: {
+                    radiusM,
+                    spacingM: Number(windSpacingInput.value),
+                    aglM: Number(windAglInput.value),
+                    baseSpeedMs: Number(windSpeedInput.value),
+                    baseDirDeg: Number(windDirInput.value),
+                    preservePrevious: generationCfg.preservePrevious,
+                    clearMode: generationCfg.clearMode,
+                    colorMode: windColorMode.value,
+                    colorTheme: windColorTheme.value,
+                    animationEnabled: windAnimate.checked
+                },
+                tempProfile: Array.isArray(tempProfile) ? tempProfile : null
+            };
+
+            await persistGenerationAuto('map', center, mapPayload);
+            await persistGenerationAuto('wind', center, windPayload);
         }
     }
 
@@ -1163,6 +1594,7 @@ $assetVersion = '20260712-07';
         TerrainAnalysis.skryDiagnostiku(viewer);
         TerrainContours.clear(viewer);
         window.WindUI?.clear?.(viewer);
+        clearGenAutoMapLayer();
         cellDiagnostics.hidden = true;
         logStatus('Výsledné mapové vrstvy boli skryté.');
     });

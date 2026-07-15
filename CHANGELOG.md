@@ -25,6 +25,10 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - WIND selector prepína medzi uloženými WIND cache a pri existujúcom WebM prehrá uložený vizuál,
   - map selector prepína medzi uloženými mapovými generáciami,
   - obidva prepínače pracujú nad dnešným `GENauto/` zoznamom bez nutnosti prepočtu všetkého naraz.
+- Rovnaké ovládanie generácií a porovnávania je doplnené aj v testovacej stránke.
+  - `XC/terrain-analysis-test.php` používa 3 radio režimy generácie vetra (`keep`, `clear-last`, `clear-all`),
+  - test panel obsahuje tlačidlá pre ručné `clearToday`, načítanie WIND/MAP zo súborov a samostatné WIND/MAP compare selectory,
+  - test workflow pri výpočte automaticky ukladá map aj wind generácie do `GENauto/` pre následné porovnanie.
 - Nové ručné operácie pre denný workflow generácií.
   - tlačidlo `Vymazať dnešné GENauto` maže dnešné mapové aj veterné záznamy a zároveň čistí vrstvy z mapy,
   - tlačidlo `Načítať vietor zo súborov` obnoví dnešné veterné generácie z `GENauto/wind` späť do scény,
