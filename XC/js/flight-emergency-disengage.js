@@ -74,9 +74,11 @@
     }
 
     function handleAuxClick(event) {
-        if (event.button !== 1 || !isMapEvent(event)) return;
+        if (event.button !== 1) return;
+
         const recentlyDisengaged = performance.now() - lastDisengageAt
             <= AUX_CLICK_SUPPRESSION_MS;
+        if (!recentlyDisengaged && !isMapEvent(event)) return;
         if (!recentlyDisengaged && !simulator()?.active) return;
 
         event.preventDefault();
