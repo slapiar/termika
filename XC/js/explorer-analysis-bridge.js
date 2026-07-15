@@ -6,7 +6,7 @@
 
     const STORAGE_KEY = 'termikaXC.explorer.analysisContext.v1';
     const MAX_CONTEXT_AGE_MS = 12 * 60 * 60 * 1000;
-    const ANALYSIS_URL = 'terrain-analysis-test.php?from=explorer';
+    const ANALYSIS_URL = 'analysis.php?from=explorer';
     const ROUTE_LAYER_NAME = 'Trať z Prieskumníka';
 
     const delay = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
