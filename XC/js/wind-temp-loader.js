@@ -10,8 +10,8 @@ window.WindTempLoader = {
     defaultSettings: {
         sourceMode: "auto",
         tempSourceUrl: "XCtrack/temptest.json",
-        windyTempUrl: "",
-        windyTempUrlTemplate: "",
+        windyTempUrl: "windy-temp-proxy.php?lat=${lat}&lon=${lon}",
+        windyTempUrlTemplate: "windy-temp-proxy.php?lat=${lat}&lon=${lon}",
         stationTempUrl: "",
         stationIndexUrl: "",
         stationProfileUrlTemplate: "",

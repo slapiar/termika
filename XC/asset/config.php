@@ -56,6 +56,11 @@ define('DB_PASSWORD', termikaConfigValue($termikaLocalConfig, 'DB_PASSWORD', 'db
 define('DB_HOST', termikaConfigValue($termikaLocalConfig, 'DB_HOST', 'db_host', '127.0.0.1'));
 define('DB_CHARSET', termikaConfigValue($termikaLocalConfig, 'DB_CHARSET', 'db_charset', 'utf8'));
 
+// 4. WINDY KONFIGURÁCIA
+// API kľúč pre Windy Point Forecast API (https://api.windy.com/).
+// Vygeneruj na: https://api.windy.com/keys
+define('WINDY_API_KEY', termikaConfigValue($termikaLocalConfig, 'WINDY_API_KEY', 'windy_api_key', ''));
+
 // Funkcia na vytvorenie bezpečného PDO spojenia s databázou
 function getDbConnection() {
     try {

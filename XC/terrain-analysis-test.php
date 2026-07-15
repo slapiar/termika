@@ -258,7 +258,7 @@ $assetVersion = '20260715-02';
                             <label>TEMP súbor / URL <input id="windTempSourceUrl" type="text" value="XCtrack/temptest.json"></label>
                         </div>
                         <div class="drawer-card">
-                            <label>Windy URL / template <input id="windyTempUrl" type="text" placeholder="https://... alebo template s ${lat}/${lon}"></label>
+                            <label>Windy URL / template <input id="windyTempUrl" type="text" value="windy-temp-proxy.php?lat=${lat}&lon=${lon}" placeholder="windy-temp-proxy.php?lat=${lat}&amp;lon=${lon}"></label>
                             <label>Station index URL <input id="stationIndexUrl" type="text" placeholder="https://... alebo template s ${lat}/${lon}"></label>
                             <label>Station profile URL template <input id="stationProfileUrlTemplate" type="text" placeholder="https://.../${stationId}.json"></label>
                         </div>
@@ -2186,28 +2186,17 @@ $assetVersion = '20260715-02';
     async function loadTempOnPointClick(point) {
         if (!window.WindTempLoader) {
             logStatus('WindTempLoader modul nie je načítaný.', 'error');
-            console.error('[TEMP Loader] WindTempLoader not available');
             return;
         }
 
         try {
             logStatus('Načítavám TEMP profil pre bod ' + formatCenter(point) + '...', 'info');
-            console.log('[TEMP Loader] Starting TEMP load for point:', point);
 
-            // Zberu settings z formulára
             const sourceMode = document.getElementById('windTempSourceMode')?.value || 'auto';
-            const windyTempUrl = document.getElementById('windyTempUrl')?.value?.trim() || '';
+            const windyTempUrl = document.getElementById('windyTempUrl')?.value?.trim() || 'windy-temp-proxy.php?lat=${lat}&lon=${lon}';
             const tempSourceUrl = document.getElementById('windTempSourceUrl')?.value?.trim() || 'XCtrack/temptest.json';
             const stationIndexUrl = document.getElementById('stationIndexUrl')?.value?.trim() || '';
             const stationProfileUrlTemplate = document.getElementById('stationProfileUrlTemplate')?.value?.trim() || '';
-
-            console.log('[TEMP Loader] Settings:', {
-                sourceMode,
-                windyTempUrl: windyTempUrl || '(empty)',
-                tempSourceUrl,
-                stationIndexUrl: stationIndexUrl || '(empty)',
-                stationProfileUrlTemplate: stationProfileUrlTemplate || '(empty)'
-            });
 
             const settings = {
                 sourceMode: sourceMode,
@@ -2218,39 +2207,25 @@ $assetVersion = '20260715-02';
                 stationProfileUrlTemplate: stationProfileUrlTemplate
             };
 
-            // Konfiguruj loader
             window.WindTempLoader.configure(settings);
-            console.log('[TEMP Loader] Loader configured');
 
-            // Načítaj profil
-            console.log('[TEMP Loader] Calling loadProfile...');
             const profile = await window.WindTempLoader.loadProfile(point, settings);
-            console.log('[TEMP Loader] Profile loaded, rows:', profile?.length || 0);
-
             const resolvedSource = window.WindTempLoader?.lastResolvedSource;
-            console.log('[TEMP Loader] Resolved source:', resolvedSource);
 
             if (!Array.isArray(profile) || profile.length === 0) {
-                console.warn('[TEMP Loader] Profile is empty!');
-                logStatus('TEMP profil je prázdny. Skontroluj Windy URL alebo skúsiť fallback zdroj.', 'warning');
+                logStatus('TEMP profil je prázdny. Skontroluj nastavenia zdroja.', 'warning');
                 renderTempProfileViews([], 'PRÁZDNY');
                 return;
             }
 
-            // Zobraziť výsledok v TEMP paneli
             renderTempProfileViews(profile, resolvedSource?.resolvedMode || 'TEMP');
-            console.log('[TEMP Loader] Profile rendered');
 
-            // Aktualizuj label zdroja
             if (document.getElementById('pTempFile')) {
-                const sourceDetail = resolvedSource?.detail || sourceMode;
-                document.getElementById('pTempFile').textContent = sourceDetail;
-                console.log('[TEMP Loader] Source label updated:', sourceDetail);
+                document.getElementById('pTempFile').textContent = resolvedSource?.detail || sourceMode;
             }
 
-            logStatus('TEMP profil úspešne načítaný z ' + (resolvedSource?.resolvedMode || sourceMode) + ' pre bod ' + formatCenter(point) + '.', 'success');
+            logStatus('TEMP profil načítaný z ' + (resolvedSource?.resolvedMode || sourceMode) + ' pre bod ' + formatCenter(point) + '.', 'success');
         } catch (error) {
-            console.error('[TEMP Loader] Error:', error);
             logStatus('Chyba pri načítaní TEMP profilu: ' + (error?.message || String(error)), 'error');
             renderTempProfileViews([], 'CHYBA: ' + (error?.message || 'unknown error'));
         }
