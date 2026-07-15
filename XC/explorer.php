@@ -34,7 +34,7 @@ if (stripos($html, 'asset/workspace-polish.css') === false) {
     $headAssets .= '    <link rel="stylesheet" href="asset/workspace-polish.css?v=20260715-02">' . "\n";
 }
 if (stripos($html, 'asset/workspace-flight-simulator.css') === false) {
-    $headAssets .= '    <link rel="stylesheet" href="asset/workspace-flight-simulator.css?v=20260715-01">' . "\n";
+    $headAssets .= '    <link rel="stylesheet" href="asset/workspace-flight-simulator.css?v=20260715-02">' . "\n";
 }
 
 if ($headAssets !== '') {
@@ -73,10 +73,10 @@ if (stripos($html, 'js/terrain-camera-hud-coordinates.js') === false) {
     $bodyScripts .= '    <script src="js/terrain-camera-hud-coordinates.js?v=20260715-01"></script>' . "\n";
 }
 if (stripos($html, 'js/flight-simulator.js') === false) {
-    $bodyScripts .= '    <script src="js/flight-simulator.js?v=20260715-01"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/flight-simulator.js?v=20260715-02"></script>' . "\n";
 }
 if (stripos($html, 'js/workspace-flight-toggle.js') === false) {
-    $bodyScripts .= '    <script src="js/workspace-flight-toggle.js?v=20260715-01"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/workspace-flight-toggle.js?v=20260715-02"></script>' . "\n";
 }
 if (stripos($html, 'js/explorer-analysis-bridge.js') === false) {
     $bodyScripts .= '    <script src="js/explorer-analysis-bridge.js?v=20260715-02"></script>' . "\n";
