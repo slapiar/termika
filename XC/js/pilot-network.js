@@ -15,33 +15,81 @@ window.PilotNetwork = {
     igcSourceName: "",
     terrainCalibration: null,
     aglStats: null,
-    tempSourceName: "XCtrack/temp.json",
+    tempSourceName: "XCtrack/temptest.json",
+
+    nacitajTempProfilPreIgc: async function (preferredUrl) {
+        const candidates = [];
+        const pushCandidate = (url) => {
+            const normalized = String(url || "").trim();
+            if (!normalized) return;
+            if (candidates.includes(normalized)) return;
+            candidates.push(normalized);
+        };
+
+        pushCandidate(preferredUrl);
+        pushCandidate(this.tempSourceName);
+        pushCandidate("XCtrack/temptest.json");
+        pushCandidate("XCtrack/temp.json");
+        pushCandidate("XCtrack/11952-1784070000000-fm94.json");
+
+        let lastError = null;
+
+        for (const url of candidates) {
+            try {
+                if (window.WindTempLoader?.loadFromUrl) {
+                    const profile = await window.WindTempLoader.loadFromUrl(url);
+                    return { profile, source: url };
+                }
+
+                const cacheBust = (url.includes("?") ? "&" : "?") + "v=" + Date.now();
+                const resTemp = await fetch(url + cacheBust, { cache: "no-store" });
+                if (!resTemp.ok) {
+                    throw new Error("HTTP " + resTemp.status + " pre " + url);
+                }
+
+                const payload = await resTemp.json();
+                const raw = Array.isArray(payload)
+                    ? payload
+                    : (payload?.profile || payload?.levels || payload?.data || []);
+                const profile = this.normalizujTempProfil(raw);
+                return { profile, source: url };
+            } catch (error) {
+                lastError = error;
+            }
+        }
+
+        if (Array.isArray(this.liveAtmosferaTEMP) && this.liveAtmosferaTEMP.length >= 2) {
+            logStatus("TEMP profil sa zo súboru nenačítal, používam posledný dostupný profil v pamäti.", "info");
+            return {
+                profile: this.liveAtmosferaTEMP,
+                source: this.tempSourceName || "cache"
+            };
+        }
+
+        const detail = lastError?.message ? (": " + lastError.message) : "";
+        throw new Error("TEMP profil sa nenačítal z dostupných zdrojov" + detail);
+    },
 
     spracujIgcSubor: async function (urlIgc, urlTemp, urlGlider, viewer, bioChart) {
         try {
             logStatus("Sťahujem IGC let, TEMP profil a aerodynamickú poláru...");
 
             const cacheBust = "?v=" + Date.now();
-            const [resIgc, resTemp] = await Promise.all([
+            const [resIgc] = await Promise.all([
                 fetch(urlIgc + cacheBust, { cache: "no-store" }),
-                fetch(urlTemp + cacheBust, { cache: "no-store" }),
                 GliderCore.inicializujPolaru(urlGlider + cacheBust)
             ]);
 
             if (!resIgc.ok) {
                 throw new Error("IGC súbor sa nenačítal: HTTP " + resIgc.status);
             }
-            if (!resTemp.ok) {
-                throw new Error("TEMP profil sa nenačítal: HTTP " + resTemp.status);
-            }
 
-            const [igcText, liveAtmosferaTEMP] = await Promise.all([
-                resIgc.text(),
-                resTemp.json()
-            ]);
+            const igcText = await resIgc.text();
+            const tempResult = await this.nacitajTempProfilPreIgc(urlTemp);
+            const liveAtmosferaTEMP = tempResult.profile;
 
             logStatus("Dátové súbory boli načítané do pamäte.", "success");
-            this.tempSourceName = urlTemp;
+            this.tempSourceName = tempResult.source;
 
             return await this.spracujIgcText(
                 igcText,

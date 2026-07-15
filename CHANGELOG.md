@@ -13,14 +13,23 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - `Vymazať poslednú generáciu`,
   - `Vymazať všetky generácie z mapy`.
 - Automatické ukladanie každého výpočtu do lokálneho úložiska `GENauto/` v koreňi projektu.
-  - nový endpoint `XC/genauto.php` pri prvom použití automaticky vytvorí adresáre `GENauto/map` a `GENauto/wind`,
+  - endpoint `XC/genauto.php` používa SQLite databázu `/.termika-runtime/genauto.sqlite`,
   - každá generácia sa zapisuje samostatne pre mapu a vietor,
-  - názov súboru obsahuje UTC dátum a čas generácie aj súradnice stredu fokusu,
-  - obsah súboru nesie metadáta stredu a payload danej generácie.
+  - identifikátor záznamu zachováva formát `GENauto/{kind}/...json` kvôli spätnej kompatibilite klienta,
+  - záznam nesie metadáta stredu a payload danej generácie.
 - WIND generácie už ukladajú aj WebM cache pod rovnakým basename ako JSON.
-  - WebM súbor má rovnaký názov ako JSON záznam, len s príponou `.webm`,
-  - cache sa ukladá mimo `XC/` do koreňového `GENauto/wind`,
+  - WebM cache je uložená v databázovej tabuľke (`BLOB`) pod rovnakým basename ako JSON identifikátor,
+  - fyzické súbory `GENauto/wind/*.webm` už nie sú potrebné,
   - prehranie cache ide cez serverový stream endpoint `XC/genauto.php?action=getWebm`.
+- TEMP profil sa ukladá samostatne a generácie naň odkazujú referenciou.
+  - nový databázový registry `temp_profiles` deduplikuje profily podľa `sha256` hash,
+  - `saveGeneration` prijíma `temp_profile`/`temp_source` (alebo ich číta z payload) a uloží referenciu `temp_profile_ref` ku generácii,
+  - `listWindToday`/`listMapToday` vracajú `temp_profile_ref` a `temp_source`,
+  - nový endpoint `XC/genauto.php?action=getTempProfile&temp_hash=...` vráti uložený profil podľa referencie.
+- Hlavná stránka má prepínač zdroja TEMP pre IGC a odolnejšie načítanie profilu.
+  - v hornom paneli pribudol výber `TEMP: temptest`, `TEMP: Poprad FM94`, `TEMP: legacy temp.json` a `TEMP: vlastná URL`,
+  - štart aplikácie aj ručné načítanie IGC používajú aktuálne zvolený TEMP zdroj,
+  - loader TEMP pre IGC už pri chybe `HTTP 404` skúša fallback zdroje a v krajnom prípade použije posledný validný profil v pamäti namiesto fatálneho pádu.
 - V paneli pribudli porovnávacie prepínače pre uložené generácie.
   - WIND selector prepína medzi uloženými WIND cache a pri existujúcom WebM prehrá uložený vizuál,
   - map selector prepína medzi uloženými mapovými generáciami,
@@ -33,6 +42,9 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - tlačidlo `Vymazať dnešné GENauto` maže dnešné mapové aj veterné záznamy a zároveň čistí vrstvy z mapy,
   - tlačidlo `Načítať vietor zo súborov` obnoví dnešné veterné generácie z `GENauto/wind` späť do scény,
   - tlačidlo `Načítať mapu zo súborov` načíta dnešné mapové generácie z `GENauto/map`.
+- Runtime generované dáta sú vyňaté z commit workflow.
+  - `.gitignore` ignoruje `GENauto/` a `/.termika-runtime/`,
+  - denné generácie už nespôsobujú konflikty pri bežných commitoch.
 - Vizualizácia historických mapových generácií v scéne Cesium.
   - načítané mapové generácie sa vykresľujú ako body so stručným časovým popisom a režimom generácie,
   - medzi bodmi sa kreslí spojnicová trasa fokusov,

@@ -101,6 +101,13 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                 <div class="map-actions map-actions-primary">
                     <input id="igcFileInput" type="file" accept=".igc,text/plain,application/octet-stream" hidden>
                     <input id="tempFileInput" type="file" accept=".json,.txt,.csv,.temp,.snd,application/json,text/plain,text/csv" hidden>
+                    <select id="igcTempSourceSelect" class="map-temp-source-select" title="Zdroje TEMP profilu pre IGC" aria-label="Zdroj TEMP pre IGC">
+                        <option value="XCtrack/temptest.json" selected>TEMP: temptest</option>
+                        <option value="XCtrack/11952-1784070000000-fm94.json">TEMP: Poprad FM94</option>
+                        <option value="XCtrack/temp.json">TEMP: legacy temp.json</option>
+                        <option value="custom">TEMP: vlastná URL...</option>
+                    </select>
+                    <input id="igcTempCustomUrl" class="map-temp-custom-url" type="text" placeholder="https://.../temp.json" hidden aria-label="Vlastná URL TEMP profilu">
                     <button id="loadIgcButton" type="button" title="Načítať iný záznam letu z počítača">⇧ Načítať IGC</button>
                     <button id="loadTempButton" type="button" title="Načítať TEMP profil z JSON alebo textovej tabuľky">⇧ Načítať TEMP</button>
                     <button id="toggleSkewTButton" type="button" title="Zobraziť TEMP v Skew‑T / log‑P grafe">⌁ Zobraziť Skew‑T</button>
@@ -174,7 +181,7 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                 <div class="separator"></div>
                 <div class="row"><span class="label">IGC súbor:</span><span id="pIgcFile" class="val">let.igc</span></div>
                 <div class="row"><span class="label">IGC bodov:</span><span id="pIgcPoints" class="val">--</span></div>
-                <div class="row"><span class="label">TEMP súbor:</span><span id="pTempFile" class="val">temp.json</span></div>
+                <div class="row"><span class="label">TEMP súbor:</span><span id="pTempFile" class="val">temptest.json</span></div>
                 <div class="row"><span class="label">TEMP hladín:</span><span id="pTempLevels" class="val">--</span></div>
                 <div class="row"><span class="label">Miesto:</span><span id="pSite" class="val">--</span></div>
                 <div class="separator"></div>
@@ -314,7 +321,7 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             return data;
         }
 
-        async function persistGenerationAuto(kind, center, payload) {
+        async function persistGenerationAuto(kind, center, payload, tempMeta = {}) {
             if (!center || !Number.isFinite(Number(center.lat)) || !Number.isFinite(Number(center.lon))) {
                 return;
             }
@@ -323,7 +330,8 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                 return await genAutoRequest("saveGeneration", {
                     kind,
                     center,
-                    payload
+                    payload,
+                    ...tempMeta
                 });
             } catch (error) {
                 logStatus("GENauto zapis pre " + kind + " zlyhal: " + error.message, "error");
@@ -761,6 +769,11 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                 }
 
                 if (!skipAutoRecord) {
+                    const tempMeta = {
+                        temp_profile: Array.isArray(tempProfile) ? tempProfile : null,
+                        temp_source: window.WindUI?.state?.lastTempSource || null
+                    };
+
                     const mapPayload = {
                         reason,
                         generationMode: generationCfg.mode,
@@ -797,8 +810,8 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                         tempSource: window.WindUI?.state?.lastTempSource || null
                     };
 
-                    await persistGenerationAuto("map", center, mapPayload);
-                    const windSaveResult = await persistGenerationAuto("wind", center, windPayload);
+                    await persistGenerationAuto("map", center, mapPayload, tempMeta);
+                    const windSaveResult = await persistGenerationAuto("wind", center, windPayload, tempMeta);
 
                     if (windSaveResult?.file) {
                         const webmMeta = {
@@ -1133,7 +1146,30 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
         });
 
         const igcInput = document.getElementById("igcFileInput");
+        const igcTempSourceSelect = document.getElementById("igcTempSourceSelect");
+        const igcTempCustomUrl = document.getElementById("igcTempCustomUrl");
         const loadIgcButton = document.getElementById("loadIgcButton");
+
+        function resolveIgcTempSourceUrl() {
+            const selected = String(igcTempSourceSelect?.value || "").trim();
+            if (selected === "custom") {
+                const custom = String(igcTempCustomUrl?.value || "").trim();
+                return custom || "XCtrack/temptest.json";
+            }
+            return selected || "XCtrack/temptest.json";
+        }
+
+        function syncIgcTempSourceUi() {
+            if (!igcTempSourceSelect || !igcTempCustomUrl) return;
+            const customMode = String(igcTempSourceSelect.value || "") === "custom";
+            igcTempCustomUrl.hidden = !customMode;
+            if (!customMode) {
+                igcTempCustomUrl.value = "";
+            }
+        }
+
+        igcTempSourceSelect?.addEventListener("change", syncIgcTempSourceUi);
+        syncIgcTempSourceUi();
 
         loadIgcButton.addEventListener("click", () => igcInput.click());
 
@@ -1145,6 +1181,17 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             loadIgcButton.textContent = "… Načítavam";
 
             try {
+                if (typeof PilotNetwork.nacitajTempProfilPreIgc === "function") {
+                    const selectedTempUrl = resolveIgcTempSourceUrl();
+                    const tempResult = await PilotNetwork.nacitajTempProfilPreIgc(selectedTempUrl);
+                    PilotNetwork.liveAtmosferaTEMP = tempResult.profile;
+                    PilotNetwork.tempSourceName = tempResult.source;
+                    PilotNetwork.lclVyska = window.MeteoCore?.vypocitajLclZProfily?.(tempResult.profile) ?? PilotNetwork.lclVyska;
+                    PilotNetwork.aktualizujTempUi?.();
+                    window.SkewTRender?.setProfile?.(tempResult.profile, tempResult.source);
+                    logStatus("IGC: TEMP zdroj nastavený na " + tempResult.source + ".", "info");
+                }
+
                 await PilotNetwork.nacitajLokalnyIgcSubor(file, viewer, bioChart);
                 await renderWindLayer("lokálny IGC");
             } catch (error) {
@@ -1285,9 +1332,10 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
             try {
                 logStatus("Načítavam IGC, TEMP a GLIDER dáta...");
                 setMapState("NAČÍTAVAM IGC");
+                const startupTempUrl = resolveIgcTempSourceUrl();
                 await PilotNetwork.spracujIgcSubor(
                     "XCtrack/let.igc",
-                    "XCtrack/temp.json",
+                    startupTempUrl,
                     "XCtrack/glider.json",
                     viewer,
                     bioChart

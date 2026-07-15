@@ -584,7 +584,7 @@ $assetVersion = '20260712-07';
         return data;
     }
 
-    async function persistGenerationAuto(kind, center, payload) {
+    async function persistGenerationAuto(kind, center, payload, tempMeta = {}) {
         if (!center || !Number.isFinite(Number(center.lat)) || !Number.isFinite(Number(center.lon))) {
             return null;
         }
@@ -593,7 +593,8 @@ $assetVersion = '20260712-07';
             return await genAutoRequest('saveGeneration', {
                 kind,
                 center,
-                payload
+                payload,
+                ...tempMeta
             });
         } catch (error) {
             logStatus('GENauto zápis pre ' + kind + ' zlyhal: ' + error.message, 'error');
@@ -1430,6 +1431,11 @@ $assetVersion = '20260712-07';
         }
 
         if (!skipAutoRecord) {
+            const tempMeta = {
+                temp_profile: Array.isArray(tempProfile) ? tempProfile : null,
+                temp_source: window.WindUI?.state?.lastTempSource || null
+            };
+
             const rendered = Number(windResult?.stats?.rendered) || 0;
             const seeds = Number(windResult?.stats?.streamlines) || 0;
             const activeLayers = Number(windResult?.stats?.activeLayers) || 0;
@@ -1467,8 +1473,8 @@ $assetVersion = '20260712-07';
                 tempProfile: Array.isArray(tempProfile) ? tempProfile : null
             };
 
-            await persistGenerationAuto('map', center, mapPayload);
-            await persistGenerationAuto('wind', center, windPayload);
+            await persistGenerationAuto('map', center, mapPayload, tempMeta);
+            await persistGenerationAuto('wind', center, windPayload, tempMeta);
         }
     }
 

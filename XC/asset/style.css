@@ -412,6 +412,24 @@ input:focus-visible {
     transition: 0.15s ease;
 }
 
+.map-temp-source-select,
+.map-temp-custom-url {
+    border: 1px solid #50616e;
+    border-radius: 6px;
+    background: #111a21;
+    color: #eef4f7;
+    padding: 5px 8px;
+    font-size: 11px;
+}
+
+.map-temp-source-select {
+    min-width: 156px;
+}
+
+.map-temp-custom-url {
+    min-width: 180px;
+}
+
 .map-actions button,
 .camera-mode-button {
     padding: 5px 8px;
@@ -444,6 +462,15 @@ input:focus-visible {
 .debug-header button:hover {
     border-color: var(--cyan);
     background: #172630;
+}
+
+.map-temp-source-select:hover,
+.map-temp-custom-url:hover,
+.map-temp-source-select:focus,
+.map-temp-custom-url:focus {
+    border-color: var(--cyan);
+    background: #172630;
+    outline: none;
 }
 
 #cesiumContainer {
@@ -772,6 +799,11 @@ input:focus-visible {
     }
 
     .map-actions button {
+        font-size: 9px;
+    }
+
+    .map-temp-source-select,
+    .map-temp-custom-url {
         font-size: 9px;
     }
 
