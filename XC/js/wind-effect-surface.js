@@ -37,7 +37,7 @@
 })();
 
 /*
- * Testovacia stránka načíta rovnaký vizuálny modul ako Prieskumník.
+ * Testovacia stránka načíta rovnaké pracovné moduly ako Prieskumník.
  * Podmienka na #navShell zabráni zásahu do ostatných stránok TermikaXC.
  */
 (function bootstrapWorkspacePolish() {
@@ -66,6 +66,14 @@
             script.src = "js/workspace-hud-toggle.js?v=20260715-01";
             script.defer = true;
             script.dataset.workspaceHudToggle = "true";
+            document.body.appendChild(script);
+        }
+
+        if (!document.querySelector('script[data-explorer-analysis-bridge="true"]')) {
+            const script = document.createElement("script");
+            script.src = "js/explorer-analysis-bridge.js?v=20260715-01";
+            script.defer = true;
+            script.dataset.explorerAnalysisBridge = "true";
             document.body.appendChild(script);
         }
     };
