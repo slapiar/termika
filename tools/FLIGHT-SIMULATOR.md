@@ -6,12 +6,12 @@ Letový režim kamery je univerzálny nástroj TermikaXC na plynulý pohyb v 3D 
 
 Nástroj nevytvára model lietadla, vetroňa ani závesného klzáka. Kamera predstavuje oči pilota. Samotný let má vlastnú orientáciu a smer pohybu; pilot sa môže nezávisle obzerať bez toho, aby tým menil smer letu.
 
-Verzia `1.1.0` oddeľuje dve vrstvy:
+Verzia `1.1.1` oddeľuje dve vrstvy:
 
-1. **riadenie letu** – myš ako knipel,
+1. **riadenie letu** – myš ako knipel pri držanom ľavom tlačidle,
 2. **pohľad pilota** – klávesy `Q/W/A/D/S`.
 
-Prvá verzia je stále zámerne kinematická. Neobsahuje ešte poláru, klesavosť, vztlak, pádovú rýchlosť, vietor ani termické stúpania. Tieto fyzikálne vrstvy sa majú pripájať samostatne.
+Aktuálna verzia je zámerne kinematická. Neobsahuje ešte poláru, klesavosť, vztlak, pádovú rýchlosť, vietor ani termické stúpania. Tieto fyzikálne vrstvy sa majú pripájať samostatne.
 
 ## 2. Identita a stav
 
@@ -20,7 +20,7 @@ Prvá verzia je stále zámerne kinematická. Neobsahuje ešte poláru, klesavos
 | ID nástroja | `flight-simulator` |
 | Názov | Letový režim kamery |
 | Stav | `ROZPRACOVANÉ` |
-| Verzia | `1.1.0` |
+| Verzia | `1.1.1` |
 | Jadro | `XC/js/flight-simulator.js` |
 | Ovládanie pracoviska | `XC/js/workspace-flight-toggle.js` |
 | Vizuál | `XC/asset/workspace-flight-simulator.css` |
@@ -42,22 +42,14 @@ V hornej pracovnej lište sa zobrazuje tlačidlo:
 LET
 ```
 
-Tlačidlo je umiestnené pri prepínači HUD-u a témy.
-
 ## 4. Zapnutie a vypnutie
 
-Kliknutím na:
-
-```text
-LET
-```
-
-sa aktivuje pilotný režim.
+Kliknutím na `LET` sa aktivuje pilotný režim.
 
 Po zapnutí:
 
 - nástroj prevezme riadenie kamery,
-- natívne pohybové ovládanie Cesium sa dočasne vypne, aby sa s pilotným riadením nebilo,
+- natívne pohybové ovládanie Cesium sa dočasne vypne,
 - cieľová rýchlosť zostane `0 m/s`,
 - let sa nezačne bez vedomého stlačenia šípky hore.
 
@@ -66,68 +58,51 @@ Po vypnutí:
 - pohyb sa zastaví,
 - rýchlosť sa vynuluje,
 - pôvodné ovládanie Cesium sa obnoví,
-- prípadný pointer-lock sa uvoľní.
+- prípadný Pointer Lock sa uvoľní.
 
-## 5. Myš ako knipel
+## 5. Myš ako jeden knipel
 
-### 5.1 Pozdĺžne riadenie – pitch
+Celé letové riadenie myšou sa aktivuje **iba držaním ľavého tlačidla myši**.
 
-Pohyb myši po stole ovláda pozdĺžne riadenie:
-
-| Pohyb myši | Reakcia letu |
+| Ovládanie pri držanom ľavom tlačidle | Reakcia letu |
 |---|---|
-| od seba | nos dole |
-| k sebe | nos hore |
+| pohyb myši doľava | náklon vľavo |
+| pohyb myši doprava | náklon vpravo |
+| pohyb myši od seba | nos dole |
+| pohyb myši k sebe | nos hore |
+| uvoľnenie ľavého tlačidla | zmena náklonu a pitchu sa zastaví; dosiahnutá orientácia zostane |
 
-Pri prvom stlačení ľavého alebo pravého tlačidla nad mapou si prehliadač podľa možností aktivuje `Pointer Lock`. Kurzor sa tým prestane opierať o okraje obrazovky a pohyb knipla môže pokračovať plynulo.
+Pravé tlačidlo myši nemá v letovom režime žiadnu riadiacu funkciu.
 
-Pracovný limit pitchu je predvolene približne:
+Pri prvom stlačení ľavého tlačidla nad mapou si prehliadač podľa možností aktivuje `Pointer Lock`. Kurzor sa tým prestane opierať o okraje obrazovky a pohyb knipla môže pokračovať plynulo. Kláves `Esc` Pointer Lock uvoľní.
 
-```text
-−55° až +55°
-```
-
-Ide o ochranný limit virtuálnej kamery, nie o letovú obálku konkrétneho lietadla.
-
-### 5.2 Priečne riadenie – náklon
-
-| Ovládanie | Reakcia letu |
-|---|---|
-| držané ľavé tlačidlo myši | rastúci náklon vľavo |
-| držané pravé tlačidlo myši | rastúci náklon vpravo |
-| uvoľnenie tlačidla | zmena náklonu sa zastaví; dosiahnutý náklon zostane |
-
-Náklon sa nemení skokom. Rastie približne rýchlosťou:
+Pracovné limity:
 
 ```text
-34°/s
+náklon: −72° až +72°
+pitch:  −55° až +55°
 ```
 
-Pracovný limit je približne:
+Citlivosť oboch osí je konfigurovateľná:
 
-```text
-−72° až +72°
+```js
+mouseRollSensitivityDegPx
+mousePitchSensitivityDegPx
 ```
 
-Na návrat do menšieho náklonu sa použije opačné tlačidlo.
-
-### 5.3 Základ koordinovanej zatáčky
+## 6. Základ koordinovanej zatáčky
 
 Náklon nie je iba grafické otočenie obrazu.
 
-Pri nenulovej rýchlosti modul mení aj smer letu podľa základného vzťahu koordinovanej zatáčky:
+Pri nenulovej rýchlosti modul mení aj smer letu podľa základného vzťahu:
 
 ```text
-uhlová rýchlosť zatáčky
-≈
-g × tan(náklon)
-──────────────
-rýchlosť
+uhlová rýchlosť zatáčky ≈ g × tan(náklon) / rýchlosť
 ```
 
 Výpočet je bezpečnostne obmedzený maximálnou pracovnou uhlovou rýchlosťou. Ide o prvý kinematický základ, nie o úplný aerodynamický model.
 
-## 6. Ovládanie rýchlosti
+## 7. Ovládanie rýchlosti
 
 | Kláves | Funkcia |
 |---|---|
@@ -148,9 +123,9 @@ minimum: 0 m/s
 maximum: 100 m/s
 ```
 
-Tieto hodnoty sú konfiguračné parametre nástroja, nie vlastnosti konkrétneho typu lietadla.
+Tieto hodnoty nie sú aerodynamické vlastnosti konkrétneho typu lietadla.
 
-## 7. Pohľad pilota
+## 8. Pohľad pilota
 
 Pohľad pilota je oddelený od osi letu.
 
@@ -164,87 +139,48 @@ Pohľad pilota je oddelený od osi letu.
 
 Klávesy `Q/W/A/D` sa držia. Po ich uvoľnení sa pohyb pohľadu zastaví v dosiahnutej polohe.
 
-Dôležité:
+Obzretie doľava nemení smer letu a pohľad hore nemení pitch lietadla. Dopredný pohyb sa stále počíta podľa letovej osi.
 
-- obzretie doľava nemení smer letu,
-- pohľad hore nemení pitch lietadla,
-- dopredný pohyb sa stále počíta podľa letovej osi,
-- kamera iba zobrazuje inú časť okolia pilota.
+## 9. Stavové zobrazenie
 
-Kláves `S` nastaví:
-
-- pohľad späť do smeru letu,
-- zvislý pohľad na horizont,
-- vyrovnaný horizont kamery.
-
-Nemení pritom samotný náklon ani pitch letu.
-
-## 8. Stavové zobrazenie
-
-Pri aktívnom letovom režime sa zobrazí kompaktný stavový panel, napríklad:
+Pri aktívnom režime sa zobrazí napríklad:
 
 ```text
-LETOVÝ REŽIM   54 km/h   cieľ 72 km/h   náklon −24°   pitch +6°
+LETOVÝ REŽIM · 54 km/h · cieľ 72 km/h · náklon −24° · pitch +6°
 ```
 
-Panel zobrazuje:
-
-- aktuálnu doprednú rýchlosť,
-- cieľovú rýchlosť,
-- aktuálny náklon letovej osi,
-- aktuálny pitch letovej osi,
-- stručnú nápovedu ovládania.
-
-Ak je v Prieskumníkovi výškový profil pripnutý dole, stavový panel sa automaticky posunie nad profil.
-
-## 9. Pohyb v priestore
-
-Letová orientácia je uložená oddelene od smeru pohľadu kamery:
+Panel obsahuje aj skrátenú nápovedu:
 
 ```text
-letová orientácia
-=
-azimut + pitch + náklon
+↑/↓ rýchlosť · drž L + myš do strán náklon · myš dopredu/dozadu pitch
+```
 
-pohľad pilota
-=
-odchýlka do strán + odchýlka hore/dole + vyrovnanie horizontu
+## 10. Pohyb a ochrana terénu
+
+Letová orientácia je uložená oddelene od pohľadu pilota:
+
+```text
+letová orientácia = azimut + pitch + náklon
+pohľad pilota = bočná a zvislá odchýlka + vyrovnanie horizontu
 ```
 
 Pri každom animačnom snímku sa vypočíta:
 
 ```text
-prejdená vzdialenosť
-=
-aktuálna rýchlosť
-×
-čas od posledného snímku
+prejdená vzdialenosť = aktuálna rýchlosť × čas od posledného snímku
 ```
 
-Smerový vektor letu sa vytvára v miestnej sústave East–North–Up a následne sa prevedie do priestorovej sústavy Cesium.
-
-Vďaka tomu pilot môže pozerať bokom a stroj pritom pokračuje po pôvodnej osi letu.
-
-## 10. Ochrana terénu
-
-Ak je v Cesium dostupná výška terénu pod kamerou a nová poloha by klesla pod povrch, kamera sa upraví približne na:
+Ak je v Cesium dostupná výška terénu a nová poloha by klesla pod povrch, kamera sa udrží približne na:
 
 ```text
 výška terénu + 3 m
 ```
 
-Táto ochrana:
+Táto ochrana nie je model kolízie ani poškodenia.
 
-- nie je model kolízie,
-- nevyhodnocuje náraz,
-- nepočíta energiu ani poškodenie,
-- iba bráni technickému zmiznutiu kamery pod načítaný povrch.
+## 11. Verejné API
 
-Ak výška terénu ešte nie je dostupná, modul si ju nevymýšľa.
-
-## 11. Verejné programové rozhranie
-
-Globálne API:
+Globálne rozhranie:
 
 ```js
 window.TermikaFlightSimulator
@@ -266,17 +202,9 @@ TermikaFlightSimulator.getState();
 TermikaFlightSimulator.destroy();
 ```
 
-Stavové vlastnosti:
+Stav obsahuje rýchlosť, súradnice, letový azimut, pitch, náklon a odchýlku pohľadu pilota.
 
-```js
-TermikaFlightSimulator.active
-TermikaFlightSimulator.installed
-TermikaFlightSimulator.viewer
-TermikaFlightSimulator.speedMs
-TermikaFlightSimulator.targetSpeedMs
-```
-
-## 12. Stavové udalosti
+## 12. Udalosti a komunikácia
 
 Nástroj vysiela DOM udalosť:
 
@@ -284,45 +212,7 @@ Nástroj vysiela DOM udalosť:
 termikaxc:flight-state
 ```
 
-Príklad:
-
-```js
-document.addEventListener('termikaxc:flight-state', (event) => {
-    console.log(event.detail.speedKmh);
-    console.log(event.detail.flight.rollDeg);
-});
-```
-
-Obsah `event.detail`:
-
-```js
-{
-    version,
-    active,
-    speedMs,
-    targetSpeedMs,
-    speedKmh,
-    targetSpeedKmh,
-    coordinates: {
-        lat,
-        lon,
-        heightM
-    },
-    flight: {
-        headingDeg,
-        pitchDeg,
-        rollDeg
-    },
-    view: {
-        yawOffsetDeg,
-        pitchOffsetDeg,
-        rollOffsetDeg
-    },
-    timestamp
-}
-```
-
-Ak je dostupný univerzálny komunikačný modul, stav sa zároveň publikuje lokálnym eventom:
+Ak je dostupný univerzálny komunikačný modul, publikuje aj:
 
 ```text
 flight:state
@@ -340,75 +230,34 @@ Povinné:
 
 - Cesium,
 - pripravený Cesium `viewer`,
-- 3D scéna a canvas pracoviska.
+- 3D kontajner pracoviska.
 
 Voliteľné:
 
 - Kamerový HUD,
 - rozšírenie HUD-u o súradnice,
 - `TermikaCommunicationTool`,
-- spoločná horná navigácia TermikaXC.
+- spoločná navigácia TermikaXC.
 
 Letové jadro nie je závislé od Windy ani od konkrétneho meteorologického zdroja.
 
-## 14. Životný cyklus
+## 14. Obmedzenia aktuálnej verzie
 
-### Inštalácia
-
-```js
-TermikaFlightSimulator.install(viewer);
-```
-
-Pripojí klávesnicu, myš, pointer-lock a pripraví stavové zobrazenie.
-
-### Aktivácia
-
-```js
-TermikaFlightSimulator.activate();
-```
-
-Prevezme riadenie kamery a spustí animačnú slučku.
-
-### Deaktivácia
-
-```js
-TermikaFlightSimulator.deactivate();
-```
-
-Zastaví slučku, vynuluje rýchlosť a obnoví pôvodné ovládanie Cesium.
-
-### Zrušenie
-
-```js
-TermikaFlightSimulator.destroy();
-```
-
-Odpojí všetky udalosti, pointer-lock, stavové prvky a väzbu na viewer.
-
-## 15. Obmedzenia aktuálnej verzie
-
-Aktuálna verzia ešte nepočíta:
+Verzia `1.1.1` ešte nepočíta:
 
 - aerodynamickú poláru,
-- minimálnu a maximálnu rýchlosť konkrétneho typu,
-- pádovú rýchlosť,
-- preťaženie,
-- sklz,
-- dynamiku nábehu a výškového kormidla,
-- vztlak,
-- odpor,
 - klesavosť,
+- vztlak a odpor,
+- pádovú rýchlosť,
 - zmenu energie pri zrýchlení,
-- vietor,
+- vietor a drift,
 - termické stúpania,
-- rotor,
-- turbulenciu,
-- stúpavé a klesavé polia,
-- predikciu kolízie s reliéfom pred kamerou.
+- rotor a turbulenciu,
+- fyzikálny náraz do terénu.
 
-Základ koordinovanej zatáčky je iba prvý kinematický vzťah. Aktuálna rýchlosť sa preto nesmie interpretovať ako výsledok úplného fyzikálneho letového modelu.
+Rýchlosť je zatiaľ riadená rýchlosť virtuálnej kamery.
 
-## 16. Plánované rozšírenia
+## 15. Plánované rozšírenia
 
 1. výber typu lietadla a jeho poláry,
 2. vzťah rýchlosť ↔ klesavosť,
@@ -417,14 +266,11 @@ Základ koordinovanej zatáčky je iba prvý kinematický vzťah. Aktuálna rýc
 5. drift podľa vetra,
 6. stúpania a klesania z WIND poľa,
 7. variometer,
-8. indikovaná, vzdušná a traťová rýchlosť,
-9. fyzikálna dynamika pitchu, rollu a koordinácie zatáčky,
-10. let po naplánovanej trati,
-11. záznam a replay letu,
-12. napojenie na HUD bez duplikovania údajov,
-13. fyzikálne obmedzenia podľa zvoleného typu klzáka alebo lietadla.
+8. indikovaná a traťová rýchlosť,
+9. let po naplánovanej trati,
+10. záznam a replay letu.
 
-## 17. Súvisiace súbory
+## 16. Súvisiace súbory
 
 ```text
 XC/js/flight-simulator.js
