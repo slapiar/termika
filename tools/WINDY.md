@@ -223,11 +223,8 @@ Pred realnym letovym testom spustit v testovacej stranke `XC/terrain-analysis-te
 4. Az po stabilnom smoku vratit scenar do letoveho testu.
 
 ### API kľúče Windy
-Map Forecast
 
-mPvyfWaJ2kFngdEITyhg1BYzZlCijvlG
-
-Issued on 24. 2. 2019
+API kľúče sú uložené v `XC/asset/local-config.php` (nie je trackovany gitom).
 
 Point Forecast
 
