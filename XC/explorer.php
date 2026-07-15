@@ -24,6 +24,9 @@ if (stripos($html, 'asset/explorer-import.css') === false) {
 if (stripos($html, 'asset/explorer-profile.css') === false) {
     $headAssets .= '    <link rel="stylesheet" href="asset/explorer-profile.css?v=20260715-01">' . "\n";
 }
+if (stripos($html, 'asset/workspace-polish.css') === false) {
+    $headAssets .= '    <link rel="stylesheet" href="asset/workspace-polish.css?v=20260715-01">' . "\n";
+}
 
 if ($headAssets !== '') {
     $headEnd = stripos($html, '</head>');
@@ -44,6 +47,9 @@ if (stripos($html, 'js/explorer-import.js') === false) {
 }
 if (stripos($html, 'js/explorer-profile.js') === false) {
     $bodyScripts .= '    <script src="js/explorer-profile.js?v=20260715-01"></script>' . "\n";
+}
+if (stripos($html, 'js/workspace-crosshair.js') === false) {
+    $bodyScripts .= '    <script src="js/workspace-crosshair.js?v=20260715-01"></script>' . "\n";
 }
 
 if ($bodyScripts !== '') {
