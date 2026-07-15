@@ -31,6 +31,7 @@ Nástroj pomáha používateľovi pracovať s 3D scénou, výsledkami a diagnost
 Príklady:
 
 - kamerový HUD,
+- letový režim kamery,
 - zobrazenie aktuálnej release verzie,
 - opakovaný prepočet rovnakého fokusu,
 - prepínanie základnej mapy,
@@ -58,7 +59,8 @@ Nástroje majú byť postupne spravované samostatným registrom doplnkov, praco
 
 | ID nástroja | Názov | Stav | Oblasť použitia | Implementácia | Dokumentácia |
 |---|---|---|---|---|---|
-| `camera-hud` | Kamerový HUD | `OVERENÉ` | Testovacia 3D analýza terénu; pripravené na ďalšie pracoviská | `XC/js/terrain-camera-hud.js` | [`tools/HUD.md`](tools/HUD.md) |
+| `camera-hud` | Kamerový HUD | `OVERENÉ` | Testovacia 3D analýza terénu; pripravené na ďalšie pracoviská | `XC/js/terrain-camera-hud.js`, `XC/js/terrain-camera-hud-coordinates.js` | [`tools/HUD.md`](tools/HUD.md) |
+| `flight-simulator` | Letový režim kamery | `ROZPRACOVANÉ` | Prieskumník, Analýza a ďalšie Cesium pracoviská | `XC/js/flight-simulator.js`, `XC/js/workspace-flight-toggle.js` | [`tools/FLIGHT-SIMULATOR.md`](tools/FLIGHT-SIMULATOR.md) |
 | `release-badge` | Zobrazenie aktuálnej release verzie | `ROZPRACOVANÉ` | Hlavička testovacej analýzy | `XC/js/terrain-release-badge.js` | [`tools/RELEASE.md`](tools/RELEASE.md) |
 | `focus-recompute` | Opakovaný prepočet aktuálneho fokusu | `AKTÍVNE` | Testovacia analýza terénu | `XC/js/terrain-analysis-focus-ui.js` | pripraví sa |
 | `mesh-viewer` | Diagnostické zobrazenie terénneho meshu | `ROZPRACOVANÉ` | Testovacia analýza terénu | `XC/js/terrain-mesh.js` | [`tools/MESH.md`](tools/MESH.md) |
@@ -79,6 +81,7 @@ Prvým používateľsky overeným referenčným nástrojom je kamerový HUD:
 
 Ďalšie úplné karty:
 
+- [`tools/FLIGHT-SIMULATOR.md`](tools/FLIGHT-SIMULATOR.md) – pohyb kamery ako letový režim, ovládanie myšou a rýchlosť klávesnicou,
 - [`tools/MESH.md`](tools/MESH.md) – drôt, dominantná výplň a jednotná šedá,
 - [`tools/BASEMAP.md`](tools/BASEMAP.md) – vypnutie obrazovej mapy pri zachovaní 3D reliéfu,
 - [`tools/RELEASE.md`](tools/RELEASE.md) – zobrazenie verzie zo súboru `RELEASE_VERSION`,
@@ -172,6 +175,7 @@ Register má neskôr zabezpečovať:
 
 - [`CHANGELOG.md`](CHANGELOG.md)
 - [`tools/HUD.md`](tools/HUD.md)
+- [`tools/FLIGHT-SIMULATOR.md`](tools/FLIGHT-SIMULATOR.md)
 - [`tools/MESH.md`](tools/MESH.md)
 - [`tools/BASEMAP.md`](tools/BASEMAP.md)
 - [`tools/RELEASE.md`](tools/RELEASE.md)
