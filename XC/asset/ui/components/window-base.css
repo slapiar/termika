@@ -1,0 +1,172 @@
+/* TermikaXC UI – components/window-base.css */
+
+@layer tx-lock {
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) {
+        box-sizing: border-box !important;
+        color: var(--tx-text-primary) !important;
+        background: var(--tx-surface) !important;
+        border-color: var(--tx-border) !important;
+        border-radius: var(--tx-radius-window) !important;
+        box-shadow: var(--tx-shadow-window) !important;
+        font-family: var(--tx-font-ui) !important;
+        font-size: var(--tx-font-size-body) !important;
+        line-height: 1.45 !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) *,
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) *::before,
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) *::after {
+        box-sizing: border-box !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window__header, .window-header) {
+        color: var(--tx-text-primary) !important;
+        background: var(--tx-header-bg) !important;
+        border-bottom-color: var(--tx-border) !important;
+        font-family: var(--tx-font-ui) !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window__title, .window-title) {
+        color: var(--tx-accent-strong) !important;
+        font-family: var(--tx-font-ui) !important;
+        font-size: var(--tx-font-size-window) !important;
+        font-weight: 800 !important;
+        line-height: 1.2 !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window__body, .window-body) {
+        color: var(--tx-text-primary) !important;
+        font-family: var(--tx-font-ui) !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) :is(.tx-label, label, .label),
+    body[data-tx-family="workbench"] #windyMapFocusLabel {
+        color: var(--tx-text-secondary) !important;
+        font-family: var(--tx-font-ui) !important;
+        font-size: var(--tx-font-size-label) !important;
+        font-weight: 600 !important;
+        line-height: 1.35 !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) :is(button, input, select, textarea, .tx-button, .tx-control) {
+        color: var(--tx-text-primary) !important;
+        background-color: var(--tx-control-bg) !important;
+        border-color: var(--tx-border) !important;
+        border-radius: var(--tx-radius-control) !important;
+        font-family: var(--tx-font-ui) !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) :is(button, .tx-button):hover,
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) :is(button, .tx-button):focus-visible {
+        color: var(--tx-text-heading) !important;
+        background-color: var(--tx-control-hover) !important;
+        border-color: var(--tx-accent) !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window__action, .window-action) {
+        color: var(--tx-text-primary) !important;
+        background: var(--tx-control-bg) !important;
+        border-color: var(--tx-border) !important;
+        border-radius: var(--tx-radius-control) !important;
+        font-family: var(--tx-font-ui) !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        line-height: 1 !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) fieldset {
+        background: var(--tx-surface-raised) !important;
+        border-color: var(--tx-border-subtle) !important;
+        border-radius: var(--tx-radius-control) !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) legend {
+        color: var(--tx-accent-strong) !important;
+        font-family: var(--tx-font-ui) !important;
+        font-size: var(--tx-font-size-section) !important;
+        font-weight: 800 !important;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) :is(.tx-help, p, .legend-note, .diagnostic-intro, .diagnostic-pending, .temp-empty) {
+        color: var(--tx-text-secondary) !important;
+    }
+}
+
+@layer tx-components {
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window) {
+        display: flex;
+        flex-direction: column;
+        min-width: 250px;
+        min-height: 120px;
+        max-width: calc(100vw - 16px);
+        max-height: calc(100vh - 16px);
+        overflow: hidden;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window__header, .window-header) {
+        display: flex;
+        align-items: center;
+        gap: var(--tx-space-4);
+        flex: 0 0 auto;
+        min-height: 44px;
+        padding: 8px 10px 8px 12px;
+        border-bottom: 1px solid var(--tx-border);
+        cursor: move;
+        user-select: none;
+        touch-action: none;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window__title, .window-title) {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        letter-spacing: 0.045em;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window__actions, .window-actions) {
+        display: flex;
+        align-items: center;
+        gap: var(--tx-space-2);
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window__action, .window-action) {
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+        min-height: 28px;
+        padding: 0;
+        cursor: pointer;
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window__body, .window-body) {
+        flex: 1;
+        min-height: 0;
+        padding: 14px;
+        overflow: auto;
+        scrollbar-color: var(--tx-border) transparent;
+    }
+
+    body[data-tx-family="workbench"] .tx-window__footer {
+        flex: 0 0 auto;
+        padding: 10px 14px;
+        border-top: 1px solid var(--tx-border-subtle);
+        background: var(--tx-surface-raised);
+    }
+
+    body[data-tx-family="workbench"] :is(.tx-window, .floating-window)[data-window-state="active"] {
+        z-index: var(--tx-z-window-active);
+    }
+
+    @media (max-width: 760px) {
+        body[data-tx-family="workbench"] :is(.tx-window, .floating-window) {
+            max-width: calc(100vw - 24px);
+            max-height: calc(100vh - 24px);
+        }
+
+        body[data-tx-family="workbench"] :is(.tx-window__body, .window-body) {
+            padding: 12px;
+        }
+    }
+}
