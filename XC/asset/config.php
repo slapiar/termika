@@ -1,8 +1,35 @@
 <?php
 // asset/config.php
 
+function termikaResolveLocalConfigPath(string $fallbackPath): string {
+    $envPath = termikaEnv('TERMIKA_LOCAL_CONFIG_PATH', '');
+    if ($envPath !== '') {
+        return $envPath;
+    }
+
+    $candidates = [];
+
+    $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath((string)$_SERVER['DOCUMENT_ROOT']) : false;
+    if (is_string($docRoot) && $docRoot !== '') {
+        $candidates[] = $docRoot;
+    }
+
+    $selfPath = realpath(__DIR__);
+    if (is_string($selfPath) && $selfPath !== '') {
+        $candidates[] = $selfPath;
+    }
+
+    foreach ($candidates as $path) {
+        if (preg_match('~^(.*?)/domains(?:/|$)~', $path, $m) === 1 && !empty($m[1])) {
+            return rtrim($m[1], '/') . '/.local-config.php';
+        }
+    }
+
+    return $fallbackPath;
+}
+
 function termikaLoadLocalConfig(): array {
-    $path = __DIR__ . '/local-config.php';
+    $path = termikaResolveLocalConfigPath(__DIR__ . '/local-config.php');
     if (!is_file($path)) return [];
 
     $data = require $path;

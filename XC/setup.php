@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-$configPath = __DIR__ . '/asset/local-config.php';
+$configPath = '';
 $examplePath = __DIR__ . '/asset/local-config.php.example';
 
 if (!isset($_SESSION['termika_setup_csrf'])) {
@@ -13,6 +13,33 @@ function readLocalConfig(string $path): array {
     if (!is_file($path)) return [];
     $data = require $path;
     return is_array($data) ? $data : [];
+}
+
+function resolveTermikaLocalConfigPath(): string {
+    $envPath = getenv('TERMIKA_LOCAL_CONFIG_PATH');
+    if (is_string($envPath) && trim($envPath) !== '') {
+        return trim($envPath);
+    }
+
+    $candidates = [];
+
+    $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath((string)$_SERVER['DOCUMENT_ROOT']) : false;
+    if (is_string($docRoot) && $docRoot !== '') {
+        $candidates[] = $docRoot;
+    }
+
+    $selfPath = realpath(__DIR__);
+    if (is_string($selfPath) && $selfPath !== '') {
+        $candidates[] = $selfPath;
+    }
+
+    foreach ($candidates as $path) {
+        if (preg_match('~^(.*?)/domains(?:/|$)~', $path, $m) === 1 && !empty($m[1])) {
+            return rtrim($m[1], '/') . '/.local-config.php';
+        }
+    }
+
+    return __DIR__ . '/asset/local-config.php';
 }
 
 function sanitizeInput(?string $value): string {
@@ -45,6 +72,8 @@ function writeLocalConfig(string $path, array $config): bool {
     return @rename($tmpPath, $path);
 }
 
+$configPath = resolveTermikaLocalConfigPath();
+
 $current = readLocalConfig($configPath);
 $message = '';
 $messageType = 'info';
@@ -58,10 +87,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $newConfig = buildConfigFromPost($_POST);
         if (writeLocalConfig($configPath, $newConfig)) {
             $current = $newConfig;
-            $message = 'Nastavenie ulozene. Aplikacia bude pouzivat local-config.php.';
+            $message = 'Nastavenie ulozene. Aplikacia bude pouzivat ' . basename($configPath) . '.';
             $messageType = 'success';
         } else {
-            $message = 'Nepodarilo sa zapisat local-config.php. Skontroluj prava zapisu do XC/asset.';
+            $message = 'Nepodarilo sa zapisat ' . basename($configPath) . '. Skontroluj prava zapisu na cielovy adresar.';
             $messageType = 'error';
         }
     }
@@ -71,7 +100,8 @@ function e(string $value): string {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
 
-$assetWritable = is_writable(__DIR__ . '/asset');
+$configDir = dirname($configPath);
+$assetWritable = is_dir($configDir) && is_writable($configDir);
 $configExists = is_file($configPath);
 $exampleExists = is_file($examplePath);
 ?>
@@ -105,7 +135,7 @@ $exampleExists = is_file($examplePath);
     <div class="card">
         <h1>TermikaXC setup bez terminalu</h1>
         <p>Vypln hodnoty a uloz. Toto je urcene pre hostovanie, kde nechces riesit serverove env premenne.</p>
-        <p class="meta">Subor: XC/asset/local-config.php | Existuje: <?php echo $configExists ? 'ano' : 'nie'; ?> | Priecinok zapisovatelny: <?php echo $assetWritable ? 'ano' : 'nie'; ?> | Example subor: <?php echo $exampleExists ? 'ano' : 'nie'; ?></p>
+        <p class="meta">Subor: <?php echo e($configPath); ?> | Existuje: <?php echo $configExists ? 'ano' : 'nie'; ?> | Priecinok zapisovatelny: <?php echo $assetWritable ? 'ano' : 'nie'; ?> | Example subor: <?php echo $exampleExists ? 'ano' : 'nie'; ?></p>
         <?php if ($message !== ''): ?>
             <div class="status <?php echo $messageType === 'success' ? 'ok' : ($messageType === 'error' ? 'err' : 'info'); ?>"><?php echo e($message); ?></div>
         <?php endif; ?>
