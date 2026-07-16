@@ -5,7 +5,19 @@ ob_start();
 require __DIR__ . '/explorer-core.php';
 $html = (string)ob_get_clean();
 
+if (stripos($html, 'data-tx-family=') === false) {
+    $html = (string)preg_replace(
+        '/<body\b([^>]*)>/i',
+        '<body$1 data-tx-family="workbench" data-theme="dark">',
+        $html,
+        1
+    );
+}
+
 $headAssets = '';
+if (stripos($html, 'asset/ui/bundles/workbench.bundle.css') === false) {
+    $headAssets .= '    <link rel="stylesheet" href="asset/ui/bundles/workbench.bundle.css?v=1.0.0" data-tx-style="family:workbench">' . "\n";
+}
 if (stripos($html, 'asset/explorer.css') === false) {
     $headAssets .= '    <link rel="stylesheet" href="asset/explorer.css?v=20260715-02">' . "\n";
 }
@@ -45,6 +57,9 @@ if ($headAssets !== '') {
 }
 
 $bodyScripts = '';
+if (stripos($html, 'js/termika-style-loader.js') === false) {
+    $bodyScripts .= '    <script src="js/termika-style-loader.js?v=1.0.0"></script>' . "\n";
+}
 if (stripos($html, 'js/explorer-nav.js') === false) {
     $bodyScripts .= '    <script src="js/explorer-nav.js?v=20260715-02"></script>' . "\n";
 }
