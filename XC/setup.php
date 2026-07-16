@@ -22,6 +22,7 @@ function sanitizeInput(?string $value): string {
 function buildConfigFromPost(array $post): array {
     return [
         'cesium_access_token' => sanitizeInput($post['cesium_access_token'] ?? ''),
+        'windy_api_key' => sanitizeInput($post['windy_api_key'] ?? ''),
         'telegram_bot_token' => sanitizeInput($post['telegram_bot_token'] ?? ''),
         'telegram_chat_id' => sanitizeInput($post['telegram_chat_id'] ?? ''),
         'update_shared_key' => sanitizeInput($post['update_shared_key'] ?? ''),
@@ -113,6 +114,10 @@ $exampleExists = is_file($examplePath);
             <div class="full">
                 <label>CESIUM_ACCESS_TOKEN</label>
                 <input type="text" name="cesium_access_token" value="<?php echo e((string)($current['cesium_access_token'] ?? '')); ?>" placeholder="Cesium token">
+            </div>
+            <div class="full">
+                <label>WINDY_API_KEY</label>
+                <input type="text" name="windy_api_key" value="<?php echo e((string)($current['windy_api_key'] ?? '')); ?>" placeholder="Windy Point Forecast key">
             </div>
             <div>
                 <label>TELEGRAM_BOT_TOKEN</label>

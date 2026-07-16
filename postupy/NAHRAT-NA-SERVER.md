@@ -19,6 +19,7 @@ Ak hostujes projekt bez SSH pristupu, otvor po nahrani:
 Tam vies ulozit lokalny konfiguracny subor `XC/asset/local-config.php` priamo formularom:
 
 - Cesium token (aby mapa fungovala okamzite),
+- Windy `WINDY_API_KEY` pre TEMP proxy cez Windy Point Forecast,
 - Telegram token/chat (volitelne),
 - `UPDATE_SHARED_KEY` pre ochranu `update.php` (volitelne, odporucane),
 - DB udaje (len ak ich pouzivas).

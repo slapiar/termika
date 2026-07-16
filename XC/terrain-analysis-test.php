@@ -255,18 +255,22 @@ $assetVersion = '20260715-03';
                         <div class="drawer-card">
                             <label>Zdroj TEMP
                                 <select id="windTempSourceMode">
-                                    <option value="auto" selected>Auto (Windy → stanica → súbor)</option>
-                                    <option value="windy">Windy.com</option>
+                                    <option value="auto" selected>Automaticky (Windy → stanica → súbor)</option>
+                                    <option value="windy">Windy.com cez proxy</option>
                                     <option value="station">Najbližšia meteo stanica</option>
-                                    <option value="file">Súbor</option>
+                                    <option value="file">Lokálny súbor</option>
                                 </select>
                             </label>
-                            <label>TEMP súbor / URL <input id="windTempSourceUrl" type="text" value="XCtrack/temptest.json"></label>
+                            <label>Lokálny TEMP súbor alebo adresa <input id="windTempSourceUrl" type="text" value="XCtrack/temptest.json"></label>
                         </div>
                         <div class="drawer-card">
-                            <label>Windy URL / template <input id="windyTempUrl" type="text" value="windy-temp-proxy.php?lat=${lat}&lon=${lon}" placeholder="windy-temp-proxy.php?lat=${lat}&amp;lon=${lon}"></label>
-                            <label>Station index URL <input id="stationIndexUrl" type="text" placeholder="https://... alebo template s ${lat}/${lon}"></label>
-                            <label>Station profile URL template <input id="stationProfileUrlTemplate" type="text" placeholder="https://.../${stationId}.json"></label>
+                            <label>Adresa Windy proxy <input id="windyTempUrl" type="text" value="windy-temp-proxy.php?lat=${lat}&lon=${lon}" placeholder="windy-temp-proxy.php?lat=${lat}&amp;lon=${lon}"></label>
+                            <label>Zoznam staníc alebo jeho adresa <input id="stationIndexUrl" type="text" placeholder="https://... alebo template s ${lat}/${lon}"></label>
+                            <label>Šablóna adresy profilu stanice <input id="stationProfileUrlTemplate" type="text" placeholder="https://.../${stationId}.json"></label>
+                            <div class="action-row">
+                                <button id="openSetupButton" type="button">Otvoriť setup.php</button>
+                            </div>
+                            <p style="margin:6px 0 0;color:#6f8594;font-size:12px;">Tu sa zadáva aj <strong>WINDY_API_KEY</strong> pre Windy TEMP proxy.</p>
                         </div>
                     </div>
                 </div>
@@ -562,6 +566,7 @@ $assetVersion = '20260715-03';
     const windyTempUrl = document.getElementById('windyTempUrl');
     const stationIndexUrl = document.getElementById('stationIndexUrl');
     const stationProfileUrlTemplate = document.getElementById('stationProfileUrlTemplate');
+    const openSetupButton = document.getElementById('openSetupButton');
     const windAglInput = document.getElementById('windAglInput');
     const windSpacingInput = document.getElementById('windSpacingInput');
     const windSpeedInput = document.getElementById('windSpeedInput');
@@ -1873,6 +1878,9 @@ $assetVersion = '20260715-03';
     quickOpenSourcesButton?.addEventListener('click', () => setActiveNavSection('sources', true));
     quickAnalyzeButton?.addEventListener('click', () => document.getElementById('analyzeButton')?.click());
     quickClearButton?.addEventListener('click', () => document.getElementById('clearButton')?.click());
+    openSetupButton?.addEventListener('click', () => {
+        window.location.href = 'setup.php';
+    });
     document.getElementById('clearDebugButton')?.addEventListener('click', () => {
         statusEl.replaceChildren();
         logStatus('Debugger bol vyčistený.');
