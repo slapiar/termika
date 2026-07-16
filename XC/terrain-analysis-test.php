@@ -2866,6 +2866,7 @@ foreach ($releaseVersionPaths as $releaseVersionPath) {
     const WINDY_MAP_INIT_MAX_ATTEMPTS = 3;
     let windyMapFocusPickerEnabled = false;
     let windyMapPickedFocus = null;
+    let windyMapFocusMarker = null;
 
     function formatWindyFocus(point, zoom = null) {
         if (!point || !Number.isFinite(Number(point.lat)) || !Number.isFinite(Number(point.lon))) {
@@ -2914,6 +2915,26 @@ foreach ($releaseVersionPaths as $releaseVersionPath) {
                     : 'Naviguj na Windy mape...';
             }
         }
+    }
+
+    function setWindyMapFocusMarker(api, lat, lon) {
+        if (!api?.map || typeof L === 'undefined') return;
+        try {
+            if (windyMapFocusMarker) {
+                api.map.removeLayer(windyMapFocusMarker);
+                windyMapFocusMarker = null;
+            }
+            windyMapFocusMarker = L.marker([lat, lon]).addTo(api.map);
+        } catch (_) {
+            // ignore marker rendering errors
+        }
+    }
+
+    function clearWindyMapFocusMarker() {
+        if (windyAPI?.map && windyMapFocusMarker) {
+            try { windyAPI.map.removeLayer(windyMapFocusMarker); } catch (_) { /* ignore */ }
+        }
+        windyMapFocusMarker = null;
     }
 
     function setWindyConnectionStatus(status, message = '') {
@@ -3266,6 +3287,7 @@ foreach ($releaseVersionPaths as $releaseVersionPath) {
                     if (label) {
                         label.textContent = 'Vybraný fokus: ' + formatWindyFocus(windyMapPickedFocus, zoom);
                     }
+                    setWindyMapFocusMarker(api, lat, lon);
                 });
             }
 
@@ -3356,6 +3378,7 @@ foreach ($releaseVersionPaths as $releaseVersionPath) {
 
         windyMapPickedFocus = { lat: point.lat, lon: point.lon, zoom };
         setWindyMapFocusPickerEnabled(false);
+        clearWindyMapFocusMarker();
 
         // Pošli aj cez komunikačný kanál
         if (window.TermikaCommunicationTool) {
