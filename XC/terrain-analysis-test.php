@@ -551,7 +551,7 @@ $assetVersion = '20260716-01';
     </header>
     <div class="window-body" style="padding:0;display:flex;flex-direction:column;height:calc(100% - 36px)">
         <div style="position:relative;flex:1;min-height:0">
-            <div id="windyMapEmbed" style="position:absolute;inset:0;min-height:0"></div>
+            <div id="windy" style="position:absolute;inset:0;min-height:0"></div>
             <div id="windyMapLoadingPanel" style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:14px;background:rgba(5,12,18,.84);border-bottom:1px solid #35505f;z-index:2">
                 <div style="font-size:12px;font-weight:700;letter-spacing:.04em;color:#70e8ff;margin-bottom:8px">WINDY MAPA - STAV PRIPOJENIA</div>
                 <div id="windyMapLoadingText" style="font-size:12px;line-height:1.45;color:#cfe6f3;white-space:pre-line">Čakám na otvorenie okna Windy...</div>
@@ -2865,7 +2865,7 @@ $assetVersion = '20260716-01';
             windyFocusPickerToggleButton.style.color = windyMapFocusPickerEnabled ? '#70e8ff' : '';
         }
 
-        const mapEmbed = document.getElementById('windyMapEmbed');
+        const mapEmbed = document.getElementById('windy');
         if (mapEmbed) {
             mapEmbed.style.cursor = windyMapFocusPickerEnabled ? 'crosshair' : '';
         }
@@ -3127,7 +3127,6 @@ $assetVersion = '20260716-01';
         try {
             windyInit({
                 key: window.TERMIKA_WINDY_MAP_KEY,
-                container: 'windyMapEmbed',
                 lat: center.lat,
                 lon: center.lon,
                 zoom: 9,
