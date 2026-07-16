@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Build a versioned release ZIP of TermikaXC from tracked repository files.
-# Packages only files from XC/ directory for deployment.
+# Packages files from XC/ directory and RELEASE_VERSION for deployment.
 # Usage:
 #   ./release.sh                          # uses version from RELEASE_VERSION
 #   ./release.sh 1.2.0                    # uses provided version
@@ -44,7 +44,7 @@ for arg in "$@"; do
 Usage: $0 [--auto-commit] [--auto-push] [--commit-message=...] [version|patch|minor|major|mini]
 
 Description:
-  Creates a release ZIP archive containing only files from XC/ directory.
+  Creates a release ZIP archive containing files from XC/ and RELEASE_VERSION.
 
 Options:
   --auto-commit           Automatically commit RELEASE_VERSION and release ZIP
@@ -143,14 +143,18 @@ trap 'rm -f "$TMP_LIST"' EXIT
 
 mkdir -p "$OUT_DIR"
 
-# Package tracked files from XC/ directory only.
+# Package tracked files from XC/ directory and RELEASE_VERSION.
 # Exclude local node_modules or build artifacts if present.
 git -C "$ROOT_DIR" ls-files "XC/" \
   | grep -Ev '(^XC_backup/|\.zip$|\.tar|\.tgz)' \
   > "$TMP_LIST"
 
+if git -C "$ROOT_DIR" ls-files --error-unmatch "$VERSION_FILE" >/dev/null 2>&1; then
+  echo "$VERSION_FILE" >> "$TMP_LIST"
+fi
+
 if [[ ! -s "$TMP_LIST" ]]; then
-  echo "Error: no tracked files found in XC/ directory to package." >&2
+  echo "Error: no tracked files found in XC/ or RELEASE_VERSION to package." >&2
   exit 1
 fi
 
@@ -168,7 +172,7 @@ rm -f "$OUT_FILE"
 zip -q -9 "$OUT_FILE" -@ < "$TMP_LIST"
 
 echo "Release created: $OUT_FILE"
-echo "Contents: $(wc -l < "$TMP_LIST") files from XC/"
+echo "Contents: $(wc -l < "$TMP_LIST") files from XC/ + RELEASE_VERSION"
 
 if [[ "$AUTO_COMMIT" == true ]]; then
   if [[ -z "$COMMIT_MESSAGE" ]]; then

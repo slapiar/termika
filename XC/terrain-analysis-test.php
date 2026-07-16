@@ -2869,6 +2869,13 @@ if (is_file($releaseVersionPath)) {
         return base;
     }
 
+    function formatWindyMapKeyFingerprint(rawKey) {
+        const key = String(rawKey || '').trim();
+        if (!key) return '(none)';
+        if (key.length <= 10) return key;
+        return key.slice(0, 6) + '...' + key.slice(-4);
+    }
+
     function setWindyMapFocusPickerEnabled(enabled) {
         windyMapFocusPickerEnabled = Boolean(enabled);
 
@@ -2949,10 +2956,12 @@ if (is_file($releaseVersionPath)) {
         if (append) {
             const previous = String(windyMapLoadingText.textContent || '').trim();
             windyMapLoadingText.textContent = previous ? (previous + '\n' + text) : text;
+            window.setTimeout(() => { markWindyReadyFromDom(); }, 350);
             return;
         }
 
         windyMapLoadingText.textContent = text;
+        window.setTimeout(() => { markWindyReadyFromDom(); }, 350);
     }
 
     function clearWindyMapLoadingMessage() {
@@ -2962,16 +2971,52 @@ if (is_file($releaseVersionPath)) {
         windyMapLoadingPanel.style.display = 'none';
     }
 
+    function readWindyUnauthorizedMessage() {
+        const root = document.getElementById('windy');
+        if (!root) return '';
+
+        const text = String(root.textContent || '').replace(/\s+/g, ' ').trim();
+        if (!text) return '';
+
+        const isUnauthorized = /cannot use windy api|unauthorized domain|statuscode\s*[:=]\s*403|forbidden/i.test(text);
+        return isUnauthorized ? text : '';
+    }
+
     function isWindyMapDomReady() {
         const root = document.getElementById('windy');
         if (!root) return false;
         if (root.querySelector('.leaflet-container, .leaflet-pane, canvas, .windy-logo, #logo-wrapper')) {
             return true;
         }
-        return root.childElementCount > 0;
+        return false;
     }
 
     function markWindyReadyFromDom() {
+        const unauthorizedMessage = readWindyUnauthorizedMessage();
+        if (unauthorizedMessage) {
+            if (windyMapInitFailTimer) {
+                clearTimeout(windyMapInitFailTimer);
+                windyMapInitFailTimer = null;
+            }
+            if (windyMapInitRetryTimer) {
+                clearInterval(windyMapInitRetryTimer);
+                windyMapInitRetryTimer = null;
+            }
+
+            const currentOrigin = window.location.origin || '(unknown origin)';
+            const keyFingerprint = formatWindyMapKeyFingerprint(window.TERMIKA_WINDY_MAP_KEY);
+            setWindyConnectionStatus('error', 'Windy API odmietlo doménu: ' + currentOrigin);
+            setWindyMapLoadingMessage(
+                'Windy API vrátilo 403 (unauthorized domain).\n'
+                + 'Aktuálny origin: ' + currentOrigin + '\n'
+                + 'Aktívny WINDY_MAP_KEY: ' + keyFingerprint + '\n'
+                + 'Vo Windy Map Forecast API whiteliste povoľ tento origin (bez path).',
+                { error: true }
+            );
+            logStatus('Windy API 403 unauthorized domain pre origin: ' + currentOrigin + ' · key ' + keyFingerprint, 'error');
+            return false;
+        }
+
         if (!isWindyMapDomReady()) return false;
 
         if (windyMapInitFailTimer) {
@@ -3079,6 +3124,10 @@ if (is_file($releaseVersionPath)) {
     function scheduleWindyMapInitRetry() {
         if (windyMapInitRetryTimer) return;
         windyMapInitRetryTimer = window.setInterval(() => {
+            if (readWindyUnauthorizedMessage()) {
+                markWindyReadyFromDom();
+                return;
+            }
             if (markWindyReadyFromDom()) return;
             if (windyAPI?.map) {
                 clearInterval(windyMapInitRetryTimer);
@@ -3153,6 +3202,10 @@ if (is_file($releaseVersionPath)) {
             clearTimeout(windyMapInitFailTimer);
         }
         windyMapInitFailTimer = window.setTimeout(() => {
+            if (readWindyUnauthorizedMessage()) {
+                markWindyReadyFromDom();
+                return;
+            }
             if (markWindyReadyFromDom()) return;
             if (windyAPI?.map) return;
             windyMapInitialized = false;
