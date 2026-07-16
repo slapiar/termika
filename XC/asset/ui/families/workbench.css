@@ -1,0 +1,195 @@
+/* TermikaXC UI – families/workbench.css */
+
+@layer tx-family {
+    body[data-tx-family="workbench"] .nav-shell,
+    body[data-tx-family="workbench"] .quick-tool-dock,
+    body[data-tx-family="workbench"] #windowDock,
+    body[data-tx-family="workbench"] #aimHint,
+    body[data-tx-family="workbench"] #terrain-analysis-hover-tooltip {
+        color: var(--tx-text-primary);
+        font-family: var(--tx-font-ui);
+        font-size: var(--tx-font-size-body);
+        line-height: 1.45;
+    }
+
+    body[data-tx-family="workbench"] .nav-bar {
+        min-height: 52px;
+        padding: 8px 10px;
+        border-color: var(--tx-border);
+        background: var(--tx-surface);
+        color: var(--tx-text-primary);
+        box-shadow: var(--tx-shadow-panel);
+        backdrop-filter: blur(10px);
+    }
+
+    body[data-tx-family="workbench"] .nav-brand strong {
+        color: var(--tx-accent-strong);
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 0.055em;
+    }
+
+    body[data-tx-family="workbench"] .nav-brand span,
+    body[data-tx-family="workbench"] .nav-dock-picker {
+        color: var(--tx-text-secondary);
+        font-size: 11px;
+        line-height: 1.3;
+    }
+
+    body[data-tx-family="workbench"] .nav-drawer {
+        border-color: var(--tx-border);
+        background: var(--tx-surface);
+        color: var(--tx-text-primary);
+        box-shadow: var(--tx-shadow-window);
+        scrollbar-color: var(--tx-border) transparent;
+    }
+
+    body[data-tx-family="workbench"] .drawer-card,
+    body[data-tx-family="workbench"] .tx-card {
+        padding: 13px;
+        border: 1px solid var(--tx-border-subtle);
+        border-radius: var(--tx-radius-card);
+        background: var(--tx-surface-raised);
+        color: var(--tx-text-primary);
+    }
+
+    body[data-tx-family="workbench"] .drawer-card .drawer-card {
+        background: var(--tx-surface-soft);
+    }
+
+    body[data-tx-family="workbench"] .drawer-card h3,
+    body[data-tx-family="workbench"] .diagnostic-section h3,
+    body[data-tx-family="workbench"] .tx-card__title {
+        margin: 0 0 10px;
+        color: var(--tx-accent-strong);
+        font-size: var(--tx-font-size-section);
+        font-weight: 800;
+        line-height: 1.25;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
+    body[data-tx-family="workbench"] .drawer-card label {
+        align-items: center;
+        gap: 8px;
+        margin: 7px 0;
+    }
+
+    body[data-tx-family="workbench"] .row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        margin: 5px 0;
+    }
+
+    body[data-tx-family="workbench"] .row .val,
+    body[data-tx-family="workbench"] .row strong,
+    body[data-tx-family="workbench"] .diagnostic-grid dd {
+        color: var(--tx-text-primary);
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    body[data-tx-family="workbench"] .legend-item strong {
+        color: var(--tx-text-primary);
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    body[data-tx-family="workbench"] .legend-item span,
+    body[data-tx-family="workbench"] .diagnostic-grid dt,
+    body[data-tx-family="workbench"] .diagnostic-reasons li,
+    body[data-tx-family="workbench"] .temp-summary-pill span {
+        color: var(--tx-text-secondary);
+        font-size: var(--tx-font-size-label);
+        line-height: 1.45;
+    }
+
+    body[data-tx-family="workbench"] .legend-note,
+    body[data-tx-family="workbench"] .diagnostic-section {
+        border-color: var(--tx-border-subtle);
+    }
+
+    body[data-tx-family="workbench"] .diagnostic-pending,
+    body[data-tx-family="workbench"] .temp-summary-pill,
+    body[data-tx-family="workbench"] .temp-graph-wrap,
+    body[data-tx-family="workbench"] .temp-table-wrap {
+        border-color: var(--tx-border-subtle);
+        background: var(--tx-surface-soft);
+    }
+
+    body[data-tx-family="workbench"] .temp-summary-pill strong {
+        color: var(--tx-text-primary);
+        font-size: 13px;
+    }
+
+    body[data-tx-family="workbench"] .temp-table {
+        color: var(--tx-text-primary);
+        font-family: var(--tx-font-ui);
+        font-size: var(--tx-font-size-table);
+    }
+
+    body[data-tx-family="workbench"] .temp-table th,
+    body[data-tx-family="workbench"] .temp-table td {
+        border-bottom-color: var(--tx-border-subtle);
+    }
+
+    body[data-tx-family="workbench"] .temp-table thead th {
+        background: var(--tx-surface-raised);
+        color: var(--tx-accent-strong);
+        font-size: 10.5px;
+        font-weight: 800;
+    }
+
+    body[data-tx-family="workbench"] .quick-tool-dock,
+    body[data-tx-family="workbench"] #windowDock {
+        border-color: var(--tx-border);
+        background: var(--tx-surface);
+        box-shadow: var(--tx-shadow-panel);
+        backdrop-filter: blur(10px);
+    }
+
+    body[data-tx-family="workbench"] #aimHint,
+    body[data-tx-family="workbench"] #cursorCoordsBadge {
+        border-color: var(--tx-border);
+        background: var(--tx-surface);
+        color: var(--tx-text-primary);
+        box-shadow: var(--tx-shadow-panel);
+        backdrop-filter: blur(8px);
+    }
+
+    body[data-tx-family="workbench"] #windyMapWindow .window-body > div:last-child {
+        border-top-color: var(--tx-border) !important;
+        background: var(--tx-surface-raised) !important;
+    }
+
+    body[data-tx-family="workbench"] #windyUseFocusButton {
+        border-color: var(--tx-accent) !important;
+        background: var(--tx-control-bg) !important;
+        color: var(--tx-text-heading) !important;
+    }
+
+    body[data-tx-family="workbench"] #terrain-analysis-hover-tooltip {
+        border-color: var(--tx-accent) !important;
+        border-radius: var(--tx-radius-control) !important;
+        background: var(--tx-surface) !important;
+        color: var(--tx-text-primary) !important;
+        box-shadow: var(--tx-shadow-panel) !important;
+        font-size: 12px !important;
+    }
+
+    @media (max-width: 760px) {
+        body[data-tx-family="workbench"] .nav-shell,
+        body[data-tx-family="workbench"] :is(.tx-window, .floating-window) {
+            font-size: 12.5px;
+        }
+
+        body[data-tx-family="workbench"] .nav-drawer-section {
+            padding: 12px;
+        }
+
+        body[data-tx-family="workbench"] .drawer-card {
+            padding: 11px;
+        }
+    }
+}
