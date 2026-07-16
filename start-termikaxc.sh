@@ -6,6 +6,18 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCROOT="$ROOT_DIR/XC"
 LOG_FILE="/tmp/termikaxc-php.log"
 LOCAL_URL="http://127.0.0.1:${PORT}/"
+START_PATH="${TERMIKA_START_PATH:-terrain-analysis-test.php}"
+
+cache_bust_url() {
+  local base_url="$1"
+  local token
+  token="$(date +%s)"
+  if [[ "$base_url" == *"?"* ]]; then
+    printf '%s&v=%s' "$base_url" "$token"
+  else
+    printf '%s?v=%s' "$base_url" "$token"
+  fi
+}
 
 if [[ ! -f "$DOCROOT/index.php" ]]; then
   echo "ERROR: Missing entrypoint: $DOCROOT/index.php"
@@ -46,7 +58,7 @@ if [[ "$STATUS" != "200" ]]; then
   exit 1
 fi
 
-OPEN_URL="$LOCAL_URL"
+OPEN_URL="$(cache_bust_url "${LOCAL_URL}${START_PATH}")"
 
 # In Codespaces prefer forwarded URL. Make it public when possible.
 if [[ -n "${CODESPACE_NAME:-}" && -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-}" ]]; then
@@ -55,7 +67,7 @@ if [[ -n "${CODESPACE_NAME:-}" && -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN
     gh codespace ports visibility "${PORT}:public" -c "$CODESPACE_NAME" >/dev/null 2>&1 || true
     GH_URL="$(gh codespace ports -c "$CODESPACE_NAME" --json sourcePort,browseUrl --jq ".[] | select(.sourcePort==${PORT}) | .browseUrl" 2>/dev/null | head -n 1 || true)"
     if [[ -n "$GH_URL" ]]; then
-      OPEN_URL="${GH_URL%/}/"
+      OPEN_URL="$(cache_bust_url "${GH_URL%/}/${START_PATH}")"
     fi
   fi
 fi
