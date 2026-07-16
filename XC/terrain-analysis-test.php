@@ -35,6 +35,7 @@ $assetVersion = '20260716-01';
     <script src="js/windy-map-bridge.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/windy-map-adapter.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
 <?php if (defined('WINDY_MAP_KEY') && WINDY_MAP_KEY !== ''): ?>
+    <script src="https://unpkg.com/leaflet@1.4.0/dist/leaflet.js"></script>
     <script src="https://api.windy.com/assets/map-forecast/libBoot.js"></script>
     <script>var TERMIKA_WINDY_MAP_KEY = <?php echo json_encode(WINDY_MAP_KEY); ?>;</script>
 <?php else: ?>
@@ -116,7 +117,7 @@ $assetVersion = '20260716-01';
         #windowDock button{padding:6px 10px;border:1px solid #54778a;border-radius:5px;background:#10212b;color:#dff7ff;cursor:pointer}
         #windowDock button:hover{background:#1c3b4b}
         #aimHint{position:absolute;left:50%;top:12px;z-index:12;transform:translateX(-50%);padding:6px 10px;background:rgba(7,16,24,.78);color:#d8f8ff;border:1px solid #426277;border-radius:6px;font:12px/1.2 system-ui;pointer-events:none}
-        #cursorCoordsBadge{position:absolute;left:50%;top:42px;z-index:12;transform:translateX(-50%);padding:5px 10px;background:rgba(7,16,24,.82);color:#d8f8ff;border:1px solid #426277;border-radius:6px;font:12px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;pointer-events:none}
+        #cursorCoordsBadge{grid-column:1 / -1;display:block;width:100%;box-sizing:border-box;padding:5px 8px;background:rgba(7,16,24,.82);color:#d8f8ff;border:1px solid #426277;border-radius:6px;font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;text-align:center;pointer-events:none}
         .record-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         .record-badge{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border:1px solid #a33;border-radius:999px;background:rgba(120,0,0,.35);color:#ffd7d7;font-size:12px;font-weight:700;letter-spacing:.2px}
         .record-dot{width:8px;height:8px;border-radius:50%;background:#ff6b6b;box-shadow:0 0 8px rgba(255,107,107,.8)}
@@ -176,13 +177,12 @@ $assetVersion = '20260716-01';
         #debugConsole{left:12px;bottom:12px;width:560px;height:260px}
         #status{max-height:none;height:100%;overflow:auto;white-space:pre-wrap;color:#d7e7ef;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
         @media (max-width:1200px){.drawer-card,.drawer-card.wide{grid-column:span 6}.temp-data-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
-        @media (max-width:760px){.nav-shell{left:0;right:0;top:0}.nav-shell[data-dock="bottom"]{bottom:8px}.nav-shell[data-dock="left"],.nav-shell[data-dock="right"]{width:100vw}.nav-bar{align-items:flex-start;flex-direction:column}.nav-primary{justify-content:flex-start}.nav-meta{width:100%;justify-content:space-between}.drawer-card,.drawer-card.wide{grid-column:1 / -1}.quick-tool-dock{top:auto;right:8px;bottom:72px;grid-template-columns:repeat(4,30px);padding:5px;gap:5px}.quick-tool-dock button{width:30px;height:30px;font-size:12px}.temp-data-summary{grid-template-columns:1fr 1fr}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}}
+        @media (max-width:760px){.nav-shell{left:0;right:0;top:0}.nav-shell[data-dock="bottom"]{bottom:8px}.nav-shell[data-dock="left"],.nav-shell[data-dock="right"]{width:100vw}.nav-bar{align-items:flex-start;flex-direction:column}.nav-primary{justify-content:flex-start}.nav-meta{width:100%;justify-content:space-between}.drawer-card,.drawer-card.wide{grid-column:1 / -1}.quick-tool-dock{top:auto;right:8px;bottom:72px;grid-template-columns:repeat(4,30px);padding:5px;gap:5px}.quick-tool-dock button{width:30px;height:30px;font-size:12px}#cursorCoordsBadge{font-size:10px;padding:4px 6px}.temp-data-summary{grid-template-columns:1fr 1fr}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}}
     </style>
 </head>
 <body>
 <div id="cesiumContainer"></div>
 <div id="aimHint">Klik na farebný bod = diagnostika · klik na terén = nový stred analýzy</div>
-<div id="cursorCoordsBadge">Kurzor: --</div>
 <div id="navShell" class="nav-shell" data-dock="top">
     <div class="nav-bar" role="navigation" aria-label="Navigačný panel testovacej stránky">
         <div class="nav-brand">
@@ -258,8 +258,8 @@ $assetVersion = '20260716-01';
                         <div class="drawer-card">
                             <label>Zdroj TEMP
                                 <select id="windTempSourceMode">
-                                    <option value="auto" selected>Automaticky (Windy → stanica → súbor)</option>
-                                    <option value="windy">Windy.com cez proxy</option>
+                                    <option value="auto">Automaticky (Windy → stanica → súbor)</option>
+                                    <option value="windy" selected>Windy.com cez proxy</option>
                                     <option value="station">Najbližšia meteo stanica</option>
                                     <option value="file">Lokálny súbor</option>
                                 </select>
@@ -281,6 +281,7 @@ $assetVersion = '20260716-01';
                             <div class="action-row">
                                 <button id="tempCleanupButton" type="button" title="Vymazať nepoužité auto TEMP záznamy">Vyčistiť nepoužité TEMP</button>
                             </div>
+                            <p id="tempUnusedCountStatus" style="margin:6px 0 0;color:#8fa9b8;font-size:12px;">Nepoužité TEMP v DB: <strong id="tempUnusedCountBadge" style="color:#ff6b6b;font-size:11px;">--</strong></p>
                             <p id="tempCleanupStatus" style="margin:6px 0 0;color:#8fa9b8;font-size:12px;">Posledná údržba: --</p>
                         </div>
                     </div>
@@ -507,6 +508,7 @@ $assetVersion = '20260716-01';
     <button type="button" data-show-window="debugConsole" title="Debugger">D</button>
     <button type="button" data-show-window="cellDiagnostics" title="Diagnostika bunky">?</button>
     <button type="button" data-show-window="windyMapWindow" title="Windy mapa">W</button>
+    <div id="cursorCoordsBadge">--</div>
 </nav>
 
 <aside id="legend" class="floating-window" data-window-name="Legenda" aria-label="Legenda geometrie terénu" hidden>
@@ -542,11 +544,19 @@ $assetVersion = '20260716-01';
     <header class="window-header">
         <div class="window-title">Windy mapa</div>
         <div class="window-actions">
+            <span id="windyConnectionStatusBadge" style="display:inline-flex;align-items:center;padding:0 8px;height:24px;border:1px solid #426277;border-radius:999px;background:rgba(7,16,24,.8);color:#8fa9b8;font-size:11px;font-weight:700;line-height:1;white-space:nowrap">Windy: čakám</span>
+            <button id="windyFocusPickerToggleButton" class="window-action" type="button" title="Zapnúť výber fokusu z mapy">⌖</button>
             <button class="window-action close-window" type="button" title="Zavrieť okno">×</button>
         </div>
     </header>
     <div class="window-body" style="padding:0;display:flex;flex-direction:column;height:calc(100% - 36px)">
-        <div id="windyMapEmbed" style="flex:1;min-height:0"></div>
+        <div style="position:relative;flex:1;min-height:0">
+            <div id="windyMapEmbed" style="position:absolute;inset:0;min-height:0"></div>
+            <div id="windyMapLoadingPanel" style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:14px;background:rgba(5,12,18,.84);border-bottom:1px solid #35505f;z-index:2">
+                <div style="font-size:12px;font-weight:700;letter-spacing:.04em;color:#70e8ff;margin-bottom:8px">WINDY MAPA - STAV PRIPOJENIA</div>
+                <div id="windyMapLoadingText" style="font-size:12px;line-height:1.45;color:#cfe6f3;white-space:pre-line">Čakám na otvorenie okna Windy...</div>
+            </div>
+        </div>
         <div style="padding:8px;display:flex;align-items:center;gap:8px;border-top:1px solid #35505f;background:rgba(7,16,24,.85)">
             <span id="windyMapFocusLabel" style="flex:1;font-size:12px;color:#8fa9b8">Naviguj na Windy mape...</span>
             <button id="windyUseFocusButton" type="button" style="padding:6px 14px;background:#0d4a6b;border:1px solid #70e8ff;border-radius:6px;color:#dff7ff;cursor:pointer;font-weight:700">Použiť tento fokus ↗</button>
@@ -593,6 +603,7 @@ $assetVersion = '20260716-01';
     const stationProfileUrlTemplate = document.getElementById('stationProfileUrlTemplate');
     const openSetupButton = document.getElementById('openSetupButton');
     const tempCleanupButton = document.getElementById('tempCleanupButton');
+    const tempUnusedCountBadge = document.getElementById('tempUnusedCountBadge');
     const tempCleanupStatus = document.getElementById('tempCleanupStatus');
     const windAglInput = document.getElementById('windAglInput');
     const windSpacingInput = document.getElementById('windSpacingInput');
@@ -615,6 +626,10 @@ $assetVersion = '20260716-01';
     const windyAdapterStatusBadge = document.getElementById('windyAdapterStatusBadge');
     const windyAdapterLastUpdateBadge = document.getElementById('windyAdapterLastUpdateBadge');
     const windyAdapterSourceBadge = document.getElementById('windyAdapterSourceBadge');
+    const windyConnectionStatusBadge = document.getElementById('windyConnectionStatusBadge');
+    const windyMapLoadingPanel = document.getElementById('windyMapLoadingPanel');
+    const windyMapLoadingText = document.getElementById('windyMapLoadingText');
+    const windyFocusPickerToggleButton = document.getElementById('windyFocusPickerToggleButton');
     const windBroadcastFocusButton = document.getElementById('windBroadcastFocusButton');
     const windSimulateIncomingFocusButton = document.getElementById('windSimulateIncomingFocusButton');
     const windCompareGenerationTest = document.getElementById('windCompareGenerationTest');
@@ -698,18 +713,18 @@ $assetVersion = '20260716-01';
         if (!cursorCoordsBadge) return;
 
         if (!mapMouseCrosshairMode) {
-            cursorCoordsBadge.textContent = 'Kurzor: vypnuté';
+            cursorCoordsBadge.textContent = 'vypnute';
             cursorCoordsBadge.style.opacity = '0.65';
             return;
         }
 
         if (!point || !Number.isFinite(Number(point.lat)) || !Number.isFinite(Number(point.lon))) {
-            cursorCoordsBadge.textContent = 'Kurzor: --';
+            cursorCoordsBadge.textContent = '--';
             cursorCoordsBadge.style.opacity = '0.9';
             return;
         }
 
-        cursorCoordsBadge.textContent = 'Kurzor: ' + Number(point.lat).toFixed(5) + ', ' + Number(point.lon).toFixed(5);
+        cursorCoordsBadge.textContent = Number(point.lat).toFixed(5) + ', ' + Number(point.lon).toFixed(5);
         cursorCoordsBadge.style.opacity = '1';
     }
 
@@ -803,6 +818,12 @@ $assetVersion = '20260716-01';
         tempSavedSelect.value = records.length ? String(records[records.length - 1]?.temp_hash || '') : '';
     }
 
+    function updateTempUnusedCountBadge(count) {
+        if (!tempUnusedCountBadge) return;
+        const normalized = Number(count);
+        tempUnusedCountBadge.textContent = Number.isFinite(normalized) ? String(Math.max(0, Math.trunc(normalized))) : '--';
+    }
+
     async function saveCurrentTempToDb() {
         if (!Array.isArray(manualTempProfile) || manualTempProfile.length < 2) {
             logStatus('TEMP DB: profil ešte nie je načítaný.', 'error');
@@ -837,6 +858,8 @@ $assetVersion = '20260716-01';
             ' | hladín ' + String(response.levels_count || manualTempProfile.length) + '.',
             'success'
         );
+
+        updateTempUnusedCountBadge(response.unused_temp_count);
 
         await loadSavedTempList();
     }
@@ -895,6 +918,7 @@ $assetVersion = '20260716-01';
 
             lastAutoSavedTempKey = signature;
             logStatus('TEMP DB: auto-save (Windy) uložený ' + String(response.file || '(bez názvu)') + '.', 'success');
+            updateTempUnusedCountBadge(response.unused_temp_count);
         } catch (error) {
             logStatus('TEMP DB: auto-save (Windy) zlyhal: ' + (error?.message || String(error)), 'error');
         } finally {
@@ -907,6 +931,7 @@ $assetVersion = '20260716-01';
         const records = Array.isArray(response.records) ? response.records : [];
         tempSavedRecords = records.slice();
         populateTempSavedSelector(tempSavedRecords);
+        updateTempUnusedCountBadge(response.unused_temp_count);
         logStatus('TEMP DB: načítaný zoznam profilov ' + records.length + '.', 'info');
     }
 
@@ -957,6 +982,8 @@ $assetVersion = '20260716-01';
         if (tempCleanupStatus) {
             tempCleanupStatus.textContent = statusText;
         }
+
+        updateTempUnusedCountBadge(response.unused_temp_count);
 
         logStatus('Údržba TEMP: zmazané eventy=' + deletedEvents + ', osirelé profily=' + deletedProfiles + '.', 'success');
 
@@ -2807,40 +2834,367 @@ $assetVersion = '20260716-01';
     // --- Windy Map Forecast embed ---
     let windyAPI = null;
     let windyMapInitialized = false;
+    let windyMapInitRetryTimer = null;
+    let windyMapInitFailTimer = null;
+    let windyLibBootLoadPromise = null;
+    let windyMapInitAttempts = 0;
+    const WINDY_MAP_INIT_MAX_ATTEMPTS = 3;
+    let windyMapFocusPickerEnabled = false;
+    let windyMapPickedFocus = null;
+
+    function formatWindyFocus(point, zoom = null) {
+        if (!point || !Number.isFinite(Number(point.lat)) || !Number.isFinite(Number(point.lon))) {
+            return 'Naviguj na Windy mape...';
+        }
+
+        const base = Number(point.lat).toFixed(5) + ', ' + Number(point.lon).toFixed(5);
+        if (Number.isFinite(Number(zoom))) {
+            return base + '  (zoom ' + Math.round(Number(zoom)) + ')';
+        }
+        return base;
+    }
+
+    function setWindyMapFocusPickerEnabled(enabled) {
+        windyMapFocusPickerEnabled = Boolean(enabled);
+
+        if (windyFocusPickerToggleButton) {
+            windyFocusPickerToggleButton.textContent = windyMapFocusPickerEnabled ? '✦' : '⌖';
+            windyFocusPickerToggleButton.title = windyMapFocusPickerEnabled
+                ? 'Vypnúť výber fokusu z mapy'
+                : 'Zapnúť výber fokusu z mapy';
+            windyFocusPickerToggleButton.style.color = windyMapFocusPickerEnabled ? '#70e8ff' : '';
+        }
+
+        const mapEmbed = document.getElementById('windyMapEmbed');
+        if (mapEmbed) {
+            mapEmbed.style.cursor = windyMapFocusPickerEnabled ? 'crosshair' : '';
+        }
+
+        const label = document.getElementById('windyMapFocusLabel');
+        if (label) {
+            if (windyMapFocusPickerEnabled) {
+                label.textContent = windyMapPickedFocus
+                    ? 'Vybraný fokus: ' + formatWindyFocus(windyMapPickedFocus, windyMapPickedFocus.zoom)
+                    : 'Režim výberu fokusu: klikni do mapy.';
+            } else {
+                label.textContent = windyMapPickedFocus
+                    ? 'Vybraný fokus: ' + formatWindyFocus(windyMapPickedFocus, windyMapPickedFocus.zoom)
+                    : 'Naviguj na Windy mape...';
+            }
+        }
+    }
+
+    function setWindyConnectionStatus(status, message = '') {
+        if (!windyConnectionStatusBadge) return;
+
+        const normalized = String(status || 'offline').toLowerCase();
+        const textMap = {
+            ready: 'Windy: pripojené',
+            loading: 'Windy: načítavam',
+            offline: 'Windy: offline',
+            missing_key: 'Windy: chýba kľúč',
+            error: 'Windy: chyba'
+        };
+
+        windyConnectionStatusBadge.textContent = textMap[normalized] || ('Windy: ' + normalized);
+        windyConnectionStatusBadge.title = String(message || '');
+
+        if (normalized === 'ready') {
+            windyConnectionStatusBadge.style.color = '#59d68b';
+            windyConnectionStatusBadge.style.borderColor = '#2f9f56';
+            return;
+        }
+        if (normalized === 'loading') {
+            windyConnectionStatusBadge.style.color = '#70e8ff';
+            windyConnectionStatusBadge.style.borderColor = '#426277';
+            return;
+        }
+        if (normalized === 'missing_key' || normalized === 'error') {
+            windyConnectionStatusBadge.style.color = '#ff8a80';
+            windyConnectionStatusBadge.style.borderColor = '#c35a5a';
+            return;
+        }
+        windyConnectionStatusBadge.style.color = '#8fa9b8';
+        windyConnectionStatusBadge.style.borderColor = '#426277';
+    }
+
+    function setWindyMapLoadingMessage(message, options = {}) {
+        if (!windyMapLoadingPanel || !windyMapLoadingText) return;
+
+        const text = String(message || '').trim();
+        const append = options.append === true;
+        const isError = options.error === true;
+
+        windyMapLoadingPanel.hidden = false;
+        windyMapLoadingPanel.style.display = 'flex';
+        windyMapLoadingText.style.color = isError ? '#ffb6b6' : '#cfe6f3';
+
+        if (!text) return;
+
+        if (append) {
+            const previous = String(windyMapLoadingText.textContent || '').trim();
+            windyMapLoadingText.textContent = previous ? (previous + '\n' + text) : text;
+            return;
+        }
+
+        windyMapLoadingText.textContent = text;
+    }
+
+    function clearWindyMapLoadingMessage() {
+        if (!windyMapLoadingPanel || !windyMapLoadingText) return;
+        windyMapLoadingText.textContent = '';
+        windyMapLoadingPanel.hidden = true;
+        windyMapLoadingPanel.style.display = 'none';
+    }
+
+    function ensureWindyLibBootLoaded() {
+        if (typeof windyInit === 'function') {
+            return Promise.resolve(true);
+        }
+
+        if (windyLibBootLoadPromise) {
+            return windyLibBootLoadPromise;
+        }
+
+        windyLibBootLoadPromise = new Promise((resolve, reject) => {
+            const scriptSrc = 'https://api.windy.com/assets/map-forecast/libBoot.js';
+            let scriptEl = document.querySelector('script[data-termika-windy-libboot="1"]');
+            let settled = false;
+
+            const finish = (ok, error = null) => {
+                if (settled) return;
+                settled = true;
+                windyLibBootLoadPromise = null;
+                if (ok) {
+                    resolve(true);
+                } else {
+                    reject(error || new Error('Windy libBoot.js sa nepodarilo načítať.'));
+                }
+            };
+
+            const checkLoaded = () => {
+                if (typeof windyInit === 'function') {
+                    finish(true);
+                    return true;
+                }
+                return false;
+            };
+
+            if (checkLoaded()) return;
+
+            const onLoad = () => {
+                if (!checkLoaded()) {
+                    finish(false, new Error('Windy libBoot.js sa síce načítal, ale windyInit nie je dostupný.'));
+                }
+            };
+
+            const onError = () => {
+                finish(false, new Error('Prehliadač zablokoval alebo nenačítal Windy libBoot.js.'));
+            };
+
+            if (!scriptEl) {
+                scriptEl = document.createElement('script');
+                scriptEl.src = scriptSrc;
+                scriptEl.async = true;
+                scriptEl.dataset.termikaWindyLibboot = '1';
+                scriptEl.addEventListener('load', onLoad, { once: true });
+                scriptEl.addEventListener('error', onError, { once: true });
+                document.head.appendChild(scriptEl);
+                return;
+            }
+
+            // Existing tag may have already fired load/error before we attached listeners.
+            // Force a fresh fetch+execute attempt with a cache buster.
+            const retryScript = document.createElement('script');
+            retryScript.src = scriptSrc + '?v=' + Date.now();
+            retryScript.async = true;
+            retryScript.dataset.termikaWindyLibboot = '1';
+            retryScript.addEventListener('load', onLoad, { once: true });
+            retryScript.addEventListener('error', onError, { once: true });
+            document.head.appendChild(retryScript);
+
+            window.setTimeout(() => {
+                if (typeof windyInit !== 'function') {
+                    finish(false, new Error('Windy libBoot.js sa síce načítava, ale prehliadač ho nespúšťa (možný adblock/CSP).'));
+                }
+            }, 4500);
+        });
+
+        return windyLibBootLoadPromise;
+    }
+
+    function refreshWindyMapSize() {
+        if (!windyAPI?.map) return;
+        window.setTimeout(() => {
+            try {
+                windyAPI.map.invalidateSize?.(true);
+                windyAPI.map.redraw?.();
+            } catch (_) {
+                // ignore resize refresh errors
+            }
+        }, 120);
+    }
+
+    function scheduleWindyMapInitRetry() {
+        if (windyMapInitRetryTimer) return;
+        windyMapInitRetryTimer = window.setInterval(() => {
+            if (windyAPI?.map) {
+                clearInterval(windyMapInitRetryTimer);
+                windyMapInitRetryTimer = null;
+                refreshWindyMapSize();
+                setWindyConnectionStatus('ready', 'Windy mapa je pripojená.');
+                return;
+            }
+            if (windyMapInitAttempts >= WINDY_MAP_INIT_MAX_ATTEMPTS) {
+                clearInterval(windyMapInitRetryTimer);
+                windyMapInitRetryTimer = null;
+                return;
+            }
+            if (typeof windyInit === 'function' && !windyMapInitialized && !document.getElementById('windyMapWindow')?.hidden) {
+                initWindyMap();
+            }
+        }, 500);
+    }
 
     function initWindyMap() {
+        if (windyAPI?.map) {
+            refreshWindyMapSize();
+            setWindyConnectionStatus('ready', 'Windy mapa je pripojená.');
+            clearWindyMapLoadingMessage();
+            return;
+        }
         if (windyMapInitialized) return;
+        if (windyMapInitAttempts >= WINDY_MAP_INIT_MAX_ATTEMPTS) {
+            setWindyConnectionStatus('error', 'Vyčerpaný limit pokusov o pripojenie Windy mapy.');
+            setWindyMapLoadingMessage(
+                'Pripojenie Windy mapy zlyhalo po ' + WINDY_MAP_INIT_MAX_ATTEMPTS + ' pokusoch.\nSkontroluj doménový whitelist pre WINDY_MAP_KEY.',
+                { error: true }
+            );
+            return;
+        }
         if (!window.TERMIKA_WINDY_MAP_KEY) {
             logStatus('Windy Map kľúč nie je nakonfigurovaný.', 'error');
+            setWindyConnectionStatus('missing_key', 'Chýba WINDY_MAP_KEY alebo nie je dostupný v konfigurácii.');
+            setWindyMapLoadingMessage('Chyba: chýba WINDY_MAP_KEY v konfigurácii.\nOtvor setup.php a doplň WINDY_MAP_KEY.', { error: true });
             return;
         }
         if (typeof windyInit !== 'function') {
             logStatus('Windy libBoot.js sa nepodarilo načítať.', 'error');
+            setWindyConnectionStatus('loading', 'Čakám na Windy libBoot.js.');
+            setWindyMapLoadingMessage('Načítavam Windy knižnicu libBoot.js...\nZatiaľ nie je dostupná.');
+            ensureWindyLibBootLoaded()
+                .then(() => {
+                    setWindyMapLoadingMessage('Windy knižnica bola načítaná, pokračujem inicializáciou mapy...');
+                    initWindyMap();
+                })
+                .catch((error) => {
+                    const reason = error?.message || 'Neznáma chyba načítania Windy knižnice.';
+                    setWindyConnectionStatus('error', reason);
+                    setWindyMapLoadingMessage('Chyba načítania Windy knižnice:\n' + reason, { error: true });
+                    logStatus('Windy libBoot.js load error: ' + reason, 'error');
+                    scheduleWindyMapInitRetry();
+                });
             return;
         }
 
-        windyMapInitialized = true;
-        const center = selectedCenter || { lat: 46.43, lon: 11.85 };
+        setWindyConnectionStatus('loading', 'Windy mapa sa pripája.');
+        windyMapInitAttempts += 1;
+        setWindyMapLoadingMessage(
+            'Knižnica pripravená. Pripájam Windy mapu...\nPokus ' + windyMapInitAttempts + ' z ' + WINDY_MAP_INIT_MAX_ATTEMPTS + '.',
+            { append: false }
+        );
 
-        windyInit({
-            key: window.TERMIKA_WINDY_MAP_KEY,
-            lat: center.lat,
-            lon: center.lon,
-            zoom: 9,
-        }, function (api) {
+        const center = selectedCenter || { lat: 46.43, lon: 11.85 };
+        windyMapInitialized = true;
+
+        if (windyMapInitFailTimer) {
+            clearTimeout(windyMapInitFailTimer);
+        }
+        windyMapInitFailTimer = window.setTimeout(() => {
+            if (windyAPI?.map) return;
+            windyMapInitialized = false;
+            setWindyConnectionStatus('error', 'Windy embed neodpovedal v limite 8 sekúnd.');
+            setWindyMapLoadingMessage(
+                'Chyba: Windy embed neodpovedal do 8 sekúnd.\nSkontroluj WINDY_MAP_KEY a povolenú doménu pre túto URL.',
+                { error: true }
+            );
+            logStatus('Windy mapa: inicializácia timeout. Skontroluj WINDY_MAP_KEY a povolenú doménu.', 'error');
+            if (windyMapInitAttempts < WINDY_MAP_INIT_MAX_ATTEMPTS) {
+                scheduleWindyMapInitRetry();
+            }
+        }, 8000);
+
+        try {
+            windyInit({
+                key: window.TERMIKA_WINDY_MAP_KEY,
+                container: 'windyMapEmbed',
+                lat: center.lat,
+                lon: center.lon,
+                zoom: 9,
+            }, function (api) {
             windyAPI = api;
+            if (windyMapInitFailTimer) {
+                clearTimeout(windyMapInitFailTimer);
+                windyMapInitFailTimer = null;
+            }
+            if (!api?.map) {
+                windyMapInitialized = false;
+                setWindyConnectionStatus('error', 'Windy callback prišiel bez map inštancie.');
+                setWindyMapLoadingMessage('Windy callback prišiel, ale mapa nebola vytvorená.', { error: true });
+                if (windyMapInitAttempts < WINDY_MAP_INIT_MAX_ATTEMPTS) {
+                    scheduleWindyMapInitRetry();
+                }
+                return;
+            }
             const label = document.getElementById('windyMapFocusLabel');
+
+            if (api?.map?.on) {
+                api.map.on('click', function (event) {
+                    if (!windyMapFocusPickerEnabled) return;
+
+                    const lat = Number(event?.latlng?.lat ?? event?.lat ?? event?.latitude);
+                    const lon = Number(event?.latlng?.lng ?? event?.latlng?.lon ?? event?.lng ?? event?.longitude);
+                    const zoom = Number(api.map.getZoom?.());
+                    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+                    windyMapPickedFocus = { lat, lon, zoom };
+                    if (label) {
+                        label.textContent = 'Vybraný fokus: ' + formatWindyFocus(windyMapPickedFocus, zoom);
+                    }
+                });
+            }
 
             // Priebežne ukazuj súradnice stredu mapy
             api.map.on('move', function () {
                 const c = api.map.getCenter();
                 if (label) {
-                    label.textContent = c.lat.toFixed(5) + ', ' + c.lng.toFixed(5) + '  (zoom ' + api.map.getZoom() + ')';
+                    if (!windyMapFocusPickerEnabled || !windyMapPickedFocus) {
+                        label.textContent = c.lat.toFixed(5) + ', ' + c.lng.toFixed(5) + '  (zoom ' + api.map.getZoom() + ')';
+                    }
                 }
             });
 
+            refreshWindyMapSize();
+            scheduleWindyMapInitRetry();
+            setWindyMapFocusPickerEnabled(false);
+            setWindyConnectionStatus('ready', 'Windy mapa je pripojená.');
+            clearWindyMapLoadingMessage();
             logStatus('Windy mapa načítaná.', 'success');
-        });
+            });
+        } catch (error) {
+            windyMapInitialized = false;
+            if (windyMapInitFailTimer) {
+                clearTimeout(windyMapInitFailTimer);
+                windyMapInitFailTimer = null;
+            }
+            const reason = error?.message || String(error);
+            setWindyConnectionStatus('error', 'windyInit zlyhal: ' + reason);
+            setWindyMapLoadingMessage('windyInit vyhodil chybu:\n' + reason, { error: true });
+            logStatus('Windy mapa: windyInit zlyhal: ' + reason, 'error');
+            if (windyMapInitAttempts < WINDY_MAP_INIT_MAX_ATTEMPTS) {
+                scheduleWindyMapInitRetry();
+            }
+        }
     }
 
     // Inicializuj Windy mapu pri prvom otvorení okna
@@ -2848,7 +3202,16 @@ $assetVersion = '20260716-01';
     if (windyMapWindowEl) {
         const observer = new MutationObserver(() => {
             if (!windyMapWindowEl.hidden) {
+                if (!windyAPI?.map) {
+                    windyMapInitAttempts = 0;
+                    windyMapInitialized = false;
+                }
+                setWindyConnectionStatus(windyAPI?.map ? 'ready' : 'loading', windyAPI?.map ? 'Windy mapa je pripojená.' : 'Windy mapa sa otvára.');
+                if (!windyAPI?.map) {
+                    setWindyMapLoadingMessage('Otváram Windy okno...\nInicializujem mapové spojenie.');
+                }
                 initWindyMap();
+                refreshWindyMapSize();
             }
         });
         observer.observe(windyMapWindowEl, { attributes: true, attributeFilter: ['hidden'] });
@@ -2858,12 +3221,16 @@ $assetVersion = '20260716-01';
     document.getElementById('windyUseFocusButton')?.addEventListener('click', async () => {
         if (!windyAPI) {
             logStatus('Windy mapa ešte nie je načítaná.', 'error');
+            setWindyMapLoadingMessage('Mapa ešte nie je pripravená.\nPočkajte na stav "Windy: pripojené".', { error: true });
             return;
         }
 
-        const c = windyAPI.map.getCenter();
-        const zoom = windyAPI.map.getZoom();
-        const point = { lat: Number(c.lat.toFixed(5)), lon: Number(c.lng.toFixed(5)) };
+        const c = windyMapPickedFocus || windyAPI.map.getCenter();
+        const zoom = Number.isFinite(Number(c?.zoom)) ? Number(c.zoom) : Number(windyAPI.map.getZoom());
+        const point = {
+            lat: Number(Number(c.lat).toFixed(5)),
+            lon: Number(Number(c.lon ?? c.lng).toFixed(5))
+        };
 
         // Aktualizuj fokus v TermikaXC
         selectedCenter = point;
@@ -2881,6 +3248,9 @@ $assetVersion = '20260716-01';
         // Načítaj TEMP pre nový bod
         loadTempOnPointClick(point);
 
+        windyMapPickedFocus = { lat: point.lat, lon: point.lon, zoom };
+        setWindyMapFocusPickerEnabled(false);
+
         // Pošli aj cez komunikačný kanál
         if (window.TermikaCommunicationTool) {
             try {
@@ -2893,6 +3263,16 @@ $assetVersion = '20260716-01';
                 });
             } catch (_) { /* non-critical */ }
         }
+    });
+
+    document.getElementById('windyFocusPickerToggleButton')?.addEventListener('click', () => {
+        setWindyMapFocusPickerEnabled(!windyMapFocusPickerEnabled);
+        logStatus(
+            windyMapFocusPickerEnabled
+                ? 'Windy mapa: režim výberu fokusu je zapnutý.'
+                : 'Windy mapa: režim výberu fokusu je vypnutý.',
+            'info'
+        );
     });
 
     function zoomToAltitudeM(zoom) {

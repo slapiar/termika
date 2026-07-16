@@ -65,6 +65,10 @@ define('WINDY_API_KEY', termikaConfigValue($termikaLocalConfig, 'WINDY_API_KEY',
 // Kľúč je viazaný na doménu v Windy dashboarde – nie je tajný ako Point Forecast.
 define('WINDY_MAP_KEY', termikaConfigValue($termikaLocalConfig, 'WINDY_MAP_KEY', 'windy_map_key', ''));
 
+// Rezervované kľúče pre ďalšie Windy služby.
+define('WINDY_WEBCAMS_KEY', termikaConfigValue($termikaLocalConfig, 'WINDY_WEBCAMS_KEY', 'windy_webcams_key', ''));
+define('WINDY_PLUGINS_KEY', termikaConfigValue($termikaLocalConfig, 'WINDY_PLUGINS_KEY', 'windy_plugins_key', ''));
+
 // Funkcia na vytvorenie bezpečného PDO spojenia s databázou
 function getDbConnection() {
     try {

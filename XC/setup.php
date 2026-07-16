@@ -23,6 +23,9 @@ function buildConfigFromPost(array $post): array {
     return [
         'cesium_access_token' => sanitizeInput($post['cesium_access_token'] ?? ''),
         'windy_api_key' => sanitizeInput($post['windy_api_key'] ?? ''),
+        'windy_map_key' => sanitizeInput($post['windy_map_key'] ?? ''),
+        'windy_webcams_key' => sanitizeInput($post['windy_webcams_key'] ?? ''),
+        'windy_plugins_key' => sanitizeInput($post['windy_plugins_key'] ?? ''),
         'telegram_bot_token' => sanitizeInput($post['telegram_bot_token'] ?? ''),
         'telegram_chat_id' => sanitizeInput($post['telegram_chat_id'] ?? ''),
         'update_shared_key' => sanitizeInput($post['update_shared_key'] ?? ''),
@@ -119,6 +122,18 @@ $exampleExists = is_file($examplePath);
                 <label>WINDY_API_KEY</label>
                 <input type="text" name="windy_api_key" value="<?php echo e((string)($current['windy_api_key'] ?? '')); ?>" placeholder="Windy Point Forecast key">
             </div>
+            <div class="full">
+                <label>WINDY_MAP_KEY</label>
+                <input type="text" name="windy_map_key" value="<?php echo e((string)($current['windy_map_key'] ?? '')); ?>" placeholder="Windy Map Forecast key">
+            </div>
+            <div>
+                <label>WINDY_WEBCAMS_KEY</label>
+                <input type="text" name="windy_webcams_key" value="<?php echo e((string)($current['windy_webcams_key'] ?? '')); ?>" placeholder="Volitelne">
+            </div>
+            <div>
+                <label>WINDY_PLUGINS_KEY</label>
+                <input type="text" name="windy_plugins_key" value="<?php echo e((string)($current['windy_plugins_key'] ?? '')); ?>" placeholder="Volitelne">
+            </div>
             <div>
                 <label>TELEGRAM_BOT_TOKEN</label>
                 <input type="text" name="telegram_bot_token" value="<?php echo e((string)($current['telegram_bot_token'] ?? '')); ?>" placeholder="Volitelne">
@@ -160,5 +175,51 @@ $exampleExists = is_file($examplePath);
         <p>Ak pouzijes UPDATE_SHARED_KEY, klient musi posielat HTTP header <code>X-Termika-Key</code>.</p>
     </div>
 </div>
+<?php if ($messageType === 'success'): ?>
+<script>
+(function () {
+    const fallbackUrl = 'index.php';
+    let targetUrl = fallbackUrl;
+
+    try {
+        const openerHref = window.opener && !window.opener.closed
+            ? String(window.opener.location.href || '')
+            : '';
+        const referrerHref = String(document.referrer || '');
+
+        const pick = (href) => {
+            if (!href) return '';
+            const u = new URL(href, window.location.href);
+            if (u.origin !== window.location.origin) return '';
+            if (/\/setup\.php$/i.test(u.pathname)) return '';
+            return u.href;
+        };
+
+        targetUrl = pick(openerHref) || pick(referrerHref) || fallbackUrl;
+    } catch (_) {
+        targetUrl = fallbackUrl;
+    }
+
+    if (window.opener && !window.opener.closed) {
+        try {
+            window.opener.location.href = targetUrl;
+        } catch (_) {
+            // Ignore cross-window navigation errors.
+        }
+        window.close();
+
+        // If the browser blocks window.close(), fallback to redirect in current tab.
+        window.setTimeout(function () {
+            if (!window.closed) {
+                window.location.href = targetUrl;
+            }
+        }, 180);
+        return;
+    }
+
+    window.location.href = targetUrl;
+})();
+</script>
+<?php endif; ?>
 </body>
 </html>

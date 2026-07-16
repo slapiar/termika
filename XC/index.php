@@ -1340,6 +1340,7 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                     viewer,
                     bioChart
                 );
+                PilotNetwork.pauzaPrehravanie({ silent: true });
                 await renderWindLayer("štart");
             } catch (error) {
                 logStatus("Spracovanie letových dát zlyhalo: " + error.message, "error");

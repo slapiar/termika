@@ -204,3 +204,46 @@ V1 zostava 2D mapa prudnic ako diagnosticka vrstva. Dalsie kroky:
 - Farba nesie informaciu o tempDeltaK.
 - Diagnostika vysvetli vypocet bez "black box" spravania.
 - Vykon zostane plynuly pri beznom testovacom rozsahu oblasti.
+
+## Windy Map API ready checklist (prakticky zapis)
+
+Tento checklist je pre embed Windy mapy v testovacom okne (ikona `W`) a sluzi na rychlu diagnostiku,
+aby sa nestracal cas hladanim, kde je problem.
+
+### Povinne predpoklady
+
+1. API kluc je typu **Map Forecast API** (`WINDY_MAP_KEY`).
+2. V browseri sa nacitava **Leaflet 1.4.x** pred `libBoot.js`.
+3. `windyInit(options, callback)` je pouzity s kontajnerom mapy.
+4. V konfiguracii je `WINDY_MAP_KEY` nacitany z `asset/local-config.php`.
+5. Referrer/domain whitelist vo Windy je nastaveny na **origin** (nie URL cestu).
+
+### Domain whitelist pravidlo
+
+- Zapisuj host/origin, nie path.
+- Spravne: `https://xc.flyfree.cloud`
+- Nespravne: `https://xc.flyfree.cloud/termika`
+- Pri Codespaces sa casto vyzaduje presna subdomena (`*.app.github.dev` alebo konkretna URL).
+
+### Runtime signaly v okne WINDY MAPA
+
+- `Windy: pripojene` -> embed je aktivny, mapa je pripravena.
+- `Windy: nacitavam` -> prebieha bootstrap, cakat kratko.
+- `Windy: chyba` + timeout po 3 pokusoch -> typicky whitelist/referrer problem alebo blokovanie skriptu v browseri.
+
+### Typicke chyby a vyznam
+
+1. `windyInit nie je dostupny`:
+   - najprv chyba poradia skriptov alebo chybajuci Leaflet,
+   - alebo script load race condition.
+2. `Windy embed neodpovedal do 8 sekund`:
+   - kluc/referrer obmedzenie,
+   - pripadne browser blokovanie (CSP/adblock/firewall).
+
+### Minimalny test po zmene kluca
+
+1. Ulozit konfiguraciu (`setup.php`).
+2. Hard refresh (`Ctrl+Shift+R`).
+3. Otvorit okno `W`.
+4. Overit prechod stavu na `Windy: pripojene`.
+5. Otestovat flow: picker rezim -> klik do mapy -> `Pouzit tento fokus`.

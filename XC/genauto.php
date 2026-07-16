@@ -418,6 +418,22 @@ function list_temp_records_today(PDO $pdo, int $limit): array {
     return $records;
 }
 
+function count_unused_temp_events(PDO $pdo): int {
+    try {
+        $stmt = $pdo->query(
+            'SELECT COUNT(*) AS cnt
+             FROM temp_profile_events e
+             LEFT JOIN generations g ON g.temp_profile_hash = e.temp_hash
+             WHERE e.is_manual = 0
+               AND g.id IS NULL'
+        );
+        $row = $stmt ? $stmt->fetch() : null;
+        return $row && isset($row['cnt']) ? (int)$row['cnt'] : 0;
+    } catch (Throwable $error) {
+        return 0;
+    }
+}
+
 function run_temp_guard_dog(PDO $pdo, int $ttlSeconds = 900, bool $forceDelete = false): array {
     $deletedEvents = 0;
     $deletedProfiles = 0;
@@ -660,6 +676,7 @@ if ($action === 'saveGeneration') {
         "message" => "Generácia bola uložená.",
         "file" => $identifier,
         "temp_profile_ref" => $tempProfileRef,
+        "unused_temp_count" => count_unused_temp_events($pdo),
         "webm_file" => $kind === 'wind' ? webm_identifier_from_json_file($identifier) : null
     ]);
 }
@@ -851,6 +868,7 @@ if ($action === 'saveTempProfile') {
         "is_manual" => $isManual === 1,
         "center" => ["lat" => $lat, "lon" => $lon],
         "levels_count" => (int)($storedTemp['levels_count'] ?? count($tempInfo['profile'])),
+        "unused_temp_count" => count_unused_temp_events($pdo),
         "guard_dog" => $guardDog
     ]);
 }
@@ -870,6 +888,7 @@ if ($action === 'listTempToday') {
         "status" => "success",
         "records" => $records,
         "count" => count($records),
+        "unused_temp_count" => count_unused_temp_events($pdo),
         "guard_dog" => $guardDog
     ]);
 }
@@ -884,7 +903,8 @@ if ($action === 'cleanupTempUnused') {
     respond(200, [
         "status" => "success",
         "message" => "Údržba TEMP bola vykonaná.",
-        "guard_dog" => $guardDog
+        "guard_dog" => $guardDog,
+        "unused_temp_count" => count_unused_temp_events($pdo)
     ]);
 }
 
