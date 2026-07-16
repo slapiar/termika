@@ -1,40 +1,66 @@
 // js/windy-map-bridge.js
 // TermikaXC - bootstrap helper that exposes a unified WindyMapBridge facade.
 
-(function loadTerrainExplorerUiStyles() {
-    function appendStylesheet(id, href) {
-        if (document.getElementById(id)) return;
+(function bootstrapTerrainWorkbenchUi() {
+    function appendStylesheet(id, href, styleKey) {
+        const existing = document.getElementById(id)
+            || document.querySelector(`link[data-tx-style="${styleKey}"]`);
+        if (existing) return existing;
 
         const link = document.createElement("link");
         link.id = id;
         link.rel = "stylesheet";
         link.href = href;
+        link.dataset.txStyle = styleKey;
         document.head.appendChild(link);
+        return link;
     }
 
-    appendStylesheet(
-        "termika-terrain-explorer-ui",
-        "asset/terrain-explorer-ui.css?v=20260716-02"
-    );
+    function appendLoaderScript() {
+        if (window.TermikaStyleLoader || document.getElementById("termika-style-loader")) return;
 
-    const appendLabelOverrides = function () {
+        const script = document.createElement("script");
+        script.id = "termika-style-loader";
+        script.src = "js/termika-style-loader.js?v=1.0.0";
+        script.async = false;
+        document.head.appendChild(script);
+    }
+
+    function activateWorkbench() {
+        if (document.body) {
+            document.body.dataset.txFamily = "workbench";
+            if (!document.body.dataset.theme) {
+                document.body.dataset.theme = "light";
+            }
+        }
+
         appendStylesheet(
-            "termika-terrain-explorer-labels",
-            "asset/terrain-explorer-labels.css?v=20260716-02"
+            "termika-workbench-bundle",
+            "asset/ui/bundles/workbench.bundle.css?v=1.0.0",
+            "family:workbench"
         );
-    };
 
-    // terrain-analysis-test.php obsahuje pôvodný vnútorný <style> až za týmto modulom.
-    // Label override preto pripájame až po dokončení HTML, aby bol v kaskáde posledný.
+        appendStylesheet(
+            "termika-terrain-analysis-compat",
+            "asset/ui/pages/terrain-analysis.compat.css?v=1.0.0",
+            "page:terrain-analysis-compat"
+        );
+    }
+
+    appendLoaderScript();
+
+    // terrain-analysis-test.php obsahuje starší vnútorný <style>.
+    // Workbench a dočasnú kompatibilnú vrstvu preto pripájame po vytvorení HTML,
+    // aby spoločný dizajnový kontrakt vyhral v kaskáde bez zásahu do geometrie.
     if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", appendLabelOverrides, { once: true });
+        document.addEventListener("DOMContentLoaded", activateWorkbench, { once: true });
     } else {
-        appendLabelOverrides();
+        activateWorkbench();
     }
 })();
 
 window.WindyMapBridgeBootstrap = {
-    VERSION: "0.1.2-bootstrap",
+    VERSION: "0.2.0-bootstrap",
     detectIntervalMs: 1500,
     timerId: null,
     activeBridgeName: "",
