@@ -2,18 +2,39 @@
 // TermikaXC - bootstrap helper that exposes a unified WindyMapBridge facade.
 
 (function loadTerrainExplorerUiStyles() {
-    const styleId = "termika-terrain-explorer-ui";
-    if (document.getElementById(styleId)) return;
+    function appendStylesheet(id, href) {
+        if (document.getElementById(id)) return;
 
-    const link = document.createElement("link");
-    link.id = styleId;
-    link.rel = "stylesheet";
-    link.href = "asset/terrain-explorer-ui.css?v=20260716-01";
-    document.head.appendChild(link);
+        const link = document.createElement("link");
+        link.id = id;
+        link.rel = "stylesheet";
+        link.href = href;
+        document.head.appendChild(link);
+    }
+
+    appendStylesheet(
+        "termika-terrain-explorer-ui",
+        "asset/terrain-explorer-ui.css?v=20260716-02"
+    );
+
+    const appendLabelOverrides = function () {
+        appendStylesheet(
+            "termika-terrain-explorer-labels",
+            "asset/terrain-explorer-labels.css?v=20260716-02"
+        );
+    };
+
+    // terrain-analysis-test.php obsahuje pôvodný vnútorný <style> až za týmto modulom.
+    // Label override preto pripájame až po dokončení HTML, aby bol v kaskáde posledný.
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", appendLabelOverrides, { once: true });
+    } else {
+        appendLabelOverrides();
+    }
 })();
 
 window.WindyMapBridgeBootstrap = {
-    VERSION: "0.1.1-bootstrap",
+    VERSION: "0.1.2-bootstrap",
     detectIntervalMs: 1500,
     timerId: null,
     activeBridgeName: "",
