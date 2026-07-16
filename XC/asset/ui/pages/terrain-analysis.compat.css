@@ -1,0 +1,41 @@
+/* Temporary migration bridge for terrain-analysis-test.php.
+ * Remove after inline visual declarations move to Workbench components. */
+
+@layer tx-page {
+    body[data-tx-family="workbench"] .drawer-card h3,
+    body[data-tx-family="workbench"] .diagnostic-section h3 {
+        color: var(--tx-accent-strong) !important;
+        font-family: var(--tx-font-ui) !important;
+        font-size: var(--tx-font-size-section) !important;
+    }
+
+    body[data-tx-family="workbench"] .drawer-card label,
+    body[data-tx-family="workbench"] .drawer-card .label,
+    body[data-tx-family="workbench"] .compare-row span,
+    body[data-tx-family="workbench"] .legend-item span,
+    body[data-tx-family="workbench"] .diagnostic-grid dt,
+    body[data-tx-family="workbench"] .diagnostic-reasons li,
+    body[data-tx-family="workbench"] .temp-summary-pill span,
+    body[data-tx-family="workbench"] .temp-empty,
+    body[data-tx-family="workbench"] .future,
+    body[data-tx-family="workbench"] #windyMapFocusLabel {
+        color: var(--tx-text-secondary) !important;
+        font-family: var(--tx-font-ui) !important;
+    }
+
+    body[data-tx-family="workbench"] .drawer-card p,
+    body[data-tx-family="workbench"] .drawer-card p[style],
+    body[data-tx-family="workbench"] #tempCleanupStatus,
+    body[data-tx-family="workbench"] #windFpsIndicator {
+        color: var(--tx-text-secondary) !important;
+        font-family: var(--tx-font-ui) !important;
+        font-size: var(--tx-font-size-help) !important;
+    }
+
+    body[data-tx-family="workbench"] #windColorLegend {
+        color: var(--tx-text-primary) !important;
+        background: var(--tx-surface-soft) !important;
+        border-color: var(--tx-border-subtle) !important;
+        font-family: var(--tx-font-ui) !important;
+    }
+}
