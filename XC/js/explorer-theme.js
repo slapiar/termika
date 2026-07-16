@@ -27,6 +27,7 @@
     function applyTheme(theme, { save = true } = {}) {
         const nextTheme = normalizeTheme(theme);
         document.body.dataset.explorerTheme = nextTheme;
+        document.body.dataset.theme = nextTheme;
 
         const isLight = nextTheme === 'light';
         themeButton.textContent = isLight ? '☀' : '☾';
