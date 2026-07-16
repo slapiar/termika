@@ -16,7 +16,7 @@ if (!defined('WINDY_API_KEY') || WINDY_API_KEY === '') {
     http_response_code(503);
     echo json_encode([
         'error' => 'WINDY_API_KEY nie je nakonfigurovaný.',
-        'hint'  => 'Pridaj windy_api_key do asset/local-config.php alebo nastav env premennú WINDY_API_KEY. Kľúč vygeneruj na https://api.windy.com/keys'
+        'hint'  => 'Pridaj windy_api_key do .local-config.php (nad domains/) alebo nastav TERMIKA_LOCAL_CONFIG_PATH / env WINDY_API_KEY. Kľúč vygeneruj na https://api.windy.com/keys'
     ]);
     exit;
 }
