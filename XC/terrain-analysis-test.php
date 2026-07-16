@@ -10,6 +10,18 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     exit('Chýba CESIUM_ACCESS_TOKEN.');
 }
 $assetVersion = '20260716-01';
+$currentYear = gmdate('Y');
+$releaseVersionPath = dirname(__DIR__) . '/RELEASE_VERSION';
+$releaseVersion = 'unknown';
+if (is_file($releaseVersionPath)) {
+    $releaseRaw = @file_get_contents($releaseVersionPath);
+    if (is_string($releaseRaw)) {
+        $trimmed = trim($releaseRaw);
+        if ($trimmed !== '') {
+            $releaseVersion = $trimmed;
+        }
+    }
+}
 ?>
 <!doctype html>
 <html lang="sk">
@@ -88,6 +100,7 @@ $assetVersion = '20260716-01';
         .window-action:hover{background:#1c3b4b}
         .window-body{flex:1;min-height:0;padding:12px;overflow:auto}
         .window-body p{margin:5px 0}
+        #appFooter{position:fixed;left:0;right:0;bottom:0;z-index:11;padding:4px 10px;text-align:center;background:linear-gradient(180deg,rgba(7,16,24,0),rgba(7,16,24,.82));color:#a9c2d1;font:11px/1.3 system-ui;pointer-events:none}
         .window-body button{margin:4px 4px 4px 0;padding:7px 10px;cursor:pointer}
         .window-body fieldset{margin:10px 0;padding:9px;border:1px solid #35505f;border-radius:6px}
         .window-body legend{padding:0 6px;color:#70e8ff;font-weight:700}
@@ -576,6 +589,8 @@ $assetVersion = '20260716-01';
         <div id="status"></div>
     </div>
 </section>
+
+<footer id="appFooter">© PIAR Team <?php echo htmlspecialchars((string)$currentYear, ENT_QUOTES, 'UTF-8'); ?> · v<?php echo htmlspecialchars((string)$releaseVersion, ENT_QUOTES, 'UTF-8'); ?></footer>
 
 <script>
     const statusEl = document.getElementById('status');
@@ -2947,6 +2962,32 @@ $assetVersion = '20260716-01';
         windyMapLoadingPanel.style.display = 'none';
     }
 
+    function isWindyMapDomReady() {
+        const root = document.getElementById('windy');
+        if (!root) return false;
+        if (root.querySelector('.leaflet-container, .leaflet-pane, canvas, .windy-logo, #logo-wrapper')) {
+            return true;
+        }
+        return root.childElementCount > 0;
+    }
+
+    function markWindyReadyFromDom() {
+        if (!isWindyMapDomReady()) return false;
+
+        if (windyMapInitFailTimer) {
+            clearTimeout(windyMapInitFailTimer);
+            windyMapInitFailTimer = null;
+        }
+        if (windyMapInitRetryTimer) {
+            clearInterval(windyMapInitRetryTimer);
+            windyMapInitRetryTimer = null;
+        }
+
+        setWindyConnectionStatus('ready', 'Windy mapa je viditeľná a pripravená.');
+        clearWindyMapLoadingMessage();
+        return true;
+    }
+
     function ensureWindyLibBootLoaded() {
         if (typeof windyInit === 'function') {
             return Promise.resolve(true);
@@ -3038,6 +3079,7 @@ $assetVersion = '20260716-01';
     function scheduleWindyMapInitRetry() {
         if (windyMapInitRetryTimer) return;
         windyMapInitRetryTimer = window.setInterval(() => {
+            if (markWindyReadyFromDom()) return;
             if (windyAPI?.map) {
                 clearInterval(windyMapInitRetryTimer);
                 windyMapInitRetryTimer = null;
@@ -3111,6 +3153,7 @@ $assetVersion = '20260716-01';
             clearTimeout(windyMapInitFailTimer);
         }
         windyMapInitFailTimer = window.setTimeout(() => {
+            if (markWindyReadyFromDom()) return;
             if (windyAPI?.map) return;
             windyMapInitialized = false;
             setWindyConnectionStatus('error', 'Windy embed neodpovedal v limite 8 sekúnd.');
@@ -3201,6 +3244,7 @@ $assetVersion = '20260716-01';
     if (windyMapWindowEl) {
         const observer = new MutationObserver(() => {
             if (!windyMapWindowEl.hidden) {
+                if (markWindyReadyFromDom()) return;
                 if (!windyAPI?.map) {
                     windyMapInitAttempts = 0;
                     windyMapInitialized = false;
