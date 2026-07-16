@@ -1,0 +1,49 @@
+/* TermikaXC UI – foundations/typography-focus.css */
+
+@layer tx-foundations {
+    body[data-tx-family="workbench"] {
+        color: var(--tx-text-primary);
+        font-family: var(--tx-font-ui);
+        font-size: var(--tx-font-size-body);
+        line-height: 1.45;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+
+    body[data-tx-family="workbench"] button,
+    body[data-tx-family="workbench"] input,
+    body[data-tx-family="workbench"] select,
+    body[data-tx-family="workbench"] textarea {
+        font: inherit;
+    }
+
+    body[data-tx-family="workbench"] .tx-number,
+    body[data-tx-family="workbench"] .row .val,
+    body[data-tx-family="workbench"] .diagnostic-grid dd,
+    body[data-tx-family="workbench"] .temp-table {
+        font-variant-numeric: tabular-nums;
+    }
+
+    body[data-tx-family="workbench"] .tx-mono,
+    body[data-tx-family="workbench"] #status,
+    body[data-tx-family="workbench"] #cursorCoordsBadge {
+        font-family: var(--tx-font-mono);
+    }
+
+    body[data-tx-family="workbench"] :where(button, input, select, textarea, [tabindex]):focus-visible {
+        border-color: var(--tx-accent);
+        outline: none;
+        box-shadow: 0 0 0 2px var(--tx-focus-ring);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        body[data-tx-family="workbench"] *,
+        body[data-tx-family="workbench"] *::before,
+        body[data-tx-family="workbench"] *::after {
+            scroll-behavior: auto !important;
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
