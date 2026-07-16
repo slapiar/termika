@@ -1,8 +1,19 @@
 // js/windy-map-bridge.js
 // TermikaXC - bootstrap helper that exposes a unified WindyMapBridge facade.
 
+(function loadTerrainExplorerUiStyles() {
+    const styleId = "termika-terrain-explorer-ui";
+    if (document.getElementById(styleId)) return;
+
+    const link = document.createElement("link");
+    link.id = styleId;
+    link.rel = "stylesheet";
+    link.href = "asset/terrain-explorer-ui.css?v=20260716-01";
+    document.head.appendChild(link);
+})();
+
 window.WindyMapBridgeBootstrap = {
-    VERSION: "0.1.0-bootstrap",
+    VERSION: "0.1.1-bootstrap",
     detectIntervalMs: 1500,
     timerId: null,
     activeBridgeName: "",
