@@ -30,6 +30,18 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 
 ### Pridané
 
+- Automatické ukladanie TEMP profilu do GENauto DB po úspešnom načítaní zo zdroja Windy.
+  - po kliknutí na bod a úspešnom načítaní cez Windy sa TEMP profil uloží bez potreby manuálneho tlačidla,
+  - auto-save používa ochranu proti duplicitnému zápisu toho istého profilu na tom istom bode,
+  - tlačidlo manuálneho uloženia posiela explicitný príznak `manual_save=true`.
+- Strážny mechanizmus pre TEMP záznamy v `XC/genauto.php`.
+  - guard dog priebežne čistí auto uložené TEMP eventy (`is_manual=0`), ktoré nie sú naviazané na žiadnu uloženú generáciu,
+  - pre bezpečné workflow sa auto eventy mažú až po TTL okne (15 min), aby mali čas byť použité vo výpočte,
+  - manuálne uložené TEMP eventy (`is_manual=1`) sa týmto automatickým filtrom nečistia,
+  - po čistení sa odstraňujú aj osirelé TEMP profily bez referencie v generáciách aj TEMP eventoch.
+- Sekcia `Zdroje` obsahuje nový panel údržby dát TEMP.
+  - tlačidlo `Vyčistiť nepoužité TEMP` spustí ručné čistenie auto TEMP záznamov nepoužitých v žiadnej uloženej analýze,
+  - panel zobrazí výsledok údržby (počet zmazaných eventov a osirelých profilov).
 - Hlavný panel aplikácie (`XC/index.php`) má kompaktné režimy generácií vetra cez tri radio voľby.
   - `Zachovať poslednú generáciu`,
   - `Vymazať poslednú generáciu`,

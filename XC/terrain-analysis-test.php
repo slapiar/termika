@@ -9,7 +9,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     http_response_code(500);
     exit('Chýba CESIUM_ACCESS_TOKEN.');
 }
-$assetVersion = '20260715-03';
+$assetVersion = '20260716-01';
 ?>
 <!doctype html>
 <html lang="sk">
@@ -72,7 +72,8 @@ $assetVersion = '20260715-03';
             --nav-card-border:#35505f;
         }
         html,body,#cesiumContainer{width:100%;height:100%;margin:0;overflow:hidden;background:#071018}
-        #cesiumContainer{cursor:crosshair}
+        #cesiumContainer{cursor:default}
+        body.map-crosshair-mode #cesiumContainer{cursor:crosshair}
         .cesium-viewer-toolbar{z-index:40}
         [hidden]{display:none!important}
         .floating-window{position:absolute;z-index:20;display:flex;flex-direction:column;min-width:250px;min-height:120px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);background:rgba(7,16,24,.94);color:#eef;font:14px/1.4 system-ui;border:1px solid #426277;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.38);resize:both;overflow:hidden}
@@ -115,6 +116,7 @@ $assetVersion = '20260715-03';
         #windowDock button{padding:6px 10px;border:1px solid #54778a;border-radius:5px;background:#10212b;color:#dff7ff;cursor:pointer}
         #windowDock button:hover{background:#1c3b4b}
         #aimHint{position:absolute;left:50%;top:12px;z-index:12;transform:translateX(-50%);padding:6px 10px;background:rgba(7,16,24,.78);color:#d8f8ff;border:1px solid #426277;border-radius:6px;font:12px/1.2 system-ui;pointer-events:none}
+        #cursorCoordsBadge{position:absolute;left:50%;top:42px;z-index:12;transform:translateX(-50%);padding:5px 10px;background:rgba(7,16,24,.82);color:#d8f8ff;border:1px solid #426277;border-radius:6px;font:12px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;pointer-events:none}
         .record-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         .record-badge{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border:1px solid #a33;border-radius:999px;background:rgba(120,0,0,.35);color:#ffd7d7;font-size:12px;font-weight:700;letter-spacing:.2px}
         .record-dot{width:8px;height:8px;border-radius:50%;background:#ff6b6b;box-shadow:0 0 8px rgba(255,107,107,.8)}
@@ -156,7 +158,7 @@ $assetVersion = '20260715-03';
         .drawer-card .action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
         .drawer-card button{padding:7px 10px;border:1px solid #54778a;border-radius:6px;background:#10212b;color:#dff7ff;cursor:pointer}
         .drawer-card button:hover{background:#1c3b4b;border-color:#70e8ff}
-        .quick-tool-dock{position:absolute;top:76px;right:12px;z-index:31;display:flex;gap:6px;padding:6px;border:1px solid #426277;border-radius:9px;background:rgba(7,16,24,.86);box-shadow:0 8px 18px rgba(0,0,0,.32)}
+        .quick-tool-dock{position:absolute;top:76px;right:12px;z-index:31;display:grid;grid-template-columns:repeat(4,32px);gap:6px;padding:6px;border:1px solid #426277;border-radius:9px;background:rgba(7,16,24,.86);box-shadow:0 8px 18px rgba(0,0,0,.32)}
         .quick-tool-dock button{width:32px;height:32px;padding:0;border:1px solid #54778a;border-radius:8px;background:#10212b;color:#dff7ff;cursor:pointer;font:700 13px/1 system-ui}
         .quick-tool-dock button:hover{background:#1c3b4b;border-color:#70e8ff}
         .temp-data-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:10px}
@@ -174,12 +176,13 @@ $assetVersion = '20260715-03';
         #debugConsole{left:12px;bottom:12px;width:560px;height:260px}
         #status{max-height:none;height:100%;overflow:auto;white-space:pre-wrap;color:#d7e7ef;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
         @media (max-width:1200px){.drawer-card,.drawer-card.wide{grid-column:span 6}.temp-data-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
-        @media (max-width:760px){.nav-shell{left:0;right:0;top:0}.nav-shell[data-dock="bottom"]{bottom:8px}.nav-shell[data-dock="left"],.nav-shell[data-dock="right"]{width:100vw}.nav-bar{align-items:flex-start;flex-direction:column}.nav-primary{justify-content:flex-start}.nav-meta{width:100%;justify-content:space-between}.drawer-card,.drawer-card.wide{grid-column:1 / -1}.quick-tool-dock{top:auto;right:8px;bottom:72px;flex-wrap:wrap;width:46px;padding:5px;gap:5px}.quick-tool-dock button{width:30px;height:30px;font-size:12px}.temp-data-summary{grid-template-columns:1fr 1fr}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}}
+        @media (max-width:760px){.nav-shell{left:0;right:0;top:0}.nav-shell[data-dock="bottom"]{bottom:8px}.nav-shell[data-dock="left"],.nav-shell[data-dock="right"]{width:100vw}.nav-bar{align-items:flex-start;flex-direction:column}.nav-primary{justify-content:flex-start}.nav-meta{width:100%;justify-content:space-between}.drawer-card,.drawer-card.wide{grid-column:1 / -1}.quick-tool-dock{top:auto;right:8px;bottom:72px;grid-template-columns:repeat(4,30px);padding:5px;gap:5px}.quick-tool-dock button{width:30px;height:30px;font-size:12px}.temp-data-summary{grid-template-columns:1fr 1fr}#legend{top:auto;right:12px;bottom:58px;left:12px;width:auto;height:36vh}#cellDiagnostics{left:12px;right:12px;bottom:58px;width:auto;height:56vh;transform:none}.floating-window{max-width:calc(100vw - 24px)}}
     </style>
 </head>
 <body>
 <div id="cesiumContainer"></div>
 <div id="aimHint">Klik na farebný bod = diagnostika · klik na terén = nový stred analýzy</div>
+<div id="cursorCoordsBadge">Kurzor: --</div>
 <div id="navShell" class="nav-shell" data-dock="top">
     <div class="nav-bar" role="navigation" aria-label="Navigačný panel testovacej stránky">
         <div class="nav-brand">
@@ -271,6 +274,14 @@ $assetVersion = '20260715-03';
                                 <button id="openSetupButton" type="button">Otvoriť setup.php</button>
                             </div>
                             <p style="margin:6px 0 0;color:#6f8594;font-size:12px;">Tu sa zadáva aj <strong>WINDY_API_KEY</strong> pre Windy TEMP proxy.</p>
+                        </div>
+                        <div class="drawer-card">
+                            <h3>Údržba dát TEMP</h3>
+                            <p>Ručné čistenie automaticky uložených TEMP záznamov, ktoré neboli použité v žiadnej uloženej analýze.</p>
+                            <div class="action-row">
+                                <button id="tempCleanupButton" type="button" title="Vymazať nepoužité auto TEMP záznamy">Vyčistiť nepoužité TEMP</button>
+                            </div>
+                            <p id="tempCleanupStatus" style="margin:6px 0 0;color:#8fa9b8;font-size:12px;">Posledná údržba: --</p>
                         </div>
                     </div>
                 </div>
@@ -418,6 +429,19 @@ $assetVersion = '20260715-03';
                 <div class="drawer-card full">
                     <h3>TEMP profil</h3>
                     <p>V tejto sekcii je vždy viditeľná aktuálna tabuľka TEMP a prehľadový graf. Pri výpočte sa sem zapíše profil použitý tesne pred simuláciou.</p>
+                    <div class="row"><span class="label">Fokus TEMP:</span><span id="tempFocusCoords" class="val">--</span></div>
+                    <div class="action-row">
+                        <button id="tempDownloadButton" type="button" title="Stiahnuť aktuálny TEMP profil do JSON">Stiahnuť TEMP JSON</button>
+                        <button id="tempSaveDbButton" type="button" title="Uložiť aktuálny TEMP profil do GENauto databázy">Uložiť TEMP do DB</button>
+                        <button id="tempRefreshSavedButton" type="button" title="Načítať dnešný zoznam uložených TEMP profilov">Načítať zoznam TEMP</button>
+                    </div>
+                    <div class="row" style="margin-top:8px;gap:8px;">
+                        <span class="label">Uložené TEMP:</span>
+                        <select id="tempSavedSelect" class="compare-select" aria-label="Výber uloženého TEMP profilu" style="flex:1;min-width:220px;">
+                            <option value="">Najprv načítaj zoznam TEMP</option>
+                        </select>
+                        <button id="tempLoadSavedButton" type="button" title="Načítať vybraný TEMP profil zo zoznamu">Načítať</button>
+                    </div>
                     <div id="tempProfileSummary" class="temp-data-summary"></div>
                 </div>
                 <div class="drawer-card wide">
@@ -478,6 +502,7 @@ $assetVersion = '20260715-03';
     <button type="button" id="quickOpenSourcesButton" title="Zdroje a nastavenia">◎</button>
     <button type="button" id="quickAnalyzeButton" title="Spustiť analýzu">▶</button>
     <button type="button" id="quickClearButton" title="Skryť výsledky">■</button>
+    <button type="button" id="quickCursorModeButton" title="Prepnúť režim myši (zameriavací/štandardný)">✛</button>
     <button type="button" data-show-window="legend" title="Legenda">L</button>
     <button type="button" data-show-window="debugConsole" title="Debugger">D</button>
     <button type="button" data-show-window="cellDiagnostics" title="Diagnostika bunky">?</button>
@@ -567,6 +592,8 @@ $assetVersion = '20260715-03';
     const stationIndexUrl = document.getElementById('stationIndexUrl');
     const stationProfileUrlTemplate = document.getElementById('stationProfileUrlTemplate');
     const openSetupButton = document.getElementById('openSetupButton');
+    const tempCleanupButton = document.getElementById('tempCleanupButton');
+    const tempCleanupStatus = document.getElementById('tempCleanupStatus');
     const windAglInput = document.getElementById('windAglInput');
     const windSpacingInput = document.getElementById('windSpacingInput');
     const windSpeedInput = document.getElementById('windSpeedInput');
@@ -603,9 +630,17 @@ $assetVersion = '20260715-03';
     const tempProfileSummary = document.getElementById('tempProfileSummary');
     const tempProfileTableWrap = document.getElementById('tempProfileTableWrap');
     const tempProfileGraph = document.getElementById('tempProfileGraph');
+    const tempFocusCoords = document.getElementById('tempFocusCoords');
+    const tempDownloadButton = document.getElementById('tempDownloadButton');
+    const tempSaveDbButton = document.getElementById('tempSaveDbButton');
+    const tempRefreshSavedButton = document.getElementById('tempRefreshSavedButton');
+    const tempSavedSelect = document.getElementById('tempSavedSelect');
+    const tempLoadSavedButton = document.getElementById('tempLoadSavedButton');
+    const cursorCoordsBadge = document.getElementById('cursorCoordsBadge');
     const quickOpenSourcesButton = document.getElementById('quickOpenSourcesButton');
     const quickAnalyzeButton = document.getElementById('quickAnalyzeButton');
     const quickClearButton = document.getElementById('quickClearButton');
+    const quickCursorModeButton = document.getElementById('quickCursorModeButton');
     const igcInput = document.getElementById('igcFileInput');
     const loadIgcButton = document.getElementById('loadIgcButton');
     const tempInput = document.getElementById('tempFileInput');
@@ -630,12 +665,302 @@ $assetVersion = '20260715-03';
     let activeNavSection = 'sources';
     let manualTempProfile = null;
     let manualTempSourceName = 'XCtrack/temptest.json';
+    let tempFocusPoint = null;
+    let tempSavedRecords = [];
+    let mapMouseCrosshairMode = true;
+    let tempAutoSaveInProgress = false;
+    let lastAutoSavedTempKey = '';
     const communicationDisposers = [];
     let runtimeCleanupDone = false;
     let sceneInputHandler = null;
 
     function formatCenter(point) {
         return point.lat.toFixed(5) + ', ' + point.lon.toFixed(5);
+    }
+
+    function formatCenterSafe(point) {
+        if (!point || !Number.isFinite(Number(point.lat)) || !Number.isFinite(Number(point.lon))) {
+            return '--';
+        }
+        return Number(point.lat).toFixed(5) + ', ' + Number(point.lon).toFixed(5);
+    }
+
+    function formatTempSavedLabel(record, index) {
+        const time = record?.generated_at_utc ? String(record.generated_at_utc).slice(11, 19) : '--:--:--';
+        const center = record?.center && Number.isFinite(Number(record.center.lat)) && Number.isFinite(Number(record.center.lon))
+            ? Number(record.center.lat).toFixed(3) + ', ' + Number(record.center.lon).toFixed(3)
+            : '--';
+        const levels = Number(record?.levels_count || 0);
+        return String(index + 1) + ' · ' + time + ' · ' + center + ' · ' + levels + ' hl.';
+    }
+
+    function updateCursorCoordsBadge(point = null) {
+        if (!cursorCoordsBadge) return;
+
+        if (!mapMouseCrosshairMode) {
+            cursorCoordsBadge.textContent = 'Kurzor: vypnuté';
+            cursorCoordsBadge.style.opacity = '0.65';
+            return;
+        }
+
+        if (!point || !Number.isFinite(Number(point.lat)) || !Number.isFinite(Number(point.lon))) {
+            cursorCoordsBadge.textContent = 'Kurzor: --';
+            cursorCoordsBadge.style.opacity = '0.9';
+            return;
+        }
+
+        cursorCoordsBadge.textContent = 'Kurzor: ' + Number(point.lat).toFixed(5) + ', ' + Number(point.lon).toFixed(5);
+        cursorCoordsBadge.style.opacity = '1';
+    }
+
+    function applyMouseMode(enabledCrosshair) {
+        mapMouseCrosshairMode = enabledCrosshair === true;
+        document.body.classList.toggle('map-crosshair-mode', mapMouseCrosshairMode);
+
+        if (quickCursorModeButton) {
+            quickCursorModeButton.textContent = mapMouseCrosshairMode ? '✛' : '◉';
+            quickCursorModeButton.title = mapMouseCrosshairMode
+                ? 'Prepnúť na štandardný kurzor'
+                : 'Prepnúť na zameriavací kríž + súradnice';
+        }
+
+        updateCursorCoordsBadge();
+    }
+
+    function setTempFocusPoint(point, sourceLabel = '') {
+        if (point && Number.isFinite(Number(point.lat)) && Number.isFinite(Number(point.lon))) {
+            tempFocusPoint = {
+                lat: Number(point.lat),
+                lon: Number(point.lon)
+            };
+        }
+
+        if (!tempFocusCoords) return;
+
+        const centerTextValue = formatCenterSafe(tempFocusPoint);
+        const sourceSuffix = String(sourceLabel || '').trim() !== ''
+            ? ' (' + String(sourceLabel).trim() + ')'
+            : '';
+        tempFocusCoords.textContent = centerTextValue + sourceSuffix;
+    }
+
+    function buildTempExportFilename(point = null) {
+        const focus = point && Number.isFinite(Number(point.lat)) && Number.isFinite(Number(point.lon))
+            ? point
+            : (tempFocusPoint || selectedCenter || null);
+        const latText = Number.isFinite(Number(focus?.lat)) ? Number(focus.lat).toFixed(5).replace('-', 'm').replace('.', '_') : 'na';
+        const lonText = Number.isFinite(Number(focus?.lon)) ? Number(focus.lon).toFixed(5).replace('-', 'm').replace('.', '_') : 'na';
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        return 'temp-profile__lat' + latText + '__lon' + lonText + '__' + stamp + '.json';
+    }
+
+    function downloadTempProfileJson() {
+        if (!Array.isArray(manualTempProfile) || manualTempProfile.length < 2) {
+            logStatus('TEMP export: profil ešte nie je načítaný.', 'error');
+            return;
+        }
+
+        const focus = tempFocusPoint || selectedCenter || null;
+        const payload = {
+            source: manualTempSourceName,
+            center: focus,
+            exported_at_iso: new Date().toISOString(),
+            profile: manualTempProfile
+        };
+
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const filename = buildTempExportFilename(focus);
+
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        logStatus('TEMP export: uložený súbor ' + filename + '.', 'success');
+    }
+
+    function populateTempSavedSelector(records) {
+        if (!tempSavedSelect) return;
+
+        tempSavedSelect.replaceChildren();
+
+        const emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = records.length ? 'Vyber uložený TEMP profil' : 'Najprv načítaj zoznam TEMP';
+        tempSavedSelect.appendChild(emptyOption);
+
+        records.forEach((record, index) => {
+            const option = document.createElement('option');
+            option.value = String(record.temp_hash || '');
+            option.textContent = formatTempSavedLabel(record, index);
+            tempSavedSelect.appendChild(option);
+        });
+
+        tempSavedSelect.value = records.length ? String(records[records.length - 1]?.temp_hash || '') : '';
+    }
+
+    async function saveCurrentTempToDb() {
+        if (!Array.isArray(manualTempProfile) || manualTempProfile.length < 2) {
+            logStatus('TEMP DB: profil ešte nie je načítaný.', 'error');
+            return;
+        }
+
+        const focus = tempFocusPoint || selectedCenter || null;
+        if (!focus || !Number.isFinite(Number(focus.lat)) || !Number.isFinite(Number(focus.lon))) {
+            logStatus('TEMP DB: chýba platný fokus so súradnicami.', 'error');
+            return;
+        }
+
+        const response = await genAutoRequest('saveTempProfile', {
+            center: {
+                lat: Number(focus.lat),
+                lon: Number(focus.lon)
+            },
+            manual_save: true,
+            temp_profile: manualTempProfile,
+            temp_source: {
+                sourceLabel: manualTempSourceName,
+                focus: {
+                    lat: Number(focus.lat),
+                    lon: Number(focus.lon)
+                }
+            }
+        });
+
+        logStatus(
+            'TEMP DB: uložené ' + String(response.file || '(bez názvu)') +
+            ' | fokus ' + formatCenterSafe(focus) +
+            ' | hladín ' + String(response.levels_count || manualTempProfile.length) + '.',
+            'success'
+        );
+
+        await loadSavedTempList();
+    }
+
+    async function autoSaveTempProfileIfWindy(profile, point, resolvedSource) {
+        const resolvedMode = String(resolvedSource?.resolvedMode || '').toLowerCase();
+        if (resolvedMode !== 'windy') {
+            return;
+        }
+
+        if (!Array.isArray(profile) || profile.length < 2) {
+            return;
+        }
+
+        const lat = Number(point?.lat);
+        const lon = Number(point?.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+            return;
+        }
+
+        const first = profile[0] || {};
+        const last = profile[profile.length - 1] || {};
+        const signature = [
+            lat.toFixed(5),
+            lon.toFixed(5),
+            profile.length,
+            Number(first.z_m).toFixed(2),
+            Number(last.z_m).toFixed(2),
+            Number(first.T_c).toFixed(2),
+            Number(last.T_c).toFixed(2)
+        ].join('|');
+
+        if (signature === lastAutoSavedTempKey || tempAutoSaveInProgress) {
+            return;
+        }
+
+        tempAutoSaveInProgress = true;
+        try {
+            const response = await genAutoRequest('saveTempProfile', {
+                center: {
+                    lat,
+                    lon
+                },
+                manual_save: false,
+                temp_profile: profile,
+                temp_source: {
+                    sourceLabel: manualTempSourceName,
+                    loader: resolvedSource || null,
+                    autoSaved: true,
+                    focus: {
+                        lat,
+                        lon
+                    }
+                }
+            });
+
+            lastAutoSavedTempKey = signature;
+            logStatus('TEMP DB: auto-save (Windy) uložený ' + String(response.file || '(bez názvu)') + '.', 'success');
+        } catch (error) {
+            logStatus('TEMP DB: auto-save (Windy) zlyhal: ' + (error?.message || String(error)), 'error');
+        } finally {
+            tempAutoSaveInProgress = false;
+        }
+    }
+
+    async function loadSavedTempList() {
+        const response = await genAutoRequest('listTempToday', { limit: 500 });
+        const records = Array.isArray(response.records) ? response.records : [];
+        tempSavedRecords = records.slice();
+        populateTempSavedSelector(tempSavedRecords);
+        logStatus('TEMP DB: načítaný zoznam profilov ' + records.length + '.', 'info');
+    }
+
+    async function loadSelectedTempFromDb() {
+        const selectedHash = String(tempSavedSelect?.value || '').trim();
+        if (!selectedHash) {
+            logStatus('TEMP DB: vyber profil zo zoznamu.', 'info');
+            return;
+        }
+
+        const response = await fetch('genauto.php?action=getTempProfile&temp_hash=' + encodeURIComponent(selectedHash), {
+            method: 'GET',
+            cache: 'no-store'
+        });
+
+        const data = await response.json();
+        if (!response.ok || data?.status !== 'success') {
+            throw new Error(String(data?.message || 'TEMP profil sa nepodarilo načítať.'));
+        }
+
+        const profile = Array.isArray(data.profile) ? data.profile : [];
+        if (profile.length < 2) {
+            throw new Error('Uložený TEMP profil je prázdny alebo neplatný.');
+        }
+
+        const selectedRecord = tempSavedRecords.find((record) => String(record.temp_hash || '') === selectedHash) || null;
+        const focus = selectedRecord?.center || tempFocusPoint || selectedCenter;
+        setTempFocusPoint(focus, 'DB');
+        renderTempProfileViews(profile, selectedRecord?.file || 'TEMP_DB', focus);
+        setActiveNavSection('temp', true);
+        logStatus('TEMP DB: načítaný profil ' + String(selectedRecord?.file || selectedHash) + '.', 'success');
+    }
+
+    async function runTempCleanupMaintenance() {
+        const response = await genAutoRequest('cleanupTempUnused', {
+            force_delete: true,
+            ttl_seconds: 0
+        });
+
+        const guard = response?.guard_dog || {};
+        const deletedEvents = Number(guard.deleted_events || 0);
+        const deletedProfiles = Number(guard.deleted_profiles || 0);
+        const statusText =
+            'Posledná údržba: zmazané eventy ' + deletedEvents +
+            ', osirelé profily ' + deletedProfiles +
+            ' (' + new Date().toLocaleTimeString('sk-SK') + ')';
+
+        if (tempCleanupStatus) {
+            tempCleanupStatus.textContent = statusText;
+        }
+
+        logStatus('Údržba TEMP: zmazané eventy=' + deletedEvents + ', osirelé profily=' + deletedProfiles + '.', 'success');
+
+        await loadSavedTempList();
     }
 
     function updateSourceLabels() {
@@ -706,12 +1031,15 @@ $assetVersion = '20260715-03';
         navDrawer.hidden = !shouldShow;
     }
 
-    function renderTempProfileViews(profile, sourceLabel = 'TEMP') {
+    function renderTempProfileViews(profile, sourceLabel = 'TEMP', focusPoint = null) {
         const rows = Array.isArray(profile)
             ? profile.slice().filter((row) => Number.isFinite(Number(row.z_m))).sort((a, b) => Number(a.z_m) - Number(b.z_m))
             : [];
         manualTempProfile = rows.length ? rows.slice() : manualTempProfile;
         manualTempSourceName = sourceLabel || manualTempSourceName;
+        if (focusPoint && Number.isFinite(Number(focusPoint.lat)) && Number.isFinite(Number(focusPoint.lon))) {
+            setTempFocusPoint(focusPoint, 'TEMP');
+        }
         updateSourceLabels();
 
         if (tempProfileSummary) {
@@ -721,11 +1049,13 @@ $assetVersion = '20260715-03';
                 const first = rows[0];
                 const last = rows[rows.length - 1];
                 const lclInfo = window.MeteoCore?.vypocitajLclDetail?.(rows) || null;
+                const focusText = formatCenterSafe(tempFocusPoint || selectedCenter);
                 tempProfileSummary.innerHTML = [
                     '<div class="temp-summary-pill"><span>Zdroj</span><strong>' + String(sourceLabel || 'TEMP') + '</strong></div>',
                     '<div class="temp-summary-pill"><span>Hladiny</span><strong>' + rows.length + '</strong></div>',
                     '<div class="temp-summary-pill"><span>Rozsah</span><strong>' + Math.round(Number(first.z_m) || 0) + '–' + Math.round(Number(last.z_m) || 0) + ' m</strong></div>',
-                    '<div class="temp-summary-pill"><span>LCL</span><strong>' + (lclInfo ? (Math.round(lclInfo.z_m) + ' m') : '—') + '</strong></div>'
+                    '<div class="temp-summary-pill"><span>LCL</span><strong>' + (lclInfo ? (Math.round(lclInfo.z_m) + ' m') : '—') + '</strong></div>',
+                    '<div class="temp-summary-pill"><span>Súradnice</span><strong>' + focusText + '</strong></div>'
                 ].join('');
             }
         }
@@ -1878,8 +2208,27 @@ $assetVersion = '20260715-03';
     quickOpenSourcesButton?.addEventListener('click', () => setActiveNavSection('sources', true));
     quickAnalyzeButton?.addEventListener('click', () => document.getElementById('analyzeButton')?.click());
     quickClearButton?.addEventListener('click', () => document.getElementById('clearButton')?.click());
+    quickCursorModeButton?.addEventListener('click', () => {
+        applyMouseMode(!mapMouseCrosshairMode);
+    });
     openSetupButton?.addEventListener('click', () => {
         window.location.href = 'setup.php';
+    });
+    tempCleanupButton?.addEventListener('click', async () => {
+        const originalText = tempCleanupButton.textContent;
+        tempCleanupButton.disabled = true;
+        tempCleanupButton.textContent = '... čistím';
+        try {
+            await runTempCleanupMaintenance();
+        } catch (error) {
+            logStatus('Údržba TEMP zlyhala: ' + (error?.message || String(error)), 'error');
+            if (tempCleanupStatus) {
+                tempCleanupStatus.textContent = 'Posledná údržba: chyba';
+            }
+        } finally {
+            tempCleanupButton.disabled = false;
+            tempCleanupButton.textContent = originalText;
+        }
     });
     document.getElementById('clearDebugButton')?.addEventListener('click', () => {
         statusEl.replaceChildren();
@@ -1887,6 +2236,48 @@ $assetVersion = '20260715-03';
     });
     loadIgcButton?.addEventListener('click', () => igcInput?.click());
     loadTempButton?.addEventListener('click', () => tempInput?.click());
+    tempDownloadButton?.addEventListener('click', () => {
+        downloadTempProfileJson();
+    });
+    tempSaveDbButton?.addEventListener('click', async () => {
+        const originalText = tempSaveDbButton.textContent;
+        tempSaveDbButton.disabled = true;
+        tempSaveDbButton.textContent = '... ukladám';
+        try {
+            await saveCurrentTempToDb();
+        } catch (error) {
+            logStatus('TEMP DB: ukladanie zlyhalo: ' + (error?.message || String(error)), 'error');
+        } finally {
+            tempSaveDbButton.disabled = false;
+            tempSaveDbButton.textContent = originalText;
+        }
+    });
+    tempRefreshSavedButton?.addEventListener('click', async () => {
+        const originalText = tempRefreshSavedButton.textContent;
+        tempRefreshSavedButton.disabled = true;
+        tempRefreshSavedButton.textContent = '... načítavam';
+        try {
+            await loadSavedTempList();
+        } catch (error) {
+            logStatus('TEMP DB: načítanie zoznamu zlyhalo: ' + (error?.message || String(error)), 'error');
+        } finally {
+            tempRefreshSavedButton.disabled = false;
+            tempRefreshSavedButton.textContent = originalText;
+        }
+    });
+    tempLoadSavedButton?.addEventListener('click', async () => {
+        const originalText = tempLoadSavedButton.textContent;
+        tempLoadSavedButton.disabled = true;
+        tempLoadSavedButton.textContent = '...';
+        try {
+            await loadSelectedTempFromDb();
+        } catch (error) {
+            logStatus('TEMP DB: načítanie profilu zlyhalo: ' + (error?.message || String(error)), 'error');
+        } finally {
+            tempLoadSavedButton.disabled = false;
+            tempLoadSavedButton.textContent = originalText;
+        }
+    });
     igcInput?.addEventListener('change', async () => {
         const file = igcInput.files?.[0];
         if (!file) return;
@@ -1927,7 +2318,7 @@ $assetVersion = '20260715-03';
             const profile = parseTempTextLocal(text);
             manualTempProfile = profile.slice();
             manualTempSourceName = file.name;
-            renderTempProfileViews(profile, file.name);
+            renderTempProfileViews(profile, file.name, selectedCenter);
             logStatus('TEMP načítaný: ' + file.name + ', hladiny=' + profile.length + '.', 'success');
             setActiveNavSection('temp', false);
         } catch (error) {
@@ -1940,6 +2331,7 @@ $assetVersion = '20260715-03';
     });
     applyNavDock(navDockMode?.value || 'top');
     initUiTheme();
+    applyMouseMode(true);
     setActiveNavSection('sources', false);
     toggleNavDrawer(false);
     renderTempProfileViews([], manualTempSourceName);
@@ -1956,16 +2348,20 @@ $assetVersion = '20260715-03';
         try {
             const removedLayers = Number(window.WindRender?.clear?.(viewer, 'all') || 0);
             clearGenAutoMapLayer();
-            const response = await genAutoRequest('clearToday', { kinds: ['map', 'wind'] });
+            const response = await genAutoRequest('clearToday', { kinds: ['map', 'wind', 'temp'] });
             const deletedMap = Number(response.deleted?.map || 0);
             const deletedWind = Number(response.deleted?.wind || 0);
+            const deletedTemp = Number(response.deleted?.temp || 0);
             windLoadedRecords = [];
             mapLoadedRecords = [];
+            tempSavedRecords = [];
             populateWindCompareSelector([]);
             populateMapCompareSelector([]);
+            populateTempSavedSelector([]);
 
             logStatus(
                 'GENauto: zmazané dnešné súbory map=' + deletedMap + ', wind=' + deletedWind +
+                ', temp=' + deletedTemp +
                 '; odstránené vrstvy z mapy=' + removedLayers + '.',
                 'success'
             );
@@ -2006,6 +2402,8 @@ $assetVersion = '20260715-03';
     viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(selectedCenter.lon, selectedCenter.lat, 9000)
     });
+    setTempFocusPoint(selectedCenter, 'stred');
+    updateCursorCoordsBadge();
     syncCenterUi(selectedCenter);
 
     if (window.WindUI) {
@@ -2222,6 +2620,7 @@ $assetVersion = '20260715-03';
         }
 
         try {
+            setTempFocusPoint(point, 'klik mapy');
             logStatus('Načítavám TEMP profil pre bod ' + formatCenter(point) + '...', 'info');
 
             const sourceMode = document.getElementById('windTempSourceMode')?.value || 'auto';
@@ -2250,7 +2649,9 @@ $assetVersion = '20260715-03';
                 return;
             }
 
-            renderTempProfileViews(profile, resolvedSource?.resolvedMode || 'TEMP');
+            renderTempProfileViews(profile, resolvedSource?.resolvedMode || 'TEMP', point);
+
+            await autoSaveTempProfileIfWindy(profile, point, resolvedSource);
 
             if (document.getElementById('pTempFile')) {
                 document.getElementById('pTempFile').textContent = resolvedSource?.detail || sourceMode;
@@ -2266,7 +2667,14 @@ $assetVersion = '20260715-03';
     sceneInputHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
     sceneInputHandler.setInputAction((event) => {
         const point = pickTerrainPosition(event.endPosition);
-        if (point) previewCenter = point;
+        if (point) {
+            previewCenter = point;
+            if (mapMouseCrosshairMode) {
+                updateCursorCoordsBadge(point);
+            }
+        } else if (mapMouseCrosshairMode) {
+            updateCursorCoordsBadge();
+        }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
     sceneInputHandler.setInputAction((event) => {
@@ -2283,6 +2691,7 @@ $assetVersion = '20260715-03';
         previewCenter = { ...point };
         selectedPoint.position = Cesium.Cartesian3.fromDegrees(point.lon, point.lat);
         syncCenterUi(point);
+        setTempFocusPoint(point, 'klik mapy');
         logStatus('Vybraný nový stred kruhovej analýzy.');
         
         // Automaticky načítaj TEMP profil z Windy pre tento bod
@@ -2300,6 +2709,7 @@ $assetVersion = '20260715-03';
         previewCenter = { ...parsed };
         selectedPoint.position = Cesium.Cartesian3.fromDegrees(parsed.lon, parsed.lat);
         syncCenterUi(parsed);
+        setTempFocusPoint(parsed, 'ručný fokus');
 
         viewer.camera.flyTo({
             destination: Cesium.Cartesian3.fromDegrees(parsed.lon, parsed.lat, 3000)
@@ -2460,6 +2870,7 @@ $assetVersion = '20260715-03';
         previewCenter = { ...point };
         selectedPoint.position = Cesium.Cartesian3.fromDegrees(point.lon, point.lat);
         syncCenterUi(point);
+        setTempFocusPoint(point, 'Windy fokus');
 
         viewer.camera.flyTo({
             destination: Cesium.Cartesian3.fromDegrees(point.lon, point.lat, zoomToAltitudeM(zoom))

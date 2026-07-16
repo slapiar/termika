@@ -11,7 +11,7 @@ function respond(int $statusCode, array $payload): void {
 
 function sanitize_kind(string $kind): ?string {
     $normalized = strtolower(trim($kind));
-    if ($normalized === "map" || $normalized === "wind") return $normalized;
+    if ($normalized === "map" || $normalized === "wind" || $normalized === "temp") return $normalized;
     return null;
 }
 
@@ -253,6 +253,29 @@ function db(): PDO {
         );
 
         $pdo->exec(
+            'CREATE TABLE IF NOT EXISTS temp_profile_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                file_identifier TEXT NOT NULL UNIQUE,
+                generated_at_utc TEXT NOT NULL,
+                day_utc TEXT NOT NULL,
+                center_lat REAL NOT NULL,
+                center_lon REAL NOT NULL,
+                temp_hash TEXT NOT NULL,
+                is_manual INTEGER NOT NULL DEFAULT 0,
+                source_json TEXT,
+                created_at_utc TEXT NOT NULL,
+                FOREIGN KEY (temp_hash) REFERENCES temp_profiles(temp_hash) ON DELETE CASCADE
+            )'
+        );
+
+        if (!table_has_column($pdo, 'temp_profile_events', 'is_manual')) {
+            $pdo->exec('ALTER TABLE temp_profile_events ADD COLUMN is_manual INTEGER NOT NULL DEFAULT 0');
+        }
+
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_temp_profile_events_day_time ON temp_profile_events(day_utc, generated_at_utc)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS idx_temp_profile_events_temp_hash ON temp_profile_events(temp_hash)');
+
+        $pdo->exec(
             'CREATE TABLE IF NOT EXISTS webm_cache (
                 generation_id INTEGER PRIMARY KEY,
                 mime_type TEXT NOT NULL,
@@ -356,6 +379,104 @@ function list_records_for_kind_today(PDO $pdo, string $kind, int $limit): array 
     }
 
     return $records;
+}
+
+function list_temp_records_today(PDO $pdo, int $limit): array {
+    $stmt = $pdo->prepare(
+        'SELECT e.file_identifier, e.generated_at_utc, e.center_lat, e.center_lon,
+                e.temp_hash, e.is_manual, e.source_json,
+                p.levels_count, p.z_min_m, p.z_max_m
+         FROM temp_profile_events e
+         INNER JOIN temp_profiles p ON p.temp_hash = e.temp_hash
+         WHERE e.day_utc = :day_utc
+         ORDER BY e.generated_at_utc ASC, e.id ASC
+         LIMIT :limit'
+    );
+    $stmt->bindValue(':day_utc', today_utc(), PDO::PARAM_STR);
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $rows = $stmt->fetchAll();
+    $records = [];
+    foreach ($rows as $row) {
+        $records[] = [
+            'file' => (string)($row['file_identifier'] ?? ''),
+            'generated_at_utc' => (string)($row['generated_at_utc'] ?? ''),
+            'center' => [
+                'lat' => isset($row['center_lat']) ? (float)$row['center_lat'] : null,
+                'lon' => isset($row['center_lon']) ? (float)$row['center_lon'] : null
+            ],
+            'temp_hash' => (string)($row['temp_hash'] ?? ''),
+            'is_manual' => isset($row['is_manual']) ? ((int)$row['is_manual'] === 1) : false,
+            'levels_count' => isset($row['levels_count']) ? (int)$row['levels_count'] : 0,
+            'z_min_m' => isset($row['z_min_m']) ? (float)$row['z_min_m'] : null,
+            'z_max_m' => isset($row['z_max_m']) ? (float)$row['z_max_m'] : null,
+            'source' => decode_json_mixed(isset($row['source_json']) ? (string)$row['source_json'] : null)
+        ];
+    }
+
+    return $records;
+}
+
+function run_temp_guard_dog(PDO $pdo, int $ttlSeconds = 900, bool $forceDelete = false): array {
+    $deletedEvents = 0;
+    $deletedProfiles = 0;
+    $now = time();
+
+    try {
+        $stmt = $pdo->query(
+            'SELECT e.id, e.generated_at_utc
+             FROM temp_profile_events e
+             LEFT JOIN generations g ON g.temp_profile_hash = e.temp_hash
+             WHERE e.is_manual = 0
+               AND g.id IS NULL'
+        );
+        $rows = $stmt ? $stmt->fetchAll() : [];
+
+        $deleteEventStmt = $pdo->prepare('DELETE FROM temp_profile_events WHERE id = :id');
+        foreach ($rows as $row) {
+            $id = isset($row['id']) ? (int)$row['id'] : 0;
+            $generatedAt = isset($row['generated_at_utc']) ? strtotime((string)$row['generated_at_utc']) : false;
+            if ($id < 1 || $generatedAt === false) {
+                continue;
+            }
+
+            if (!$forceDelete && ($now - (int)$generatedAt) < $ttlSeconds) {
+                continue;
+            }
+
+            $deleteEventStmt->execute([':id' => $id]);
+            $deletedEvents += $deleteEventStmt->rowCount();
+        }
+
+        $deletedProfilesStmt = $pdo->prepare(
+            'DELETE FROM temp_profiles
+             WHERE temp_hash NOT IN (
+                SELECT DISTINCT temp_profile_hash
+                FROM generations
+                WHERE temp_profile_hash IS NOT NULL AND temp_profile_hash != ""
+             )
+             AND temp_hash NOT IN (
+                SELECT DISTINCT temp_hash
+                FROM temp_profile_events
+             )'
+        );
+        $deletedProfilesStmt->execute();
+        $deletedProfiles = (int)$deletedProfilesStmt->rowCount();
+    } catch (Throwable $error) {
+        return [
+            'deleted_events' => $deletedEvents,
+            'deleted_profiles' => $deletedProfiles,
+            'error' => 'TEMP guard dog zlyhal.'
+        ];
+    }
+
+    return [
+        'deleted_events' => $deletedEvents,
+        'deleted_profiles' => $deletedProfiles,
+        'ttl_seconds' => $ttlSeconds,
+        'force_delete' => $forceDelete
+    ];
 }
 
 $requestMethod = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? ''));
@@ -648,18 +769,137 @@ if ($action === 'listMapToday') {
     ]);
 }
 
+if ($action === 'saveTempProfile') {
+    $center = isset($payload['center']) && is_array($payload['center']) ? $payload['center'] : [];
+    $lat = safe_float($center['lat'] ?? null);
+    $lon = safe_float($center['lon'] ?? null);
+    if ($lat === null || $lon === null) {
+        respond(400, ["status" => "error", "message" => "Chýbajú alebo sú neplatné súradnice stredu TEMP."]);
+    }
+
+    $tempInfo = extract_temp_profile_from_request($payload);
+    if (!is_array($tempInfo['profile']) || count($tempInfo['profile']) < 2) {
+        respond(400, ["status" => "error", "message" => "TEMP profil musí obsahovať aspoň dve validné hladiny."]);
+    }
+
+    try {
+        $storedTemp = persist_temp_profile($pdo, $tempInfo['profile'], $tempInfo['source']);
+    } catch (Throwable $error) {
+        respond(500, ["status" => "error", "message" => "Nepodarilo sa uložiť TEMP profil."]);
+    }
+
+    if (!is_array($storedTemp) || !isset($storedTemp['temp_hash'])) {
+        respond(500, ["status" => "error", "message" => "Nepodarilo sa pripraviť referenciu TEMP profilu."]);
+    }
+
+    $tempHash = (string)$storedTemp['temp_hash'];
+    $manualSave = filter_var($payload['manual_save'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    $isManual = $manualSave ? 1 : 0;
+    $generatedAtUtc = gmdate('c');
+    $timestamp = gmdate('Y-m-d\\TH-i-s\\Z');
+    $baseFilename = generation_filename('temp', $lat, $lon, $timestamp);
+    $filename = $baseFilename;
+    $identifier = generation_identifier('temp', $filename);
+    $dayUtc = today_utc();
+    $sourceJson = isset($storedTemp['source_json']) ? $storedTemp['source_json'] : null;
+
+    try {
+        $insert = $pdo->prepare(
+              'INSERT INTO temp_profile_events (file_identifier, generated_at_utc, day_utc, center_lat, center_lon, temp_hash, is_manual, source_json, created_at_utc)
+               VALUES (:file_identifier, :generated_at_utc, :day_utc, :center_lat, :center_lon, :temp_hash, :is_manual, :source_json, :created_at_utc)'
+        );
+
+        $suffix = 0;
+        while (true) {
+            try {
+                $insert->execute([
+                    ':file_identifier' => $identifier,
+                    ':generated_at_utc' => $generatedAtUtc,
+                    ':day_utc' => $dayUtc,
+                    ':center_lat' => $lat,
+                    ':center_lon' => $lon,
+                    ':temp_hash' => $tempHash,
+                    ':is_manual' => $isManual,
+                    ':source_json' => $sourceJson,
+                    ':created_at_utc' => $generatedAtUtc
+                ]);
+                break;
+            } catch (PDOException $error) {
+                if ((int)$error->getCode() !== 23000) {
+                    throw $error;
+                }
+
+                $suffix += 1;
+                $filename = preg_replace('/\.json$/', '__n' . $suffix . '.json', $baseFilename);
+                if (!is_string($filename)) {
+                    $filename = $baseFilename . '__n' . $suffix . '.json';
+                }
+                $identifier = generation_identifier('temp', $filename);
+            }
+        }
+    } catch (Throwable $error) {
+        respond(500, ["status" => "error", "message" => "Nepodarilo sa uložiť TEMP záznam do databázy."]);
+    }
+
+    $guardDog = run_temp_guard_dog($pdo);
+
+    respond(200, [
+        "status" => "success",
+        "message" => "TEMP profil bol uložený.",
+        "file" => $identifier,
+        "temp_hash" => $tempHash,
+        "is_manual" => $isManual === 1,
+        "center" => ["lat" => $lat, "lon" => $lon],
+        "levels_count" => (int)($storedTemp['levels_count'] ?? count($tempInfo['profile'])),
+        "guard_dog" => $guardDog
+    ]);
+}
+
+if ($action === 'listTempToday') {
+    $limitRaw = isset($payload['limit']) ? (int)$payload['limit'] : 500;
+    $limit = max(1, min(3000, $limitRaw));
+    $guardDog = run_temp_guard_dog($pdo);
+
+    try {
+        $records = list_temp_records_today($pdo, $limit);
+    } catch (Throwable $error) {
+        respond(500, ["status" => "error", "message" => "Nepodarilo sa načítať zoznam TEMP profilov."]);
+    }
+
+    respond(200, [
+        "status" => "success",
+        "records" => $records,
+        "count" => count($records),
+        "guard_dog" => $guardDog
+    ]);
+}
+
+if ($action === 'cleanupTempUnused') {
+    $ttlRaw = isset($payload['ttl_seconds']) ? (int)$payload['ttl_seconds'] : 900;
+    $ttlSeconds = max(0, min(86400 * 30, $ttlRaw));
+    $forceDelete = filter_var($payload['force_delete'] ?? true, FILTER_VALIDATE_BOOLEAN);
+
+    $guardDog = run_temp_guard_dog($pdo, $ttlSeconds, $forceDelete);
+
+    respond(200, [
+        "status" => "success",
+        "message" => "Údržba TEMP bola vykonaná.",
+        "guard_dog" => $guardDog
+    ]);
+}
+
 if ($action === 'clearToday') {
-    $kindsRaw = isset($payload['kinds']) && is_array($payload['kinds']) ? $payload['kinds'] : ['map', 'wind'];
+    $kindsRaw = isset($payload['kinds']) && is_array($payload['kinds']) ? $payload['kinds'] : ['map', 'wind', 'temp'];
     $kinds = [];
     foreach ($kindsRaw as $kindValue) {
         $kind = sanitize_kind((string)$kindValue);
         if ($kind !== null) $kinds[$kind] = true;
     }
     if (!$kinds) {
-        $kinds = ['map' => true, 'wind' => true];
+        $kinds = ['map' => true, 'wind' => true, 'temp' => true];
     }
 
-    $deleted = ['map' => 0, 'wind' => 0];
+    $deleted = ['map' => 0, 'wind' => 0, 'temp' => 0];
     try {
         $countStmt = $pdo->prepare(
             'SELECT kind, COUNT(*) AS cnt
@@ -673,6 +913,21 @@ if ($action === 'clearToday') {
         );
 
         foreach (array_keys($kinds) as $kind) {
+            if ($kind === 'temp') {
+                $countTempStmt = $pdo->prepare(
+                    'SELECT COUNT(*) AS cnt
+                     FROM temp_profile_events
+                     WHERE day_utc = :day_utc'
+                );
+                $countTempStmt->execute([':day_utc' => today_utc()]);
+                $tempRow = $countTempStmt->fetch();
+                $deleted['temp'] = $tempRow && isset($tempRow['cnt']) ? (int)$tempRow['cnt'] : 0;
+
+                $deleteTempStmt = $pdo->prepare('DELETE FROM temp_profile_events WHERE day_utc = :day_utc');
+                $deleteTempStmt->execute([':day_utc' => today_utc()]);
+                continue;
+            }
+
             $countStmt->execute([
                 ':day_utc' => today_utc(),
                 ':kind' => $kind

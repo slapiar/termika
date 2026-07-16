@@ -1,6 +1,18 @@
 # termika
 Výpočet preletových možností a stavu pilota za letu
 
+## Spustenie v GitHub Codespaces
+
+Pre lokálny štart v Codespaces použi:
+
+```bash
+./start-termikaxc.sh
+```
+
+Skript po štarte automaticky nastaví porty `8000` a `8001` na `private`, aby sa nezobrazovalo upozornenie pre verejný development port.
+
+Ak chceš vlastný zoznam portov, nastav premennú `TERMIKA_PRIVATE_PORTS` (napr. `TERMIKA_PRIVATE_PORTS="8000,8001,8099" ./start-termikaxc.sh`).
+
 # 3D Tactical Flight Control & Debriefing Station (TermikaXC)
 
 ## 1. Úvod a vizia projektu

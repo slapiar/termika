@@ -1,12 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PORT="${1:-8000}"
+PORT="${1:-${TERMIKA_BIND_PORT:-8000}}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCROOT="$ROOT_DIR/XC"
 LOG_FILE="/tmp/termikaxc-php.log"
 LOCAL_URL="http://127.0.0.1:${PORT}/"
 START_PATH="${TERMIKA_START_PATH:-terrain-analysis-test.php}"
+
+set_codespace_ports_private() {
+  if [[ -z "${CODESPACE_NAME:-}" ]]; then
+    return 0
+  fi
+
+  if ! command -v gh >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local ports_raw ports port
+  ports_raw="${TERMIKA_PRIVATE_PORTS:-${PORT} 8001}"
+
+  # Normalize commas to spaces to support both "8000 8001" and "8000,8001".
+  ports="${ports_raw//,/ }"
+
+  for port in $ports; do
+    if [[ ! "$port" =~ ^[0-9]+$ ]]; then
+      continue
+    fi
+
+    if gh codespace ports visibility "${port}:private" -c "$CODESPACE_NAME" >/dev/null 2>&1; then
+      echo "Codespaces: port ${port} visibility set to private"
+    else
+      echo "Codespaces: could not set port ${port} to private (continuing)"
+    fi
+  done
+}
 
 cache_bust_url() {
   local base_url="$1"
@@ -58,19 +86,9 @@ if [[ "$STATUS" != "200" ]]; then
   exit 1
 fi
 
-OPEN_URL="$(cache_bust_url "${LOCAL_URL}${START_PATH}")"
+set_codespace_ports_private
 
-# In Codespaces prefer forwarded URL. Make it public when possible.
-if [[ -n "${CODESPACE_NAME:-}" && -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-}" ]]; then
-  OPEN_URL="https://${CODESPACE_NAME}-${PORT}.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}/"
-  if command -v gh >/dev/null 2>&1; then
-    gh codespace ports visibility "${PORT}:public" -c "$CODESPACE_NAME" >/dev/null 2>&1 || true
-    GH_URL="$(gh codespace ports -c "$CODESPACE_NAME" --json sourcePort,browseUrl --jq ".[] | select(.sourcePort==${PORT}) | .browseUrl" 2>/dev/null | head -n 1 || true)"
-    if [[ -n "$GH_URL" ]]; then
-      OPEN_URL="$(cache_bust_url "${GH_URL%/}/${START_PATH}")"
-    fi
-  fi
-fi
+OPEN_URL="$(cache_bust_url "${LOCAL_URL}${START_PATH}")"
 
 echo "Opening: $OPEN_URL"
 if [[ -n "${BROWSER:-}" ]]; then
