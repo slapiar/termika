@@ -81,10 +81,12 @@ Ovláda ho `setWindyMapFocusPickerEnabled(enabled)`, prepínané tlačidlom `win
 
 - kurzor nad mapou sa zmení na `crosshair`,
 - ďalší klik do mapy zachytí **presné súradnice kliknutého bodu** (nie stred mapy) cez `api.map.on('click', ...)` a uloží ich do `windyMapPickedFocus = { lat, lon, zoom }`,
+- na kliknuté miesto sa priamo na Windy mape vloží **viditeľný Leaflet marker/pin** (`setWindyMapFocusMarker(api, lat, lon)`) – bez neho by klik pôsobil, akoby sa nič nedialo, keďže jediná pôvodná spätná väzba bol malý text pod mapou,
+- pri ďalšom kliku sa predchádzajúci marker odstráni (`api.map.removeLayer(...)`) a nahradí novým,
 - label sa zmení na `Vybraný fokus: <lat, lon> (zoom Z)`,
 - kým je vybraný fokus nastavený, posun mapy label už neprepisuje (zostáva zobrazený vybraný bod, nie stred mapy).
 
-Picker sa automaticky vypne (`setWindyMapFocusPickerEnabled(false)`) vždy po úspešnom (opätovnom) pripojení mapy a po použití tlačidla „Použiť tento fokus“.
+Picker sa automaticky vypne (`setWindyMapFocusPickerEnabled(false)`) vždy po úspešnom (opätovnom) pripojení mapy a po použití tlačidla „Použiť tento fokus“. Marker na Windy mape sa odstráni (`clearWindyMapFocusMarker()`) až po úspešnom prenose fokusu tlačidlom „Použiť tento fokus“ – dovtedy ostáva viditeľný aj pri prepínaní medzi režimami.
 
 ## 8. Tlačidlo „Použiť tento fokus ↗“
 
@@ -96,7 +98,7 @@ Handler `windyUseFocusButton`:
 4. Nastaví tento bod ako `selectedCenter`/`previewCenter` TermikaXC, presunie značku (`selectedPoint.position`), zosynchronizuje UI (`syncCenterUi`) a nastaví TEMP fokus bod (`setTempFocusPoint`).
 5. Preletí kamerou Cesium na daný bod (`viewer.camera.flyTo`), s výškou dopočítanou zo zoomu (`zoomToAltitudeM(zoom)` – orientačný prevod Leaflet zoom → výška kamery v metroch, min. 500 m).
 6. Spustí načítanie TEMP dát pre nový bod (`loadTempOnPointClick(point)`).
-7. Vypne picker a odošle udalosť cez `TermikaCommunicationTool.send('windy-focus', {...})` (nekritické – zlyhanie sa ignoruje), aby sa o novom fokuse mohli dozvedieť aj iné napojené nástroje/adaptéry.
+7. Vypne picker, odstráni marker z Windy mapy (`clearWindyMapFocusMarker()`) a odošle udalosť cez `TermikaCommunicationTool.send('windy-focus', {...})` (nekritické – zlyhanie sa ignoruje), aby sa o novom fokuse mohli dozvedieť aj iné napojené nástroje/adaptéry.
 
 ## 9. Konfigurácia a typické chyby
 

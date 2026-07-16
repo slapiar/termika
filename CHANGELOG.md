@@ -210,7 +210,19 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - `tools/HUD.md`,
   - `tools/MESH.md`,
   - `tools/BASEMAP.md`,
-  - `tools/RELEASE.md`.
+  - `tools/RELEASE.md`,
+  - `tools/WINDY-MAP-WINDOW.md` – podrobný popis okna „Windy mapa“ (všetky stavy pripojenia, režim výberu fokusu, tlačidlo prenosu fokusu, typické chyby).
+- Päta stránky (footer) v `XC/terrain-analysis-test.php`.
+  - zobrazuje `© PIAR Team <rok> · v<verzia>`,
+  - rok sa berie z aktuálneho serverového času (`gmdate('Y')`),
+  - verzia sa číta primárne z nového súboru `XC/asset/RELEASE_VERSION.txt` (vzdy súčasťou nasadenia), s fallbackom na koreňový `RELEASE_VERSION`.
+- Diagnostika Windy Map Forecast API 403 „unauthorized domain“ v okne Windy mapa.
+  - `readWindyUnauthorizedMessage()` rozozná 403 chybu priamo z DOM obsahu Windy embedu namiesto nečinného načítavania,
+  - chybová hláška zobrazuje presný aktuálny origin a maskovaný fingerprint aktívneho `WINDY_MAP_KEY` (prvých 6 + posledné 4 znaky),
+  - stavový odznak prechádza do `Windy: chyba` namiesto nekonečného `Windy: načítavam`.
+- Viditeľný Leaflet marker (pin) na Windy mape v režime výberu fokusu.
+  - klik do mapy v režime `✦` teraz vloží marker presne na kliknuté miesto (`setWindyMapFocusMarker`),
+  - ďalší klik nahradí marker novým, marker sa odstráni až po použití tlačidla „Použiť tento fokus“ (`clearWindyMapFocusMarker`).
 
 ### Opravené
 
@@ -249,6 +261,14 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - pribudla stavová diagnostika počtu pripravených a vykreslených plôch,
   - chyba rendereru sa zobrazuje priamo v ovládacom paneli aj v stavovom výpise,
   - diagnostika bodu uvádza stav rendereru a počet vykreslených plôch.
+- Verzia appky sa nemusela dostať na produkciu, aj keď bola správne zabalená v release ZIP-e.
+  - koreňový `RELEASE_VERSION` je mimo priečinka `XC/`, takže bežný hostingový deploy (nahráva iba obsah `XC/`) ho nemusel preniesť na server,
+  - `release.sh` teraz pri každom releasi automaticky prepíše `XC/asset/RELEASE_VERSION.txt` aktuálnou verziou a garantuje jeho zaradenie do ZIP-u,
+  - footer v `terrain-analysis-test.php` číta verziu prednostne z tohto nového, vždy nasadeného súboru.
+- Windy Map Forecast API vracalo 403 (`unauthorized domain`) aj pri korektne vygenerovanom kľúči a zhodujúcom sa origine.
+  - príčinou bol nesprávny formát whitelistu vo Windy dashboarde – zápis s `https://` prefixom sa nezhodoval s realným originom,
+  - overené empiricky (16. 7. 2026) na novo vygenerovanom kľúči: whitelist musí byť holý hostname bez `https://` a bez cesty,
+  - opravené pravidlo je zdokumentované v `postupy/WIND.md` (sekcia „Domain whitelist pravidlo“) aj v `tools/WINDY-MAP-WINDOW.md`.
 
 ### Overené používateľom
 
@@ -256,6 +276,7 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
   - grafické stvárnenie bolo prijaté bez požiadavky na korekciu,
   - svetlozelené pravítka, živé uhlové údaje, výška kamery a zameriavací prvok vytvárajú prirodzený letecký prístrojový dojem,
   - základný grafický jazyk HUD-u je schválený pre budúce rozšírenie o meteorologické veličiny a vektory prúdenia.
+- Windy Map Forecast API pripojenie bolo 16. 7. 2026 úspešne overené na produkčnej doméne aj na dev doméne po oprave formátu whitelistu (holý hostname bez `https://`).
 
 ### Technické rozhodnutia
 
