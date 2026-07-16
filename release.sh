@@ -136,6 +136,13 @@ fi
 # Persist requested/default version after validation.
 echo "$VERSION" > "$VERSION_FILE"
 
+# Mirror the version inside XC/ so it always deploys together with the app
+# (RELEASE_VERSION at repo root is a sibling of XC/ and is not guaranteed to
+# reach the hosting document root during deployment).
+XC_VERSION_FILE="$ROOT_DIR/XC/asset/RELEASE_VERSION.txt"
+mkdir -p "$(dirname "$XC_VERSION_FILE")"
+echo "$VERSION" > "$XC_VERSION_FILE"
+
 OUT_DIR="$ROOT_DIR/releases"
 OUT_FILE="$OUT_DIR/termika-xc-${VERSION}.zip"
 TMP_LIST="$(mktemp)"
@@ -143,11 +150,16 @@ trap 'rm -f "$TMP_LIST"' EXIT
 
 mkdir -p "$OUT_DIR"
 
-# Package tracked files from XC/ directory and RELEASE_VERSION.
+# Package tracked files from XC/ directory (includes XC/asset/RELEASE_VERSION.txt)
+# plus the root RELEASE_VERSION marker for local/dev convenience.
 # Exclude local node_modules or build artifacts if present.
 git -C "$ROOT_DIR" ls-files "XC/" \
   | grep -Ev '(^XC_backup/|\.zip$|\.tar|\.tgz)' \
   > "$TMP_LIST"
+
+if ! grep -qx 'XC/asset/RELEASE_VERSION.txt' "$TMP_LIST"; then
+  echo 'XC/asset/RELEASE_VERSION.txt' >> "$TMP_LIST"
+fi
 
 if git -C "$ROOT_DIR" ls-files --error-unmatch "$VERSION_FILE" >/dev/null 2>&1; then
   echo "$VERSION_FILE" >> "$TMP_LIST"

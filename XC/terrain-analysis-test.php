@@ -11,14 +11,24 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
 }
 $assetVersion = '20260716-01';
 $currentYear = gmdate('Y');
-$releaseVersionPath = dirname(__DIR__) . '/RELEASE_VERSION';
 $releaseVersion = 'unknown';
-if (is_file($releaseVersionPath)) {
+// Primárny zdroj: verzia nasadená priamo v XC/, takže je vždy súčasťou release balíka.
+// Fallback: koreňový RELEASE_VERSION (súbor bez prípony), použiteľný len lokálne/dev,
+// keďže pri hostingovom nasadení sa priečinok nad XC/ nemusí nahrávať.
+$releaseVersionPaths = [
+    __DIR__ . '/asset/RELEASE_VERSION.txt',
+    dirname(__DIR__) . '/RELEASE_VERSION',
+];
+foreach ($releaseVersionPaths as $releaseVersionPath) {
+    if (!is_file($releaseVersionPath)) {
+        continue;
+    }
     $releaseRaw = @file_get_contents($releaseVersionPath);
     if (is_string($releaseRaw)) {
         $trimmed = trim($releaseRaw);
         if ($trimmed !== '') {
             $releaseVersion = $trimmed;
+            break;
         }
     }
 }
