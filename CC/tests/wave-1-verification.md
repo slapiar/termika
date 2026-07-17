@@ -12,3 +12,14 @@
 | `cesium-basemap-control` | Terrain Analysis | DISCOVERED | skrytie/obnova imagery bez vypnutia 3D reliéfu a korektné nové vrstvy |
 | `diagnostics-console` | `XC/index.php`, `XC/terrain-analysis-test.php` | DISCOVERED | logovanie, čistenie, skrytie a obnova v oboch hostiteľoch |
 | `terrain-legend` | Terrain Analysis | DISCOVERED | otvorenie, obsah, presun, resize, zatvorenie a opätovné otvorenie |
+
+## Beh 2026-07-17 – vstupná kontrola
+
+- Register obsahuje presne osem kandidátov a všetci majú `runtime_enabled: false`.
+- Všetkých osem manifestov je platný JSON a každý odkazovaný zdroj v `XC` existuje.
+- Všetky kotvy uvedené za `#` boli nájdené v príslušnom zdroji.
+- Opravený bol chybný zápis pôvodu `window-core` z `XC/terrain-analysis-test.php:.floating-window` na `XC/terrain-analysis-test.php#.floating-window`.
+- Verejný koreň `https://xc.flyfree.cloud/` momentálne zobrazuje predvolenú stránku hostingu; očakávaná cesta `/termika/XC/terrain-analysis-test.php` vracia 404.
+- V pracovnom prostredí nie je PHP runtime a cloudový prehliadač nemá prístup k lokálnemu preview. Interakčné dôkazy preto v tomto behu nevznikli.
+
+Výsledok: vstupná štruktúra prešla, ale žiadny kandidát nebol iba na základe statickej kontroly povýšený na `VERIFIED_XC`.

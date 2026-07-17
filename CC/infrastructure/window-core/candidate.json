@@ -5,7 +5,7 @@
   "target": "infrastructure",
   "wave": 1,
   "migration": { "status": "DISCOVERED", "runtime_enabled": false, "evidence": [], "blockers": ["Treba dávkovo overiť obe existujúce implementácie okien v XC."] },
-  "origins": ["XC/js/workspace-ui.js", "XC/terrain-analysis-test.php:.floating-window"],
+  "origins": ["XC/js/workspace-ui.js", "XC/terrain-analysis-test.php#.floating-window"],
   "planned_entry": "window-core.js",
   "planned_styles": ["window-core.css"]
 }
