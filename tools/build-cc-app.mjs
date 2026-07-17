@@ -108,6 +108,42 @@ for (const mapping of viewMappings) views.push(extractElement(...mapping));
 const cursorView = views.find(view => view.selector === '#cursorCoordsBadge');
 if (cursorView) cursorView.host = 'CC/ux/workbench-shell/quick-tool-dock/quick-tool-dock.view.php';
 
+function writeClassicProxy(appRelative, moduleRelative, owner) {
+  const appFile = path.join(appRoot, appRelative);
+  const moduleFile = path.join(root, moduleRelative);
+  const relativeSource = path.relative(path.dirname(appFile), moduleFile).replaceAll('\\', '/');
+  fs.writeFileSync(appFile, `/* CC host proxy. Implementácia patrí modulu ${owner}. */\n(() => {\n  const moduleUrl = new URL(${JSON.stringify(relativeSource)}, document.currentScript.src).href;\n  document.write('<script src="' + moduleUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;') + '"><\\/script>');\n})();\n`);
+}
+
+writeClassicProxy('js/cc-host-context.js', 'CC/infrastructure/host-context/host-context/host-context.js', 'host-context');
+
+const terrainHostPath = path.join(appRoot, 'terrain-analysis-test.php');
+let terrainHost = fs.readFileSync(terrainHostPath, 'utf8');
+const inlineStart = terrainHost.lastIndexOf('<script>');
+const inlineEnd = terrainHost.lastIndexOf('</script>');
+if (inlineStart < 0 || inlineEnd <= inlineStart) throw new Error('Missing terrain host inline runtime.');
+let terrainRuntime = terrainHost.slice(inlineStart + '<script>'.length, inlineEnd);
+terrainRuntime = terrainRuntime.replace(
+  "    let highestWindowZ = 20;\n",
+  ''
+);
+terrainRuntime = terrainRuntime.replace(
+  /\s*highestWindowZ \+= 1;\s*cellDiagnostics\.style\.zIndex = highestWindowZ;\s*keepWindowInViewport\(cellDiagnostics\);/,
+  '\n        window.TermikaCCWindowManager?.bringToFront(cellDiagnostics);'
+);
+const windowManagerStart = terrainRuntime.lastIndexOf('    function keepWindowInViewport(windowEl) {');
+if (windowManagerStart < 0) throw new Error('Missing inline window manager boundary.');
+terrainRuntime = terrainRuntime.slice(0, windowManagerStart).trimEnd() + '\n';
+terrainRuntime = terrainRuntime.replace(
+  "<?php echo json_encode(CESIUM_ACCESS_TOKEN, JSON_UNESCAPED_SLASHES); ?>",
+  'window.TERMIKA_CC_CONFIG.cesiumAccessToken'
+);
+fs.writeFileSync(path.join(appRoot, 'js', 'terrain-analysis-runtime.js'), terrainRuntime);
+
+const runtimeTags = `<script>\nwindow.TERMIKA_CC_CONFIG = Object.freeze({\n    cesiumAccessToken: <?php echo json_encode(CESIUM_ACCESS_TOKEN, JSON_UNESCAPED_SLASHES); ?>\n});\n</script>\n<script src="js/cc-host-context.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>\n<script src="../infrastructure/window-core/window-manager/window-manager.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>\n<script src="js/terrain-analysis-runtime.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>`;
+terrainHost = `${terrainHost.slice(0, inlineStart)}${runtimeTags}${terrainHost.slice(inlineEnd + '</script>'.length)}`;
+fs.writeFileSync(terrainHostPath, terrainHost);
+
 fs.writeFileSync(path.join(ccRoot, 'registry', 'host-code-owners.json'), `${JSON.stringify({
   generated_at: '2026-07-17',
   host: 'CC/app',
@@ -116,7 +152,9 @@ fs.writeFileSync(path.join(ccRoot, 'registry', 'host-code-owners.json'), `${JSON
   css_proxies: cssOwnership,
   extracted_view_count: views.length,
   views,
-  inline_script_extraction_status: 'PENDING',
+  inline_script_extraction_status: 'HOST_RUNTIME_EXTRACTED',
+  host_runtime: 'CC/app/js/terrain-analysis-runtime.js',
+  extracted_runtime_modules: ['window-manager'],
 }, null, 2)}\n`);
 
 console.log(`Created CC/app with ${proxies.length} JavaScript module proxies and ${views.length} extracted views.`);

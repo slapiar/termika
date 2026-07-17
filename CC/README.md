@@ -27,6 +27,7 @@ Register prvej vlny je v `CC/registry/wave-1.json`. Jeho dnešné položky sú f
 Úplný register je v `CC/registry/modules.json`; adresárové skupiny sú v `CC/registry/groups.json`.
 
 - 69 identifikovaných prenositeľných položiek je uložených ako 69 samostatných modulov.
+- Nový `host-context` je evidovaný osobitne ako architektonický modul vytvorený pre CC; nepočíta sa medzi pôvodných 69 položiek.
 - 12 analytických a fyzikálnych jadier je zachovaných osobitne v `CC/kernels/` a nie je vydávaných za UX moduly.
 - Každý modul má vlastný adresár, `module.json`, rovnako pomenovaný `.js` vstup a samostatnú `.css` hranicu.
 - Pôvodné zdroje sú bez obsahovej zmeny uložené v podadresári `source/` daného modulu.

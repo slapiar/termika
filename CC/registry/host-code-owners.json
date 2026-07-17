@@ -380,5 +380,9 @@
       "view": "CC/ux/skewt-instrument/skewt-panel/skewt-panel.view.php"
     }
   ],
-  "inline_script_extraction_status": "PENDING"
+  "inline_script_extraction_status": "HOST_RUNTIME_EXTRACTED",
+  "host_runtime": "CC/app/js/terrain-analysis-runtime.js",
+  "extracted_runtime_modules": [
+    "window-manager"
+  ]
 }

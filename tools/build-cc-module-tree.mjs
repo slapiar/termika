@@ -127,6 +127,7 @@ const groups = {
 };
 
 const infrastructure = {
+  'host-context': [['host-context', ['postupy/2026-07-17_06-06_CC-modularna-struktura-a-kontrola-postupov.md']]],
   'module-loader': [['style-loader', ['XC/js/termika-style-loader.js']]],
   'communication-bus': [['tool-communication', ['XC/js/tool-communication.js']]],
   'windy-bridge-adapter': [
@@ -180,8 +181,14 @@ function copyModule(section, group, id, origins, kind = 'module') {
 
   const jsOrigins = copied.filter(file => file.endsWith('.js'));
   const entry = `const descriptor = Object.freeze(${JSON.stringify({ id, group, kind, origins }, null, 2)});\n\nexport function describe() {\n  return descriptor;\n}\n\nexport async function loadLegacy() {\n  const sources = ${JSON.stringify(jsOrigins, null, 2)};\n  for (const source of sources) {\n    await import(new URL(source, import.meta.url));\n  }\n  return descriptor;\n}\n\nexport default descriptor;\n`;
-  fs.writeFileSync(path.join(dir, `${id}.js`), entry);
-  fs.writeFileSync(path.join(dir, `${id}.css`), `/* Samostatná štýlová hranica modulu ${id}. Pôvodné štýly zostávajú zachované v zdrojových snapshotoch, kým sa bezpečne vyextrahujú. */\n`);
+  const entryPath = path.join(dir, `${id}.js`);
+  const stylePath = path.join(dir, `${id}.css`);
+  if (!fs.existsSync(entryPath) || !fs.readFileSync(entryPath, 'utf8').includes('@cc-owned')) {
+    fs.writeFileSync(entryPath, entry);
+  }
+  if (!fs.existsSync(stylePath) || !fs.readFileSync(stylePath, 'utf8').includes('@cc-owned')) {
+    fs.writeFileSync(stylePath, `/* Samostatná štýlová hranica modulu ${id}. Pôvodné štýly zostávajú zachované v zdrojových snapshotoch, kým sa bezpečne vyextrahujú. */\n`);
+  }
 
   const manifest = {
     id,
@@ -198,7 +205,12 @@ function copyModule(section, group, id, origins, kind = 'module') {
       runtime_enabled: false,
     },
   };
-  fs.writeFileSync(path.join(dir, 'module.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+  const manifestPath = path.join(dir, 'module.json');
+  const currentManifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, 'utf8')) : null;
+  if (currentManifest?.migration?.runtime_enabled === true) {
+    manifest.migration = currentManifest.migration;
+  }
+  fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   registry.push({ id, group, section, kind, path: path.relative(root, dir), runtime_enabled: false });
 }
 
@@ -207,7 +219,8 @@ for (const [group, modules] of Object.entries(groups)) {
   for (const [id, origins] of modules) copyModule(section, group, id, origins);
 }
 for (const [group, modules] of Object.entries(infrastructure)) {
-  for (const [id, origins] of modules) copyModule('infrastructure', group, id, origins, 'infrastructure');
+  const kind = group === 'host-context' ? 'architecture' : 'infrastructure';
+  for (const [id, origins] of modules) copyModule('infrastructure', group, id, origins, kind);
 }
 for (const [group, modules] of Object.entries(services)) {
   for (const [id, origins] of modules) copyModule('services', group, id, origins, 'service');
@@ -216,22 +229,24 @@ for (const [id, origins] of kernels) copyModule('kernels', 'analytic-and-physics
 
 registry.sort((a, b) => a.path.localeCompare(b.path));
 fs.mkdirSync(path.join(root, 'CC', 'registry'), { recursive: true });
-const transferable = registry.filter(item => item.kind !== 'kernel');
+const transferable = registry.filter(item => item.kind !== 'kernel' && item.kind !== 'architecture');
+const architectural = registry.filter(item => item.kind === 'architecture');
 const kernelEntries = registry.filter(item => item.kind === 'kernel');
-const groupRegistry = [...new Set(transferable.map(item => `${item.section}/${item.group}`))]
+const groupRegistry = [...new Set(registry.filter(item => item.kind !== 'kernel').map(item => `${item.section}/${item.group}`))]
   .sort()
   .map(groupPath => {
     const [section, group] = groupPath.split('/');
     return {
       section,
       group,
-      modules: transferable.filter(item => item.section === section && item.group === group).map(item => item.id),
+      modules: registry.filter(item => item.kind !== 'kernel' && item.section === section && item.group === group).map(item => item.id),
     };
   });
 
 fs.writeFileSync(path.join(root, 'CC', 'registry', 'modules.json'), `${JSON.stringify({
   generated_at: '2026-07-17',
   transferable_module_count: transferable.length,
+  architectural_module_count: architectural.length,
   preserved_kernel_count: kernelEntries.length,
   total_entry_count: registry.length,
   modules: registry,
@@ -242,4 +257,4 @@ fs.writeFileSync(path.join(root, 'CC', 'registry', 'groups.json'), `${JSON.strin
   groups: groupRegistry,
 }, null, 2)}\n`);
 
-console.log(`Created ${transferable.length} transferable modules and preserved ${kernelEntries.length} kernels.`);
+console.log(`Created ${transferable.length} transferable modules, ${architectural.length} architectural modules and preserved ${kernelEntries.length} kernels.`);

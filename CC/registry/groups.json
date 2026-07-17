@@ -1,12 +1,19 @@
 {
   "generated_at": "2026-07-17",
-  "group_count": 40,
+  "group_count": 41,
   "groups": [
     {
       "section": "infrastructure",
       "group": "communication-bus",
       "modules": [
         "tool-communication"
+      ]
+    },
+    {
+      "section": "infrastructure",
+      "group": "host-context",
+      "modules": [
+        "host-context"
       ]
     },
     {

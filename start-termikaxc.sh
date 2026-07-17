@@ -3,10 +3,18 @@ set -euo pipefail
 
 PORT="${1:-${TERMIKA_BIND_PORT:-8000}}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCROOT="$ROOT_DIR/CC"
+DOCROOT="$ROOT_DIR/CC/app"
 LOG_FILE="/tmp/termikaxc-php.log"
 LOCAL_URL="http://127.0.0.1:${PORT}/"
 START_PATH="${TERMIKA_START_PATH:-terrain-analysis-test.php}"
+
+if [[ -z "${TERMIKA_LOCAL_CONFIG_PATH:-}" ]]; then
+  if [[ -f "$ROOT_DIR/XC/asset/local-config.php" ]]; then
+    export TERMIKA_LOCAL_CONFIG_PATH="$ROOT_DIR/XC/asset/local-config.php"
+  elif [[ -f "$ROOT_DIR/.local-config.php" ]]; then
+    export TERMIKA_LOCAL_CONFIG_PATH="$ROOT_DIR/.local-config.php"
+  fi
+fi
 
 set_codespace_ports_private() {
   if [[ -z "${CODESPACE_NAME:-}" ]]; then

@@ -1,8 +1,9 @@
 {
   "generated_at": "2026-07-17",
   "transferable_module_count": 69,
+  "architectural_module_count": 1,
   "preserved_kernel_count": 12,
-  "total_entry_count": 81,
+  "total_entry_count": 82,
   "modules": [
     {
       "id": "tool-communication",
@@ -10,6 +11,14 @@
       "section": "infrastructure",
       "kind": "infrastructure",
       "path": "CC/infrastructure/communication-bus/tool-communication",
+      "runtime_enabled": false
+    },
+    {
+      "id": "host-context",
+      "group": "host-context",
+      "section": "infrastructure",
+      "kind": "architecture",
+      "path": "CC/infrastructure/host-context/host-context",
       "runtime_enabled": false
     },
     {

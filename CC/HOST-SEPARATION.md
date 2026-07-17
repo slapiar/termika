@@ -15,7 +15,7 @@
 
 ## Zostávajúci inline dlh
 
-Veľký inline skript v `CC/app/terrain-analysis-test.php` zatiaľ obsahuje spoločný stav a obsluhu viacerých modulov. Zdieľa najmä:
+Veľký inline skript bol z `CC/app/terrain-analysis-test.php` odstránený. Jeho zostávajúca hostiteľská orchestrace je dočasne uložená v `CC/app/js/terrain-analysis-runtime.js` a zdieľa najmä:
 
 - zvolený fokus a Cesium viewer,
 - TEMP profil a jeho databázový stav,
@@ -25,8 +25,14 @@ Veľký inline skript v `CC/app/terrain-analysis-test.php` zatiaľ obsahuje spol
 - záznam MediaRecorder,
 - spoločné logovanie a cleanup.
 
-Tento blok nesmie byť plošne rozdelený iba podľa názvov funkcií. Pred odstránením z hostiteľa treba zaviesť explicitný hostiteľský kontext a udalostné kontrakty. Dovtedy zostáva v registri označený `PENDING`; jeho existencia sa nesmie vydávať za dokončené oddelenie.
+Vznikol nový architektonický modul `CC/infrastructure/host-context/host-context`, ktorý poskytuje stav, služby, udalosti a cleanup bez priamej väzby na konkrétne UX moduly.
+
+Zo spoločného runtime bol ako prvý úplne vyčlenený `window-manager`. Hostiteľ ho načíta ako samostatný modul a diagnostika bunky používa jeho verejné `bringToFront()` namiesto zdieľanej premennej `highestWindowZ`.
+
+Zostávajúci runtime sa nesmie plošne rozdeliť iba podľa názvov funkcií. Jednotlivé bloky sa budú vyberať cez explicitný hostiteľský kontext a udalostné kontrakty. Stav `HOST_RUNTIME_EXTRACTED` preto znamená, že PHP už neobsahuje monolitický inline skript; neznamená ešte úplné rozdelenie všetkých jeho funkcií.
 
 ## Reprodukcia
 
 Hostiteľský strom a vlastnícke proxy vytvára `tools/build-cc-app.mjs`. Skript nikdy nekopíruje `asset/local-config.php` ani `.local-config.php` a nemení `XC`.
+
+Lokálny štart používa document root `CC/app`. Ak existuje `XC/asset/local-config.php` alebo koreňový `.local-config.php`, `start-termikaxc.sh` ho poskytne PHP cez `TERMIKA_LOCAL_CONFIG_PATH`; tajné kľúče sa nekopírujú do `CC`.

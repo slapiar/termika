@@ -1,0 +1,21 @@
+{
+  "id": "host-context",
+  "group": "host-context",
+  "section": "infrastructure",
+  "kind": "architecture",
+  "entry": "host-context.js",
+  "styles": [
+    "host-context.css"
+  ],
+  "origins": [
+    "postupy/2026-07-17_06-06_CC-modularna-struktura-a-kontrola-postupov.md"
+  ],
+  "copied_files": [
+    "source/postupy__2026-07-17_06-06_CC-modularna-struktura-a-kontrola-postupov.md"
+  ],
+  "migration": {
+    "source_copied": false,
+    "functional_status": "WRAPPED_CC",
+    "runtime_enabled": true
+  }
+}

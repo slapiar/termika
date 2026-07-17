@@ -1,1 +1,1 @@
-/* Samostatná štýlová hranica modulu window-manager. Pôvodné štýly zostávajú zachované v zdrojových snapshotoch, kým sa bezpečne vyextrahujú. */
+/* @cc-owned window-manager: vzhľad okien zostáva v samostatných view moduloch a spoločnom window-base.css. */

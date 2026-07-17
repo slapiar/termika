@@ -17,7 +17,7 @@
   ],
   "migration": {
     "source_copied": true,
-    "functional_status": "NEOVERENE",
-    "runtime_enabled": false
+    "functional_status": "WRAPPED_CC",
+    "runtime_enabled": true
   }
 }
