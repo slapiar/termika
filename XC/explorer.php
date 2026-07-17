@@ -100,7 +100,7 @@ if (stripos($html, 'js/flight-emergency-disengage.js') === false) {
     $bodyScripts .= '    <script src="js/flight-emergency-disengage.js?v=20260715-01"></script>' . "\n";
 }
 if (stripos($html, 'js/explorer-analysis-bridge.js') === false) {
-    $bodyScripts .= '    <script src="js/explorer-analysis-bridge.js?v=20260715-02"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/explorer-analysis-bridge.js?v=20260717-01"></script>' . "\n";
 }
 
 if ($bodyScripts !== '') {

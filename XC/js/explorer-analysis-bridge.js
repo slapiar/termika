@@ -173,6 +173,11 @@
         return saved;
     }
 
+    function clearContext() {
+        try { sessionStorage.removeItem(STORAGE_KEY); } catch (_) {}
+        try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+    }
+
     function readContext() {
         let serialized = null;
         try {
@@ -449,6 +454,7 @@
                             'success'
                         );
                     }
+                    clearContext();
                     return true;
                 }
             } catch (error) {

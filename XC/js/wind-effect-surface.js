@@ -87,7 +87,7 @@
 
         if (!document.querySelector('script[data-explorer-analysis-bridge="true"]')) {
             const script = document.createElement("script");
-            script.src = "js/explorer-analysis-bridge.js?v=20260715-02";
+            script.src = "js/explorer-analysis-bridge.js?v=20260717-01";
             script.defer = true;
             script.dataset.explorerAnalysisBridge = "true";
             document.body.appendChild(script);

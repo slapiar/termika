@@ -37,7 +37,7 @@ if (stripos($html, 'js/flight-emergency-disengage.js') === false) {
     $bodyScripts .= '    <script src="js/flight-emergency-disengage.js?v=20260715-01" data-flight-emergency-disengage="true"></script>' . "\n";
 }
 if (stripos($html, 'js/explorer-analysis-bridge.js') === false) {
-    $bodyScripts .= '    <script src="js/explorer-analysis-bridge.js?v=20260715-02" data-explorer-analysis-bridge="true"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/explorer-analysis-bridge.js?v=20260717-01" data-explorer-analysis-bridge="true"></script>' . "\n";
 }
 if (stripos($html, 'js/explorer-analysis-arrival.js') === false) {
     $bodyScripts .= '    <script src="js/explorer-analysis-arrival.js?v=20260715-01" data-explorer-analysis-arrival="true"></script>' . "\n";
