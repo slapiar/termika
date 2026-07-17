@@ -19,7 +19,8 @@
 - Všetkých osem manifestov je platný JSON a každý odkazovaný zdroj v `XC` existuje.
 - Všetky kotvy uvedené za `#` boli nájdené v príslušnom zdroji.
 - Opravený bol chybný zápis pôvodu `window-core` z `XC/terrain-analysis-test.php:.floating-window` na `XC/terrain-analysis-test.php#.floating-window`.
-- Verejný koreň `https://xc.flyfree.cloud/` momentálne zobrazuje predvolenú stránku hostingu; očakávaná cesta `/termika/XC/terrain-analysis-test.php` vracia 404.
-- V pracovnom prostredí nie je PHP runtime a cloudový prehliadač nemá prístup k lokálnemu preview. Interakčné dôkazy preto v tomto behu nevznikli.
+- Produkčná inštancia je v podadresári `https://xc.flyfree.cloud/termika/`; testovacie pracovisko sa z nej otvára na `https://xc.flyfree.cloud/termika/terrain-analysis-test.php`.
+- Živý test potvrdil na testovacom pracovisku pätičku `© PIAR Team 2026 · v3.1.0`.
+- Cloudový prehliadač nevytvoril WebGL kontext (`Error constructing CesiumWidget`), preto výsledok nemožno použiť ako dôkaz mapových a Cesium interakcií. V pracovnom prostredí zároveň nie je PHP runtime pre plnohodnotné lokálne spustenie.
 
 Výsledok: vstupná štruktúra prešla, ale žiadny kandidát nebol iba na základe statickej kontroly povýšený na `VERIFIED_XC`.
