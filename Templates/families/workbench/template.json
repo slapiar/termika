@@ -16,8 +16,5 @@
     "status",
     "scripts"
   ],
-  "language_domains": [
-    "common",
-    "workbench"
-  ]
+  "language_catalog": "selected"
 }
