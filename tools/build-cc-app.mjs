@@ -57,7 +57,7 @@ for (const entry of cssOwnership) {
 function extractElement(hostRelative, id, modulePath, outputName) {
   const hostPath = path.join(appRoot, hostRelative);
   let host = fs.readFileSync(hostPath, 'utf8');
-  const idPattern = new RegExp(`<([a-zA-Z][\\w:-]*)\\b[^>]*\\bid=["']${id.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}["'][^>]*>`);
+  const idPattern = new RegExp(`<([a-zA-Z][\\w:-]*)\\b[^>]*\\bid=["']${id}["'][^>]*>`);
   const opening = idPattern.exec(host);
   if (!opening) throw new Error(`Missing #${id} in ${hostRelative}`);
   const tag = opening[1];
