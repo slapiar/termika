@@ -75,25 +75,40 @@ if (!explorer.source.includes('class="brand-nav"')) {
   explorer.changed = true;
 }
 if (explorer.source.includes("$assetVersion = '20260715-01';")) {
-  explorer.source = explorer.source.replace("$assetVersion = '20260715-01';", "$assetVersion = '20260717-04';");
+  explorer.source = explorer.source.replace("$assetVersion = '20260715-01';", "$assetVersion = '20260717-05';");
   explorer.changed = true;
 }
-const autoRestore = '    const restored = restore();';
-const emptyStart = '    const restored = false;';
-if (explorer.source.includes(autoRestore)) {
-  explorer.source = explorer.source.replace(autoRestore, emptyStart);
+if (explorer.source.includes('    const restored = false;')) {
+  explorer.source = explorer.source.replace('    const restored = false;', '    const restored = restore();');
   explorer.changed = true;
 }
+const emptyMessage = `    setStatus('Prieskumník je pripravený s prázdnou úlohou. Body alebo let načítaj až výslovným príkazom.', 'info');`;
 const restoredMessage = `    if (restored) {
         setStatus('Obnovila som posledný rozpracovaný plán z tohto prehliadača.', 'ok');
         if (state.entities.length) setTimeout(focusTask, 500);
     }`;
-const emptyMessage = `    setStatus('Prieskumník je pripravený s prázdnou úlohou. Body alebo let načítaj až výslovným príkazom.', 'info');`;
-if (explorer.source.includes(restoredMessage)) {
-  explorer.source = explorer.source.replace(restoredMessage, emptyMessage);
+if (explorer.source.includes(emptyMessage)) {
+  explorer.source = explorer.source.replace(emptyMessage, restoredMessage);
   explorer.changed = true;
 }
 writePage(explorer);
+
+const explorerImportPath = path.join(root, 'CC', 'ux', 'route-import', 'explorer-route-import', 'source', 'XC__js__explorer-import.js');
+if (!fs.existsSync(explorerImportPath)) throw new Error(`Chýba ${explorerImportPath}`);
+let explorerImport = fs.readFileSync(explorerImportPath, 'utf8');
+const rawCoordinatePush = `            if (coordinate) {
+                coordinates.push(coordinate);
+                return;
+            }`;
+const safeCoordinatePush = `            if (coordinate) {
+                const isNullPlaceholder = Math.abs(coordinate.lat) < 1e-10 && Math.abs(coordinate.lon) < 1e-10;
+                if (!isNullPlaceholder) coordinates.push(coordinate);
+                return;
+            }`;
+if (explorerImport.includes(rawCoordinatePush)) {
+  explorerImport = explorerImport.replace(rawCoordinatePush, safeCoordinatePush);
+  fs.writeFileSync(explorerImportPath, explorerImport);
+}
 
 const setup = readPage('setup.php');
 const setupHeading = '<h1>TermikaXC setup bez terminalu</h1>';
@@ -122,4 +137,4 @@ if (setup.source.includes(oldSetupHint)) {
 }
 writePage(setup);
 
-console.log('CC runtime pripravený: hlavná stránka, test, Prieskumník a Nastavenie majú spoločnú navigáciu; Prieskumník štartuje prázdny.');
+console.log('CC runtime pripravený: navigácia je zjednotená a Explorer ignoruje nulové IGC deklarácie 0°, 0°.');
