@@ -9,7 +9,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     http_response_code(500);
     exit('Chýba CESIUM_ACCESS_TOKEN.');
 }
-$assetVersion = '20260717-02';
+$assetVersion = '20260718-01';
 $currentYear = gmdate('Y');
 $releaseVersion = null;
 $releaseVersionPath = __DIR__ . '/asset/RELEASE_VERSION.txt';
@@ -48,6 +48,7 @@ if (is_readable($releaseVersionPath)) {
     <script src="js/cesium-render.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="ux/igc-parser.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/pilot-network.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/flight-temp-linker.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/workspace-crosshair.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/workspace-hud-toggle.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-camera-hud-coordinates.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>

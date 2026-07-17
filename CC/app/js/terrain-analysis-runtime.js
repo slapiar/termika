@@ -78,6 +78,10 @@
     const quickClearButton = document.getElementById('quickClearButton');
     const quickCursorModeButton = document.getElementById('quickCursorModeButton');
     const quickHudToggleButton = document.getElementById('quickHudToggleButton');
+    const quickLoadIgcButton = document.getElementById('quickLoadIgcButton');
+    const quickTempReachButton = document.getElementById('quickTempReachButton');
+    const quickPilotModelToggleButton = document.getElementById('quickPilotModelToggleButton');
+    const pilotModelSelect = document.getElementById('pilotModelSelect');
     const igcInput = document.getElementById('igcFileInput');
     const loadIgcButton = document.getElementById('loadIgcButton');
     const tempInput = document.getElementById('tempFileInput');
@@ -106,6 +110,10 @@
     let mapMouseCrosshairMode = true;
     let tempAutoSaveInProgress = false;
     let lastAutoSavedTempKey = '';
+    const PILOT_MODEL_STORAGE_KEY = 'termikaXC.pilotModel.v1';
+    let pilotModelChoice = '';
+    try { pilotModelChoice = localStorage.getItem(PILOT_MODEL_STORAGE_KEY) || ''; } catch (error) { pilotModelChoice = ''; }
+    let pilotModelActive = false;
     const communicationDisposers = [];
     let runtimeCleanupDone = false;
     let sceneInputHandler = null;
@@ -1557,6 +1565,32 @@
     window.TermikaCC3DObjectLoader?.attachViewer(viewer);
     viewer.clock.shouldAnimate = true;
 
+    function updatePilotModelToggleUi() {
+        if (!quickPilotModelToggleButton) return;
+        quickPilotModelToggleButton.classList.toggle('is-active', pilotModelActive);
+        quickPilotModelToggleButton.disabled = !pilotModelChoice;
+        quickPilotModelToggleButton.title = pilotModelChoice
+            ? (pilotModelActive ? 'Zobraziť pilota ako guľu' : 'Zobraziť pilota ako 3D objekt')
+            : 'Vyber 3D objekt v sekcii Zdroje';
+    }
+
+    if (pilotModelSelect) {
+        pilotModelSelect.value = pilotModelChoice;
+        if (pilotModelChoice) window.CesiumRender?.preloadPilotModel?.(viewer, pilotModelChoice);
+        pilotModelSelect.addEventListener('change', () => {
+            pilotModelChoice = pilotModelSelect.value || '';
+            try { localStorage.setItem(PILOT_MODEL_STORAGE_KEY, pilotModelChoice); } catch (error) { /* localStorage nedostupný */ }
+            if (!pilotModelChoice) pilotModelActive = false;
+            if (pilotModelChoice) window.CesiumRender?.preloadPilotModel?.(viewer, pilotModelChoice);
+            if (pilotModelActive) window.CesiumRender?.setPilotModel?.(viewer, pilotModelChoice);
+            updatePilotModelToggleUi();
+            logStatus(pilotModelChoice
+                ? 'Pripravený 3D objekt pilota: ' + (pilotModelSelect.selectedOptions[0]?.textContent || pilotModelChoice) + '.'
+                : 'Značka pilota bude opäť guľa.', 'success');
+        });
+    }
+    updatePilotModelToggleUi();
+
     let fpsFrameCounter = 0;
     let fpsLastTs = performance.now();
     viewer.scene.postRender.addEventListener(() => {
@@ -1626,6 +1660,20 @@
         applyMouseMode(!mapMouseCrosshairMode);
     });
     quickHudToggleButton?.addEventListener('click', () => document.getElementById('workspaceHudToggle')?.click());
+    quickLoadIgcButton?.addEventListener('click', () => igcInput?.click());
+    quickTempReachButton?.addEventListener('click', () => {
+        const isActive = window.FlightTempLinker?.toggleReachOverlay?.(viewer);
+        quickTempReachButton.classList.toggle('is-active', Boolean(isActive));
+    });
+    quickPilotModelToggleButton?.addEventListener('click', () => {
+        if (!pilotModelChoice) {
+            logStatus('Najprv vyber 3D objekt v sekcii Zdroje.', 'error');
+            return;
+        }
+        pilotModelActive = !pilotModelActive;
+        window.CesiumRender?.setPilotModel?.(viewer, pilotModelActive ? pilotModelChoice : null);
+        updatePilotModelToggleUi();
+    });
     openSetupButton?.addEventListener('click', () => {
         window.location.href = 'setup.php';
     });
@@ -1730,12 +1778,21 @@
             syncCenterUi(selectedCenter);
             loadedIgcName.textContent = file.name;
             loadedIgcName.title = file.name;
-            viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(selectedCenter.lon, selectedCenter.lat, 3000),
-                duration: 1.5
-            });
             logStatus('IGC načítaný: ' + file.name + ', body=' + points.length + ', nový stred ' + formatCenter(selectedCenter) + '.', 'success');
             setActiveNavSection('analysis', false);
+
+            if (window.FlightTempLinker?.handleIgcLoaded) {
+                window.FlightTempLinker.handleIgcLoaded({
+                    flightDate: parsedShared?.flightDate || null,
+                    route: points,
+                    viewer,
+                    settings: {
+                        windyTempUrl: document.getElementById('windyTempUrl')?.value?.trim() || undefined
+                    }
+                }).catch((linkerError) => {
+                    logStatus('TEMP podľa IGC: ' + (linkerError?.message || String(linkerError)), 'error');
+                });
+            }
         } catch (error) {
             logStatus('IGC súbor sa nepodarilo načítať: ' + (error?.message || String(error)), 'error');
         } finally {

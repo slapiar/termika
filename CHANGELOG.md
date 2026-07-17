@@ -30,6 +30,21 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 
 ### Pridané
 
+- IGC → TEMP linker – automatické pripojenie meteorologického TEMP profilu podľa dátumu letu z `.igc`.
+  - nová akcia `findTempNear` v `CC/app/genauto.php`: vyhľadá v existujúcom SQLite archíve TEMP profilov najbližší **starší** (nikdy nie z budúcnosti voči letu) profil v okruhu 100 km od zadaného bodu,
+  - nový modul `CC/app/js/flight-temp-linker.js` (`window.FlightTempLinker`) – pri načítaní `.igc` prečíta dátum letu a bod štartu; čerstvé lety (≤ 2 dni) použijú živé Windy TEMP, staršie lety najprv hľadajú najbližší starší profil v archíve, až potom (s viditeľným upozornením `isMismatched`) padnú na živé dáta,
+  - automatická detekcia medzier v dosahu 100 km pozdĺž celej trate letu a doťahovanie ďalších profilov (do 6 na let),
+  - kruhy dosahu (100 km) pripojených profilov sa dajú zobraziť/skryť na mape,
+  - pripravené (zatiaľ nenapojené na fyziku) API `interpolateAt(lat, lon)` pre váženú (IDW) interpoláciu medzi profilmi s mierou spoľahlivosti a proveninenciou,
+  - nové ikony rýchleho panela `⇧ Načítať IGC` a `⊚ Zobraziť dosah TEMP` (`CC/ux/workbench-shell/quick-tool-dock/quick-tool-dock.view.php`), reuse existujúcej IGC načítavacej logiky,
+  - podrobný popis: [`tools/FLIGHT-TEMP-LINKER.md`](tools/FLIGHT-TEMP-LINKER.md).
+
+### Opravené
+
+- Oprava blokujúcej chyby v `CC/ux/flight-playback/flight-track-renderer/source/XC__js__cesium-render.js`: `nastavRezimKamery()` volala globálnu `setMapState(...)` bez `window.` prefixu, ktorá na `CC/app/terrain-analysis-test.php` neexistuje – spôsobovalo to `ReferenceError` a blokovalo celé načítanie `.igc` (aj pôvodné tlačidlo v sekcii „Zdroje“). Opravené na defenzívne `window.setMapState?.(...)`.
+
+### Pridané (predchádzajúce)
+
 - Modulový loader hotových 3D objektov pre CC testovacie pracovisko.
   - nový modul `CC/ux/object-library/three-d-object-loader` s API `window.TermikaCC3DObjectLoader`,
   - hostiteľský proxy vstup `CC/app/js/three-d-object-loader.js` načítaný v `CC/app/terrain-analysis-test.php`,

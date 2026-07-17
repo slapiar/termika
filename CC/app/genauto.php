@@ -308,6 +308,21 @@ function today_utc(): string {
     return gmdate('Y-m-d');
 }
 
+function haversine_km(float $lat1, float $lon1, float $lat2, float $lon2): float {
+    $earthRadiusKm = 6371.0;
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLon = deg2rad($lon2 - $lon1);
+    $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+    return 2 * $earthRadiusKm * atan2(sqrt($a), sqrt(1 - $a));
+}
+
+function day_diff_days(string $dayUtc, string $targetDayUtc): int {
+    $eventTs = strtotime($dayUtc . 'T00:00:00+00:00');
+    $targetTs = strtotime($targetDayUtc . 'T00:00:00+00:00');
+    if ($eventTs === false || $targetTs === false) return 999999;
+    return (int) round(($eventTs - $targetTs) / 86400);
+}
+
 function normalize_json_identifier(string $kind, string $jsonFile): ?string {
     $kind = sanitize_kind($kind);
     if ($kind === null) return null;
@@ -870,6 +885,97 @@ if ($action === 'saveTempProfile') {
         "levels_count" => (int)($storedTemp['levels_count'] ?? count($tempInfo['profile'])),
         "unused_temp_count" => count_unused_temp_events($pdo),
         "guard_dog" => $guardDog
+    ]);
+}
+
+if ($action === 'findTempNear') {
+    $center = isset($payload['center']) && is_array($payload['center']) ? $payload['center'] : [];
+    $lat = safe_float($center['lat'] ?? null);
+    $lon = safe_float($center['lon'] ?? null);
+    if ($lat === null || $lon === null) {
+        respond(400, ["status" => "error", "message" => "Chýbajú alebo sú neplatné súradnice stredu vyhľadávania."]);
+    }
+
+    $radiusKmRaw = isset($payload['radius_km']) ? (float)$payload['radius_km'] : 100.0;
+    $radiusKm = max(1.0, min(2000.0, $radiusKmRaw));
+
+    $targetDayUtc = isset($payload['target_day_utc']) ? (string)$payload['target_day_utc'] : today_utc();
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $targetDayUtc)) {
+        $targetDayUtc = today_utc();
+    }
+
+    $limitRaw = isset($payload['limit']) ? (int)$payload['limit'] : 20;
+    $limit = max(1, min(200, $limitRaw));
+
+    // Hrubý bounding-box predfilter (1 stupeň zemepisnej šírky ~ 111 km).
+    $latDeltaDeg = $radiusKm / 111.0;
+    $lonDeltaDeg = $radiusKm / max(1.0, 111.0 * cos(deg2rad($lat)));
+
+    try {
+        $stmt = $pdo->prepare(
+            'SELECT e.file_identifier, e.generated_at_utc, e.day_utc, e.center_lat, e.center_lon,
+                    e.temp_hash, e.is_manual, e.source_json,
+                    p.levels_count, p.z_min_m, p.z_max_m
+             FROM temp_profile_events e
+             INNER JOIN temp_profiles p ON p.temp_hash = e.temp_hash
+             WHERE e.center_lat BETWEEN :lat_min AND :lat_max
+               AND e.center_lon BETWEEN :lon_min AND :lon_max
+             ORDER BY e.generated_at_utc DESC
+             LIMIT 500'
+        );
+        $stmt->execute([
+            ':lat_min' => $lat - $latDeltaDeg,
+            ':lat_max' => $lat + $latDeltaDeg,
+            ':lon_min' => $lon - $lonDeltaDeg,
+            ':lon_max' => $lon + $lonDeltaDeg
+        ]);
+        $rows = $stmt->fetchAll();
+    } catch (Throwable $error) {
+        respond(500, ["status" => "error", "message" => "Nepodarilo sa vyhľadať TEMP záznamy."]);
+    }
+
+    $candidates = [];
+    foreach ($rows as $row) {
+        $rLat = (float)$row['center_lat'];
+        $rLon = (float)$row['center_lon'];
+        $distanceKm = haversine_km($lat, $lon, $rLat, $rLon);
+        if ($distanceKm > $radiusKm) continue;
+
+        $dayUtc = (string)($row['day_utc'] ?? '');
+        $dayDiff = day_diff_days($dayUtc, $targetDayUtc);
+        // Zaujímajú nás iba záznamy z dňa letu alebo staršie (nikdy z budúcnosti voči letu) –
+        // pozri postupy/WIND-noty-v1.md: dáta sa nesmú nahrádzať vymyslenými/nesedčiacimi hodnotami.
+        if ($dayDiff > 0) continue;
+
+        $candidates[] = [
+            'file' => (string)($row['file_identifier'] ?? ''),
+            'generated_at_utc' => (string)($row['generated_at_utc'] ?? ''),
+            'day_utc' => $dayUtc,
+            'center' => ['lat' => $rLat, 'lon' => $rLon],
+            'temp_hash' => (string)($row['temp_hash'] ?? ''),
+            'is_manual' => isset($row['is_manual']) ? ((int)$row['is_manual'] === 1) : false,
+            'levels_count' => isset($row['levels_count']) ? (int)$row['levels_count'] : 0,
+            'source' => decode_json_mixed(isset($row['source_json']) ? (string)$row['source_json'] : null),
+            'distance_km' => round($distanceKm, 3),
+            'day_diff_days' => $dayDiff
+        ];
+    }
+
+    // Zoradenie: najbližší (podľa dní) starší/rovnaký záznam, pri zhode bližší podľa vzdialenosti.
+    usort($candidates, function ($a, $b) {
+        $diffCmp = abs($a['day_diff_days']) <=> abs($b['day_diff_days']);
+        if ($diffCmp !== 0) return $diffCmp;
+        return $a['distance_km'] <=> $b['distance_km'];
+    });
+
+    $candidates = array_slice($candidates, 0, $limit);
+
+    respond(200, [
+        "status" => "success",
+        "target_day_utc" => $targetDayUtc,
+        "radius_km" => $radiusKm,
+        "candidates" => $candidates,
+        "count" => count($candidates)
     ]);
 }
 

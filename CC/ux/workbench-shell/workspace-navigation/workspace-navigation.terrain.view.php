@@ -67,6 +67,20 @@
                     </label>
                     <button id="centerApplyButton" type="button">Presunúť mapu na stred (3000 m ASL)</button>
                 </div>
+                <div class="drawer-card">
+                    <h3>Značka pilota</h3>
+                    <label>3D objekt namiesto gule
+                        <select id="pilotModelSelect">
+                            <option value="">Guľa (predvolené)</option>
+                            <option value="cesium_air">Lietadlo</option>
+                            <option value="cesium_drone">Dron</option>
+                            <option value="cesium_balloon">Balón</option>
+                            <option value="ground_vehicle">Pozemné vozidlo</option>
+                            <option value="cesium_milk_truck">Nákladiak</option>
+                        </select>
+                    </label>
+                    <p style="margin:6px 0 0;color:#6f8594;font-size:12px;">Model sa načíta vopred (skrytý), tlačidlo ✈ v rýchlom docku ho potom okamžite prepne s guľou.</p>
+                </div>
                 <div class="drawer-card full">
                     <h3>Zdroje TEMP a sieťové nastavenia</h3>
                     <div class="drawer-grid">

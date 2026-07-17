@@ -2,6 +2,9 @@
 window.CesiumRender = {
     kominEntities: [],
     p3DBodPilota: null,
+    p3DObjektPilota: null,
+    pilotModelId: null,
+    lastPilotData: null,
     celaLetovaStopaPrimitive: null,
     prehranaStopaCollection: null,
     prehraneUseky: [],
@@ -18,7 +21,7 @@ window.CesiumRender = {
     },
 
     resetujLet: function (viewer) {
-        [this.p3DBodPilota, this.startEntity, this.finishEntity].forEach((entity) => {
+        [this.p3DBodPilota, this.p3DObjektPilota, this.startEntity, this.finishEntity].forEach((entity) => {
             if (entity) viewer.entities.remove(entity);
         });
 
@@ -30,6 +33,8 @@ window.CesiumRender = {
         }
 
         this.p3DBodPilota = null;
+        this.p3DObjektPilota = null;
+        this.lastPilotData = null;
         this.celaLetovaStopaPrimitive = null;
         this.prehranaStopaCollection = null;
         this.prehraneUseky = [];
@@ -131,7 +136,7 @@ window.CesiumRender = {
 
         if (this.cameraMode === "free") {
             viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
-            setMapState("VOĽNÁ 3D KAMERA", "success");
+            window.setMapState?.("VOĽNÁ 3D KAMERA", "success");
             logStatus("Kamera je vo voľnom 3D režime. Ovládanie Cesium myšou ostáva aktívne.");
             viewer.scene.requestRender();
             return;
@@ -139,7 +144,7 @@ window.CesiumRender = {
 
         if (this.cameraMode === "overview") {
             this.zamerajCelyLet(viewer);
-            setMapState("CELÝ LET", "success");
+            window.setMapState?.("CELÝ LET", "success");
             return;
         }
 
@@ -152,7 +157,7 @@ window.CesiumRender = {
 
         this.aktualizujKameru(viewer, letoveBody, index, true);
         const nazov = this.cameraMode === "follow" ? "KAMERA ZA PILOTOM" : "POHĽAD PILOTA";
-        setMapState(nazov, "success");
+        window.setMapState?.(nazov, "success");
         logStatus(this.cameraMode === "follow"
             ? "Kamera bola pripnutá za pilota."
             : "Kamera bola prepnutá do pohľadu z pozície pilota.", "success");
@@ -283,10 +288,16 @@ window.CesiumRender = {
         );
 
         const farbaPilota = this.farbaVaria(liveData.vertical_speed_ms, 1.0);
+        const safeIndex = Array.isArray(letoveBody) ? Math.max(0, Math.min(letoveBody.length - 1, index)) : index;
+        const smer = Array.isArray(letoveBody) && letoveBody.length > 1
+            ? this.vypocitajSmerLetu(letoveBody, safeIndex)
+            : { heading: this.lastHeading ?? 0 };
+
+        this.lastPilotData = { liveData, letoveBody, index };
 
         if (!this.p3DBodPilota) {
             this.p3DBodPilota = viewer.entities.add({
-                name: "Aktuálna poloha pilota",
+                name: "Aktuálna poloha pilota (guľa)",
                 position: novaPozicia,
                 point: {
                     pixelSize: 13,
@@ -299,9 +310,93 @@ window.CesiumRender = {
 
         this.p3DBodPilota.position = novaPozicia;
         this.p3DBodPilota.point.color = farbaPilota;
+        this.p3DBodPilota.show = !this.pilotModelId;
+
+        this.aktualizujObjektPilota(viewer, novaPozicia, smer.heading);
+
         this.nastavPrehranuStopu(viewer, letoveBody, index);
         this.aktualizujKameru(viewer, letoveBody, index);
         viewer.scene.requestRender();
+    },
+
+    // Zobrazí/aktualizuje 3D objekt pilota (namiesto gule), ak je vybraný v sekcii Zdroje.
+    aktualizujObjektPilota: function (viewer, pozicia, headingRad = 0) {
+        if (!this.pilotModelId) {
+            if (this.p3DObjektPilota) this.p3DObjektPilota.show = false;
+            return;
+        }
+
+        const uri = window.TermikaCC3DObjectLoader?.resolveUri?.(this.pilotModelId);
+        if (!uri) {
+            console.warn("Neznámy 3D objekt pilota:", this.pilotModelId);
+            return;
+        }
+
+        const orientation = Cesium.Transforms.headingPitchRollQuaternion(
+            pozicia,
+            new Cesium.HeadingPitchRoll(headingRad, 0, 0)
+        );
+
+        if (!this.p3DObjektPilota || this.p3DObjektPilota.__modelId !== this.pilotModelId) {
+            if (this.p3DObjektPilota) viewer.entities.remove(this.p3DObjektPilota);
+            this.p3DObjektPilota = viewer.entities.add({
+                name: "Aktuálna poloha pilota (3D objekt)",
+                position: pozicia,
+                orientation,
+                model: {
+                    uri,
+                    minimumPixelSize: 48,
+                    maximumScale: 4000,
+                    scale: 1
+                }
+            });
+            this.p3DObjektPilota.__modelId = this.pilotModelId;
+        }
+
+        this.p3DObjektPilota.position = pozicia;
+        this.p3DObjektPilota.orientation = orientation;
+        this.p3DObjektPilota.show = true;
+    },
+
+    // Prepne značku pilota medzi guľou (modelId = null) a zvoleným 3D objektom.
+    // Ak už let beží, prekreslí pilota okamžite na jeho poslednej známej pozícii.
+    setPilotModel: function (viewer, modelId) {
+        this.pilotModelId = modelId || null;
+
+        if (viewer && this.lastPilotData) {
+            this.vykresliPilotaNaIndexe(viewer, this.lastPilotData.liveData, this.lastPilotData.letoveBody, this.lastPilotData.index);
+            return;
+        }
+
+        if (this.p3DBodPilota) this.p3DBodPilota.show = !this.pilotModelId;
+        if (this.p3DObjektPilota) this.p3DObjektPilota.show = Boolean(this.pilotModelId);
+    },
+
+    // Načíta (skrytý) 3D objekt vopred, aby bolo neskoršie prepnutie tlačidlom okamžité.
+    preloadPilotModel: function (viewer, modelId) {
+        if (!viewer || !modelId) return;
+
+        const uri = window.TermikaCC3DObjectLoader?.resolveUri?.(modelId);
+        if (!uri) return;
+        if (this.p3DObjektPilota && this.p3DObjektPilota.__modelId === modelId) return;
+
+        const pozicia = this.p3DBodPilota
+            ? this.p3DBodPilota.position.getValue(viewer.clock.currentTime)
+            : Cesium.Cartesian3.fromDegrees(11.85, 46.43, 1500);
+
+        if (this.p3DObjektPilota) viewer.entities.remove(this.p3DObjektPilota);
+        this.p3DObjektPilota = viewer.entities.add({
+            name: "Aktuálna poloha pilota (3D objekt)",
+            position: pozicia,
+            model: {
+                uri,
+                minimumPixelSize: 48,
+                maximumScale: 4000,
+                scale: 1
+            },
+            show: Boolean(this.pilotModelId)
+        });
+        this.p3DObjektPilota.__modelId = modelId;
     },
 
     // Starší názov ponechávame ako poistku pre kompatibilitu.

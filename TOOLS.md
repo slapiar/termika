@@ -70,6 +70,7 @@ Nástroje majú byť postupne spravované samostatným registrom doplnkov, praco
 | `three-d-object-loader` | Loader hotových 3D objektov (Cesium sample assets) | `AKTÍVNE` | CC testovacia stránka terénnej analýzy | `CC/ux/object-library/three-d-object-loader/three-d-object-loader.js`, `CC/app/js/three-d-object-loader.js`, `CC/3D_obj/*.glb` | `TOOLS.md`, `CHANGELOG.md` |
 | `windy-map-bridge` | Integrácia Windy Map Forecast API ako doplnkového mapového vizuálu | `NÁVRH` | Workflow pilotov: orientácia na Windy, detail v TermikaXC | návrh implementácie | [`tools/WINDY.md`](tools/WINDY.md) |
 | `cell-diagnostics` | Diagnostika geometrickej bunky | `AKTÍVNE` | Testovacia analýza terénu | `XC/terrain-analysis-test.php`, `XC/js/terrain-design-ui.js`, ďalšie diagnostické moduly | pripraví sa |
+| `flight-temp-linker` | IGC → TEMP linker (dátum letu, dosah 100 km, viacstaničné pripojenie) | `AKTÍVNE` | CC testovacia stránka terénnej analýzy | `CC/app/js/flight-temp-linker.js`, akcia `findTempNear` v `CC/app/genauto.php` | [`tools/FLIGHT-TEMP-LINKER.md`](tools/FLIGHT-TEMP-LINKER.md) |
 | `terrain-test-link` | Rýchly vstup na test terénu | `AKTÍVNE` | Hlavná stránka TermikaXC | `XC/js/terrain-test-link.js` | pripraví sa |
 
 ## 4. Referenčné dokumenty nástrojov

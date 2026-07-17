@@ -153,6 +153,11 @@ body[data-theme="dark"] {
     box-shadow: 0 0 0 1px color-mix(in srgb, var(--tx-ui-accent) 24%, transparent) inset;
 }
 
+.quick-tool-dock button.is-active {
+    border-color: var(--tx-ui-accent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--tx-ui-accent) 40%, transparent) inset;
+}
+
 .nav-close-button,
 .nav-theme-toggle {
     min-width: 36px;
