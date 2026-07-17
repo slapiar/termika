@@ -22,17 +22,25 @@ function replaceOnce(page, search, replacement, errorMessage) {
 }
 
 const index = readPage('index.php');
-const plainList = '$jsFiles = array_values(array_unique($jsFiles));';
-const safeList = `$mainOnlyExcludedScripts = [
+const safeFilter = `$mainOnlyExcludedScripts = [
     'terrain-analysis-runtime.js',
     'cc-host-context.js',
 ];
 $jsFiles = array_values(array_unique(array_filter(
     $jsFiles,
     static fn(string $file): bool => !in_array($file, $mainOnlyExcludedScripts, true)
-)));`;
-if (!index.source.includes(safeList)) {
-  replaceOnce(index, plainList, safeList, 'V index.php chýba zoznam JavaScriptov aj pripravený filter.');
+)));
+
+`;
+if (!index.source.includes("'terrain-analysis-runtime.js'") || !index.source.includes('$mainOnlyExcludedScripts')) {
+  const usortMarker = 'usort($jsFiles, static function';
+  const markerIndex = index.source.indexOf(usortMarker);
+  if (markerIndex >= 0) {
+    index.source = index.source.slice(0, markerIndex) + safeFilter + index.source.slice(markerIndex);
+    index.changed = true;
+  } else {
+    console.warn('CC runtime: v index.php sa nenašiel blok usort; filter hostiteľských skriptov sa neaplikoval.');
+  }
 }
 
 const fullscreenButton = '<button id="toggleFullscreenButton" type="button" title="Roztiahnuť mapu na celú obrazovku">⛶ Celá obrazovka</button>';
