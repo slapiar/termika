@@ -1,0 +1,23 @@
+{
+  "id": "workbench",
+  "body_attributes": {
+    "data-tx-family": "workbench",
+    "data-theme": "dark"
+  },
+  "styles": [
+    "asset/ui/bundles/workbench.bundle.css"
+  ],
+  "slots": [
+    "head",
+    "workspace",
+    "navigation",
+    "tools",
+    "windows",
+    "status",
+    "scripts"
+  ],
+  "language_domains": [
+    "common",
+    "workbench"
+  ]
+}
