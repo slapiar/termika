@@ -11,6 +11,8 @@
 - Zachovalo sa pôvodné pomenovanie a poradie `<script>` vstupov hostiteľa.
 - 14 samostatných DOM okien, panelov a líšt bolo vybratých z hostiteľských PHP stránok do príslušných modulov.
 - Hostiteľské PHP stránky na ich pôvodných miestach obsahujú iba `require` volanie modulového view.
+- CSS súbory vyčlenených view modulov sa pripájajú cez generovaný hostiteľský balík `CC/app/asset/cc-module-styles.css`.
+- Balík je načítaný z existujúceho hostiteľského štýlu `workspace-flight-simulator.css`, takže netreba rozbíjať PHP hlavičky ďalšími ručnými väzbami.
 - Vlastníctvo je strojovo evidované v `CC/registry/host-code-owners.json`.
 
 ## Zostávajúci inline dlh
@@ -33,6 +35,6 @@ Zostávajúci runtime sa nesmie plošne rozdeliť iba podľa názvov funkcií. J
 
 ## Reprodukcia
 
-Hostiteľský strom a vlastnícke proxy vytvára `tools/build-cc-app.mjs`. Skript nikdy nekopíruje `asset/local-config.php` ani `.local-config.php` a nemení `XC`.
+Hostiteľský strom, vlastnícke proxy, modulové view aj CSS balík vytvára `tools/build-cc-app.mjs`. Skript nikdy nekopíruje `asset/local-config.php` ani `.local-config.php` a nemení `XC`.
 
 Lokálny štart používa document root `CC/app`. Ak existuje `XC/asset/local-config.php` alebo koreňový `.local-config.php`, `start-termikaxc.sh` ho poskytne PHP cez `TERMIKA_LOCAL_CONFIG_PATH`; tajné kľúče sa nekopírujú do `CC`.
