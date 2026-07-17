@@ -75,7 +75,22 @@ if (!explorer.source.includes('class="brand-nav"')) {
   explorer.changed = true;
 }
 if (explorer.source.includes("$assetVersion = '20260715-01';")) {
-  explorer.source = explorer.source.replace("$assetVersion = '20260715-01';", "$assetVersion = '20260717-03';");
+  explorer.source = explorer.source.replace("$assetVersion = '20260715-01';", "$assetVersion = '20260717-04';");
+  explorer.changed = true;
+}
+const autoRestore = '    const restored = restore();';
+const emptyStart = '    const restored = false;';
+if (explorer.source.includes(autoRestore)) {
+  explorer.source = explorer.source.replace(autoRestore, emptyStart);
+  explorer.changed = true;
+}
+const restoredMessage = `    if (restored) {
+        setStatus('Obnovila som posledný rozpracovaný plán z tohto prehliadača.', 'ok');
+        if (state.entities.length) setTimeout(focusTask, 500);
+    }`;
+const emptyMessage = `    setStatus('Prieskumník je pripravený s prázdnou úlohou. Body alebo let načítaj až výslovným príkazom.', 'info');`;
+if (explorer.source.includes(restoredMessage)) {
+  explorer.source = explorer.source.replace(restoredMessage, emptyMessage);
   explorer.changed = true;
 }
 writePage(explorer);
@@ -107,4 +122,4 @@ if (setup.source.includes(oldSetupHint)) {
 }
 writePage(setup);
 
-console.log('CC runtime pripravený: hlavná stránka, test, Prieskumník a Nastavenie majú spoločnú navigáciu a oddelené runtime skripty.');
+console.log('CC runtime pripravený: hlavná stránka, test, Prieskumník a Nastavenie majú spoločnú navigáciu; Prieskumník štartuje prázdny.');
