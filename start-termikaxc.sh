@@ -3,7 +3,7 @@ set -euo pipefail
 
 PORT="${1:-${TERMIKA_BIND_PORT:-8000}}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCROOT="$ROOT_DIR/XC"
+DOCROOT="$ROOT_DIR/CC"
 LOG_FILE="/tmp/termikaxc-php.log"
 LOCAL_URL="http://127.0.0.1:${PORT}/"
 START_PATH="${TERMIKA_START_PATH:-terrain-analysis-test.php}"
