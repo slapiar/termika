@@ -3,10 +3,12 @@ set -euo pipefail
 
 PORT="${1:-${TERMIKA_BIND_PORT:-8000}}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCROOT="$ROOT_DIR/CC/app"
+DOCROOT="$ROOT_DIR/CC"
+APP_ROOT="$DOCROOT/app"
 LOG_FILE="/tmp/termikaxc-php.log"
 LOCAL_URL="http://127.0.0.1:${PORT}/"
-START_PATH="${TERMIKA_START_PATH:-terrain-analysis-test.php}"
+HEALTH_PATH="${TERMIKA_HEALTH_PATH:-app/index.php}"
+START_PATH="${TERMIKA_START_PATH:-app/terrain-analysis-test.php}"
 
 if [[ -z "${TERMIKA_LOCAL_CONFIG_PATH:-}" ]]; then
   if [[ -f "$ROOT_DIR/XC/asset/local-config.php" ]]; then
@@ -55,8 +57,8 @@ cache_bust_url() {
   fi
 }
 
-if [[ ! -f "$DOCROOT/index.php" ]]; then
-  echo "ERROR: Missing entrypoint: $DOCROOT/index.php"
+if [[ ! -f "$APP_ROOT/index.php" ]]; then
+  echo "ERROR: Missing entrypoint: $APP_ROOT/index.php"
   exit 1
 fi
 
@@ -72,25 +74,26 @@ fi
 cd "$ROOT_DIR"
 nohup php -S "0.0.0.0:${PORT}" -t "$DOCROOT" >"$LOG_FILE" 2>&1 &
 
-# Wait until HTTP responds; require 200 from root.
+# Wait until the CC application entrypoint responds.
 STATUS="000"
+HEALTH_URL="${LOCAL_URL}${HEALTH_PATH}"
 for _ in {1..20}; do
-  STATUS="$(curl -s -o /dev/null -w '%{http_code}' "$LOCAL_URL" || true)"
+  STATUS="$(curl -s -o /dev/null -w '%{http_code}' "$HEALTH_URL" || true)"
   if [[ "$STATUS" == "200" ]]; then
     break
   fi
   sleep 0.2
 done
 
-echo "Local health: $LOCAL_URL -> HTTP $STATUS"
+echo "Local health: $HEALTH_URL -> HTTP $STATUS"
 
 if [[ "$STATUS" != "200" ]]; then
-  echo "--- Diagnostic dump (non-200 on local URL) ---"
+  echo "--- Diagnostic dump (non-200 on CC application entrypoint) ---"
   pwd
-  ls -la
   ls -la "$DOCROOT"
+  ls -la "$APP_ROOT"
   cat "$LOG_FILE" || true
-  ls -l "$DOCROOT/index.php"
+  ls -l "$APP_ROOT/index.php"
   exit 1
 fi
 
