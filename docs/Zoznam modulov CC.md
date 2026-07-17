@@ -31,6 +31,23 @@ Stav `NEOVERENÉ` znamená, že existencia a zapojenie boli nájdené v kóde, a
 | `test-page-link` | Rýchly vstup na testovaciu stránku | component | Dynamicky pridá do toolbaru odkaz na terénne testovacie pracovisko. | `XC/js/terrain-test-link.js`, `#openTerrainTestButton` | `.map-actions-primary` | stredná | NEOVERENÉ |
 | `setup-launcher` | Otvorenie konfigurácie | component | Otvorí samostatné nastavenie zdrojov a API konfigurácie. | `XC/terrain-analysis-test.php`, `#openSetupButton`; `XC/setup.php` | popup/nové okno, serverová konfigurácia | stredná | NEOVERENÉ |
 
+### Plánované rozšírenie `release-footer`
+
+Poznámka používateľa z 17. 7. 2026:
+
+`release-footer` nemá zostať iba formálnou copyright pätičkou. Má sa postupne rozšíriť na systémovú informačnú a stavovú lištu pracoviska. Okrem vlastníka, roku a verzie má byť pripravená niesť najmä:
+
+- technické informácie zariadenia,
+- informácie o sieťovom pripojení, napríklad IP a podľa možností konkrétneho runtime aj MAC,
+- stav a technické informácie pripojených externých modulov,
+- stav Cesium,
+- stav Windy,
+- informácie o pripojených meteorologických staniciach,
+- informácie o použitých satelitných alebo ďalších dátových zdrojoch,
+- ďalšie prevádzkové údaje, ktoré budú dôležité pre kontrolu pracoviska.
+
+Rozšírenie sa má robiť po samostatných stavových segmentoch a adaptéroch. Výpadok jedného externého zdroja nesmie znefunkčniť ostatné časti lišty. Každý dynamický údaj má niesť aj stav dostupnosti a čas poslednej aktualizácie.
+
 ## B. Mapa, kamera a letové pracovisko
 
 | ID kandidáta | Pracovný názov | Typ | Skutočný účel | Dôkaz v kóde | Hlavné závislosti | Univerzálnosť | Stav XC |
