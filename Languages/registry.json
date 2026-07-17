@@ -1,12 +1,13 @@
 {
-  "version": "1.0.0",
-  "default": "sk",
-  "fallback": "sk",
-  "languages": {
-    "sk": {
+  "version": "1.1.0",
+  "default": "SK_sk",
+  "fallback": "SK_sk",
+  "catalogs": {
+    "SK_sk": {
       "label": "Slovenčina",
       "direction": "ltr",
-      "domains": ["common", "workbench"]
+      "file": "SK_sk.json",
+      "source": true
     }
   }
 }
