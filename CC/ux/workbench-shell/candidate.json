@@ -1,0 +1,11 @@
+{
+  "id": "workbench-shell",
+  "title": "Shell technického pracoviska",
+  "type": "component",
+  "target": "ux",
+  "wave": 1,
+  "migration": { "status": "DISCOVERED", "runtime_enabled": false, "evidence": [], "blockers": ["Treba porovnať Explorer shell a Terrain Analysis shell podľa správania, nie názvov."] },
+  "origins": ["XC/js/explorer-nav.js", "XC/js/explorer-theme.js", "XC/terrain-analysis-test.php#navShell", "XC/terrain-analysis-test.php#quickToolDock"],
+  "planned_entry": "workbench-shell.js",
+  "planned_styles": ["workbench-shell.css"]
+}

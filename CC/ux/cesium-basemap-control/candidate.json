@@ -1,0 +1,11 @@
+{
+  "id": "cesium-basemap-control",
+  "title": "Ovládanie podkladovej mapy Cesium",
+  "type": "tool",
+  "target": "ux",
+  "wave": 1,
+  "migration": { "status": "DISCOVERED", "runtime_enabled": false, "evidence": [], "blockers": ["Treba overiť obnovu viditeľnosti existujúcich aj neskôr pridaných imagery vrstiev."] },
+  "origins": ["XC/js/terrain-basemap-visibility.js"],
+  "planned_entry": "cesium-basemap-control.js",
+  "planned_styles": ["cesium-basemap-control.css"]
+}

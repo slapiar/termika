@@ -1,0 +1,16 @@
+{
+  "id": "system-status-bar",
+  "title": "Systémová stavová lišta",
+  "type": "system",
+  "target": "ux",
+  "wave": 1,
+  "migration": {
+    "status": "DEBUGGING_XC",
+    "runtime_enabled": false,
+    "evidence": ["Používateľ 17. 7. 2026 potvrdil pôvodnú pätičku PIAR TEAM 2026 · 3.1.0."],
+    "blockers": ["Po zjednotení zdroja verzie na XC/asset/RELEASE_VERSION.txt treba zopakovať produkčný test."]
+  },
+  "origins": ["XC/terrain-analysis-test.php#appFooter", "XC/js/terrain-release-badge.js", "XC/release-version.php"],
+  "planned_entry": "system-status-bar.js",
+  "planned_styles": ["system-status-bar.css"]
+}

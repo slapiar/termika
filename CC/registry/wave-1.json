@@ -1,0 +1,14 @@
+{
+  "wave": 1,
+  "runtime_enabled": false,
+  "modules": [
+    "system-status-bar",
+    "window-core",
+    "workbench-shell",
+    "map-pointer-tools",
+    "camera-hud",
+    "cesium-basemap-control",
+    "diagnostics-console",
+    "terrain-legend"
+  ]
+}

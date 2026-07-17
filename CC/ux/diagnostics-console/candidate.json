@@ -1,0 +1,11 @@
+{
+  "id": "diagnostics-console",
+  "title": "Diagnostická konzola",
+  "type": "window",
+  "target": "ux",
+  "wave": 1,
+  "migration": { "status": "DISCOVERED", "runtime_enabled": false, "evidence": [], "blockers": ["Treba zjednotiť zdroj logov a správanie dvoch hostiteľských implementácií."] },
+  "origins": ["XC/index.php#debugConsole", "XC/terrain-analysis-test.php#debugConsole", "XC/js/workspace-ui.js"],
+  "planned_entry": "diagnostics-console.js",
+  "planned_styles": ["diagnostics-console.css"]
+}

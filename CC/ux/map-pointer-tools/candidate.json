@@ -1,0 +1,11 @@
+{
+  "id": "map-pointer-tools",
+  "title": "Nástroje mapového kurzora",
+  "type": "tool",
+  "target": "ux",
+  "wave": 1,
+  "migration": { "status": "DISCOVERED", "runtime_enabled": false, "evidence": [], "blockers": ["Treba overiť konflikt kurzorového režimu s Cesium pick a diagnostikou bunky."] },
+  "origins": ["XC/js/workspace-crosshair.js", "XC/terrain-analysis-test.php#cursorCoordsBadge"],
+  "planned_entry": "map-pointer-tools.js",
+  "planned_styles": ["map-pointer-tools.css"]
+}

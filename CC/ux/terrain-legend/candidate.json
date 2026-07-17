@@ -1,0 +1,11 @@
+{
+  "id": "terrain-legend",
+  "title": "Legenda terénu",
+  "type": "window",
+  "target": "ux",
+  "wave": 1,
+  "migration": { "status": "DISCOVERED", "runtime_enabled": false, "evidence": [], "blockers": ["Treba overiť obsah a správanie okna v pôvodnej testovacej stránke."] },
+  "origins": ["XC/terrain-analysis-test.php#legend"],
+  "planned_entry": "terrain-legend.js",
+  "planned_styles": ["terrain-legend.css"]
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://termikaxc.local/schemas/candidate-module.schema.json",
+  "title": "TermikaXC CC candidate module",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "type", "target", "wave", "migration", "origins"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "title": { "type": "string", "minLength": 1 },
+    "type": { "enum": ["system", "infrastructure", "component", "tool", "instrument", "window", "HUD"] },
+    "target": { "enum": ["ux", "infrastructure", "services"] },
+    "wave": { "type": "integer", "minimum": 1 },
+    "migration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "runtime_enabled"],
+      "properties": {
+        "status": { "enum": ["DISCOVERED", "DEBUGGING_XC", "VERIFIED_XC", "WRAPPED_CC", "VERIFIED_CC", "ACCEPTED"] },
+        "runtime_enabled": { "type": "boolean" },
+        "evidence": { "type": "array", "items": { "type": "string" } },
+        "blockers": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "origins": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "planned_entry": { "type": ["string", "null"] },
+    "planned_styles": { "type": "array", "items": { "type": "string" } }
+  }
+}

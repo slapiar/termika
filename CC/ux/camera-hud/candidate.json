@@ -1,0 +1,11 @@
+{
+  "id": "camera-hud",
+  "title": "Kamerový HUD",
+  "type": "HUD",
+  "target": "ux",
+  "wave": 1,
+  "migration": { "status": "DISCOVERED", "runtime_enabled": false, "evidence": [], "blockers": ["workspace-hud-toggle dnes vytvára falošný skrytý #radiusInput; pred prenosom treba riadny kontextový kontrakt."] },
+  "origins": ["XC/js/terrain-camera-hud.js", "XC/js/terrain-camera-hud-coordinates.js", "XC/js/workspace-hud-toggle.js"],
+  "planned_entry": "camera-hud.js",
+  "planned_styles": ["camera-hud.css"]
+}
