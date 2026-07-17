@@ -3,39 +3,35 @@ set -euo pipefail
 
 PORT="${1:-${TERMIKA_BIND_PORT:-8000}}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCROOT="$ROOT_DIR/CC/app"
+DOCROOT="$ROOT_DIR/CC"
+APP_ROOT="$DOCROOT/app"
 LOG_FILE="/tmp/termikaxc-cc-php.log"
 LOCAL_URL="http://127.0.0.1:${PORT}/"
-START_PATH="${TERMIKA_START_PATH:-terrain-analysis-test.php}"
+HEALTH_PATH="${TERMIKA_HEALTH_PATH:-app/index.php}"
+START_PATH="${TERMIKA_START_PATH:-app/index.php}"
+MODULE_PATH="ux/skewt-instrument/skewt-panel/source/XC__js__skewt-render.js"
 
 if [[ -z "${TERMIKA_LOCAL_CONFIG_PATH:-}" ]]; then
-  if [[ -f "$ROOT_DIR/XC/asset/local-config.php" ]]; then
-    export TERMIKA_LOCAL_CONFIG_PATH="$ROOT_DIR/XC/asset/local-config.php"
-  elif [[ -f "$ROOT_DIR/.local-config.php" ]]; then
-    export TERMIKA_LOCAL_CONFIG_PATH="$ROOT_DIR/.local-config.php"
+  if [[ -f "$APP_ROOT/asset/local-config.php" ]]; then
+    export TERMIKA_LOCAL_CONFIG_PATH="$APP_ROOT/asset/local-config.php"
+  elif [[ -f "$ROOT_DIR/XC/asset/local-config.php" ]]; then
+    mkdir -p "$APP_ROOT/asset"
+    cp "$ROOT_DIR/XC/asset/local-config.php" "$APP_ROOT/asset/local-config.php"
+    export TERMIKA_LOCAL_CONFIG_PATH="$APP_ROOT/asset/local-config.php"
   fi
 fi
 
 set_codespace_ports_private() {
-  if [[ -z "${CODESPACE_NAME:-}" ]]; then
-    return 0
-  fi
-
-  if ! command -v gh >/dev/null 2>&1; then
+  if [[ -z "${CODESPACE_NAME:-}" ]] || ! command -v gh >/dev/null 2>&1; then
     return 0
   fi
 
   local ports_raw ports port
   ports_raw="${TERMIKA_PRIVATE_PORTS:-${PORT} 8001}"
-
-  # Normalize commas to spaces to support both "8000 8001" and "8000,8001".
   ports="${ports_raw//,/ }"
 
   for port in $ports; do
-    if [[ ! "$port" =~ ^[0-9]+$ ]]; then
-      continue
-    fi
-
+    [[ "$port" =~ ^[0-9]+$ ]] || continue
     if gh codespace ports visibility "${port}:private" -c "$CODESPACE_NAME" >/dev/null 2>&1; then
       echo "Codespaces: port ${port} visibility set to private"
     else
@@ -55,15 +51,12 @@ cache_bust_url() {
   fi
 }
 
-if [[ ! -f "$DOCROOT/index.php" ]]; then
-  echo "ERROR: Missing entrypoint: $DOCROOT/index.php"
+if [[ ! -f "$APP_ROOT/index.php" ]]; then
+  echo "ERROR: Missing entrypoint: $APP_ROOT/index.php"
   exit 1
 fi
 
-# Stop stale PHP development servers for this port.
 pkill -f "php -S.*:${PORT}" >/dev/null 2>&1 || true
-
-# If anything still holds the target port, terminate that process too.
 PID_ON_PORT="$(ss -ltnp 2>/dev/null | awk -v p=":${PORT}" '$4 ~ p { if (match($0, /pid=[0-9]+/)) { print substr($0, RSTART+4, RLENGTH-4); exit } }')"
 if [[ -n "${PID_ON_PORT}" ]]; then
   kill "$PID_ON_PORT" >/dev/null 2>&1 || true
@@ -72,32 +65,32 @@ fi
 cd "$ROOT_DIR"
 nohup php -S "0.0.0.0:${PORT}" -t "$DOCROOT" >"$LOG_FILE" 2>&1 &
 
-# Wait until HTTP responds; require 200 from root.
 STATUS="000"
+HEALTH_URL="${LOCAL_URL}${HEALTH_PATH}"
 for _ in {1..20}; do
-  STATUS="$(curl -s -o /dev/null -w '%{http_code}' "$LOCAL_URL" || true)"
-  if [[ "$STATUS" == "200" ]]; then
-    break
-  fi
+  STATUS="$(curl -s -o /dev/null -w '%{http_code}' "$HEALTH_URL" || true)"
+  [[ "$STATUS" == "200" ]] && break
   sleep 0.2
 done
 
-echo "Local health: $LOCAL_URL -> HTTP $STATUS"
-
+echo "Local health: $HEALTH_URL -> HTTP $STATUS"
 if [[ "$STATUS" != "200" ]]; then
-  echo "--- Diagnostic dump (non-200 on local URL) ---"
-  pwd
-  ls -la
-  ls -la "$DOCROOT"
+  echo "--- Diagnostic dump ---"
   cat "$LOG_FILE" || true
-  ls -l "$DOCROOT/index.php"
+  exit 1
+fi
+
+MODULE_URL="${LOCAL_URL}${MODULE_PATH}"
+MODULE_STATUS="$(curl -s -o /dev/null -w '%{http_code}' "$MODULE_URL" || true)"
+MODULE_TYPE="$(curl -sI "$MODULE_URL" | awk -F': ' 'tolower($1)=="content-type" {print $2}' | tr -d '\r' | head -n1)"
+echo "Module health: $MODULE_URL -> HTTP $MODULE_STATUS | ${MODULE_TYPE:-unknown}"
+if [[ "$MODULE_STATUS" != "200" ]] || [[ "$MODULE_TYPE" == text/html* ]]; then
+  echo "ERROR: CC modules are not served from /ux. Document root must be /CC."
   exit 1
 fi
 
 set_codespace_ports_private
-
 OPEN_URL="$(cache_bust_url "${LOCAL_URL}${START_PATH}")"
-
 echo "Opening: $OPEN_URL"
 if [[ -n "${BROWSER:-}" ]]; then
   "$BROWSER" "$OPEN_URL" >/dev/null 2>&1 || true
