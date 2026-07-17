@@ -34,12 +34,15 @@ $jsFiles = array_values(array_unique(array_filter(
 replaceOnce(index, plainList, safeList, 'V index.php chýba zoznam JavaScriptov.');
 
 const fullscreenButton = '<button id="toggleFullscreenButton" type="button" title="Roztiahnuť mapu na celú obrazovku">⛶ Celá obrazovka</button>';
+const oldTerrainButton = '<button type="button" onclick="window.location.href=\'terrain-analysis-test.php\'" title="Otvoriť testovaciu stránku analýzy terénu">⌁ Test terénu</button>';
 const mainNavigation = `${fullscreenButton}
-                    <button type="button" onclick="window.location.href='terrain-analysis-test.php'" title="Otvoriť testovaciu stránku analýzy terénu">⌁ Test terénu</button>
+                    ${oldTerrainButton}
                     <button type="button" onclick="window.location.href='explorer-core.php'" title="Otvoriť plánovač preletu">⌖ Prieskumník</button>
                     <button type="button" onclick="window.location.href='setup.php'" title="Otvoriť nastavenie lokálnych kľúčov">⚙ Nastavenie</button>`;
 if (!index.source.includes("onclick=\"window.location.href='explorer-core.php'\"")) {
-  replaceOnce(index, fullscreenButton, mainNavigation, 'V index.php chýba kotva hlavnej navigácie.');
+  const duplicateAnchor = `${fullscreenButton}\n                    ${oldTerrainButton}`;
+  const anchor = index.source.includes(duplicateAnchor) ? duplicateAnchor : fullscreenButton;
+  replaceOnce(index, anchor, mainNavigation, 'V index.php chýba kotva hlavnej navigácie.');
 }
 
 if (index.source.includes("$assetVersion = '20260715-03';")) {
@@ -96,11 +99,12 @@ if (!setup.source.includes('class="cc-page-nav"')) {
   );
   setup.changed = true;
 }
-setup.source = setup.source.replace(
-  '<p><strong>Dalej:</strong> po ulozeni otvor index.php alebo terrain-analysis-test.php a skontroluj, ze Cesium mapa nabehne.</p>',
-  '<p><strong>Ďalej:</strong> po uložení sa vráť do 3D pracoviska, testu terénu alebo Prieskumníka cez navigáciu vyššie.</p>'
-);
-setup.source = setup.source.replace("const fallbackUrl = 'index.php';", "const fallbackUrl = 'index.php';");
+const oldSetupHint = '<p><strong>Dalej:</strong> po ulozeni otvor index.php alebo terrain-analysis-test.php a skontroluj, ze Cesium mapa nabehne.</p>';
+const newSetupHint = '<p><strong>Ďalej:</strong> po uložení sa vráť do 3D pracoviska, testu terénu alebo Prieskumníka cez navigáciu vyššie.</p>';
+if (setup.source.includes(oldSetupHint)) {
+  setup.source = setup.source.replace(oldSetupHint, newSetupHint);
+  setup.changed = true;
+}
 writePage(setup);
 
 console.log('CC runtime pripravený: hlavná stránka, test, Prieskumník a Nastavenie majú spoločnú navigáciu a oddelené runtime skripty.');
