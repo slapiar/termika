@@ -77,6 +77,7 @@
     const quickAnalyzeButton = document.getElementById('quickAnalyzeButton');
     const quickClearButton = document.getElementById('quickClearButton');
     const quickCursorModeButton = document.getElementById('quickCursorModeButton');
+    const quickHudToggleButton = document.getElementById('quickHudToggleButton');
     const igcInput = document.getElementById('igcFileInput');
     const loadIgcButton = document.getElementById('loadIgcButton');
     const tempInput = document.getElementById('tempFileInput');
@@ -1623,6 +1624,7 @@
     quickCursorModeButton?.addEventListener('click', () => {
         applyMouseMode(!mapMouseCrosshairMode);
     });
+    quickHudToggleButton?.addEventListener('click', () => document.getElementById('workspaceHudToggle')?.click());
     openSetupButton?.addEventListener('click', () => {
         window.location.href = 'setup.php';
     });
