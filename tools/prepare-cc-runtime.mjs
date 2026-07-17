@@ -31,7 +31,9 @@ $jsFiles = array_values(array_unique(array_filter(
     $jsFiles,
     static fn(string $file): bool => !in_array($file, $mainOnlyExcludedScripts, true)
 )));`;
-replaceOnce(index, plainList, safeList, 'V index.php chýba zoznam JavaScriptov.');
+if (!index.source.includes(safeList)) {
+  replaceOnce(index, plainList, safeList, 'V index.php chýba zoznam JavaScriptov aj pripravený filter.');
+}
 
 const fullscreenButton = '<button id="toggleFullscreenButton" type="button" title="Roztiahnuť mapu na celú obrazovku">⛶ Celá obrazovka</button>';
 const oldTerrainButton = '<button type="button" onclick="window.location.href=\'terrain-analysis-test.php\'" title="Otvoriť testovaciu stránku analýzy terénu">⌁ Test terénu</button>';
