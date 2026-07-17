@@ -1,0 +1,23 @@
+{
+  "id": "setup-launcher",
+  "group": "workbench-shell",
+  "section": "ux",
+  "kind": "module",
+  "entry": "setup-launcher.js",
+  "styles": [
+    "setup-launcher.css"
+  ],
+  "origins": [
+    "XC/terrain-analysis-test.php",
+    "XC/setup.php"
+  ],
+  "copied_files": [
+    "source/XC__terrain-analysis-test.php",
+    "source/XC__setup.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

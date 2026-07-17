@@ -1,0 +1,656 @@
+{
+  "generated_at": "2026-07-17",
+  "transferable_module_count": 69,
+  "preserved_kernel_count": 12,
+  "total_entry_count": 81,
+  "modules": [
+    {
+      "id": "tool-communication",
+      "group": "communication-bus",
+      "section": "infrastructure",
+      "kind": "infrastructure",
+      "path": "CC/infrastructure/communication-bus/tool-communication",
+      "runtime_enabled": false
+    },
+    {
+      "id": "style-loader",
+      "group": "module-loader",
+      "section": "infrastructure",
+      "kind": "infrastructure",
+      "path": "CC/infrastructure/module-loader/style-loader",
+      "runtime_enabled": false
+    },
+    {
+      "id": "window-manager",
+      "group": "window-core",
+      "section": "infrastructure",
+      "kind": "module",
+      "path": "CC/infrastructure/window-core/window-manager",
+      "runtime_enabled": false
+    },
+    {
+      "id": "windy-map-adapter",
+      "group": "windy-bridge-adapter",
+      "section": "infrastructure",
+      "kind": "infrastructure",
+      "path": "CC/infrastructure/windy-bridge-adapter/windy-map-adapter",
+      "runtime_enabled": false
+    },
+    {
+      "id": "windy-map-bridge",
+      "group": "windy-bridge-adapter",
+      "section": "infrastructure",
+      "kind": "infrastructure",
+      "path": "CC/infrastructure/windy-bridge-adapter/windy-map-bridge",
+      "runtime_enabled": false
+    },
+    {
+      "id": "glider-core",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/glider-core",
+      "runtime_enabled": false
+    },
+    {
+      "id": "meteo-core",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/meteo-core",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-analysis",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/terrain-analysis",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-analysis-core",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/terrain-analysis-core",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-analysis-diagnostics",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/terrain-analysis-diagnostics",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-analysis-geometry",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/terrain-analysis-geometry",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-mesh",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/terrain-mesh",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-morphology",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/terrain-morphology",
+      "runtime_enabled": false
+    },
+    {
+      "id": "wind-effect-surface",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/wind-effect-surface",
+      "runtime_enabled": false
+    },
+    {
+      "id": "wind-effect-terrain",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/wind-effect-terrain",
+      "runtime_enabled": false
+    },
+    {
+      "id": "wind-effects-core",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/wind-effects-core",
+      "runtime_enabled": false
+    },
+    {
+      "id": "wind-field",
+      "group": "analytic-and-physics",
+      "section": "kernels",
+      "kind": "kernel",
+      "path": "CC/kernels/analytic-and-physics/wind-field",
+      "runtime_enabled": false
+    },
+    {
+      "id": "genauto-service",
+      "group": "generation-storage-service",
+      "section": "services",
+      "kind": "service",
+      "path": "CC/services/generation-storage-service/genauto-service",
+      "runtime_enabled": false
+    },
+    {
+      "id": "local-config-setup",
+      "group": "local-config-service",
+      "section": "services",
+      "kind": "service",
+      "path": "CC/services/local-config-service/local-config-setup",
+      "runtime_enabled": false
+    },
+    {
+      "id": "release-version-service",
+      "group": "release-version-service",
+      "section": "services",
+      "kind": "service",
+      "path": "CC/services/release-version-service/release-version-service",
+      "runtime_enabled": false
+    },
+    {
+      "id": "runtime-data-update",
+      "group": "runtime-data-service",
+      "section": "services",
+      "kind": "service",
+      "path": "CC/services/runtime-data-service/runtime-data-update",
+      "runtime_enabled": false
+    },
+    {
+      "id": "wind-temp-loader",
+      "group": "temp-provider-service",
+      "section": "services",
+      "kind": "service",
+      "path": "CC/services/temp-provider-service/wind-temp-loader",
+      "runtime_enabled": false
+    },
+    {
+      "id": "windy-temp-proxy",
+      "group": "temp-provider-service",
+      "section": "services",
+      "kind": "service",
+      "path": "CC/services/temp-provider-service/windy-temp-proxy",
+      "runtime_enabled": false
+    },
+    {
+      "id": "wind-streamline-renderer",
+      "group": "wind-render-service",
+      "section": "services",
+      "kind": "service",
+      "path": "CC/services/wind-render-service/wind-streamline-renderer",
+      "runtime_enabled": false
+    },
+    {
+      "id": "analysis-focus-controls",
+      "group": "analysis-focus-control",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/analysis-focus-control/analysis-focus-controls",
+      "runtime_enabled": false
+    },
+    {
+      "id": "analysis-focus-summary",
+      "group": "analysis-focus-control",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/analysis-focus-control/analysis-focus-summary",
+      "runtime_enabled": false
+    },
+    {
+      "id": "analysis-layer-toggle",
+      "group": "analysis-layer-control",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/analysis-layer-control/analysis-layer-toggle",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-mesh-controls",
+      "group": "analysis-layer-control",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/analysis-layer-control/terrain-mesh-controls",
+      "runtime_enabled": false
+    },
+    {
+      "id": "camera-hud-coordinates",
+      "group": "camera-hud",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/camera-hud/camera-hud-coordinates",
+      "runtime_enabled": false
+    },
+    {
+      "id": "camera-hud-toggle",
+      "group": "camera-hud",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/camera-hud/camera-hud-toggle",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-camera-hud",
+      "group": "camera-hud",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/camera-hud/terrain-camera-hud",
+      "runtime_enabled": false
+    },
+    {
+      "id": "camera-mode-controller",
+      "group": "camera-mode-controller",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/camera-mode-controller/camera-mode-controller",
+      "runtime_enabled": false
+    },
+    {
+      "id": "cell-diagnostics",
+      "group": "cell-diagnostics",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/cell-diagnostics/cell-diagnostics",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-hover-tooltip",
+      "group": "cell-diagnostics",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/cell-diagnostics/terrain-hover-tooltip",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-morphology-diagnostics",
+      "group": "cell-diagnostics",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/cell-diagnostics/terrain-morphology-diagnostics",
+      "runtime_enabled": false
+    },
+    {
+      "id": "cesium-basemap-toggle",
+      "group": "cesium-basemap-control",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/cesium-basemap-control/cesium-basemap-toggle",
+      "runtime_enabled": false
+    },
+    {
+      "id": "debug-console",
+      "group": "diagnostics-console",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/diagnostics-console/debug-console",
+      "runtime_enabled": false
+    },
+    {
+      "id": "explorer-analysis-arrival",
+      "group": "explorer-analysis-transfer",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/explorer-analysis-transfer/explorer-analysis-arrival",
+      "runtime_enabled": false
+    },
+    {
+      "id": "explorer-analysis-bridge",
+      "group": "explorer-analysis-transfer",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/explorer-analysis-transfer/explorer-analysis-bridge",
+      "runtime_enabled": false
+    },
+    {
+      "id": "igc-temp-loader",
+      "group": "flight-data-loader",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/flight-data-loader/igc-temp-loader",
+      "runtime_enabled": false
+    },
+    {
+      "id": "flight-meteo-panel",
+      "group": "flight-meteo-panel",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/flight-meteo-panel/flight-meteo-panel",
+      "runtime_enabled": false
+    },
+    {
+      "id": "flight-playback",
+      "group": "flight-playback",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/flight-playback/flight-playback",
+      "runtime_enabled": false
+    },
+    {
+      "id": "flight-track-renderer",
+      "group": "flight-playback",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/flight-playback/flight-track-renderer",
+      "runtime_enabled": false
+    },
+    {
+      "id": "flight-emergency-disengage",
+      "group": "flight-simulator",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/flight-simulator/flight-emergency-disengage",
+      "runtime_enabled": false
+    },
+    {
+      "id": "flight-simulator",
+      "group": "flight-simulator",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/flight-simulator/flight-simulator",
+      "runtime_enabled": false
+    },
+    {
+      "id": "flight-simulator-toggle",
+      "group": "flight-simulator",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/flight-simulator/flight-simulator-toggle",
+      "runtime_enabled": false
+    },
+    {
+      "id": "generation-manager",
+      "group": "generation-manager",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/generation-manager/generation-manager",
+      "runtime_enabled": false
+    },
+    {
+      "id": "cursor-coordinate-badge",
+      "group": "map-pointer-tools",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/map-pointer-tools/cursor-coordinate-badge",
+      "runtime_enabled": false
+    },
+    {
+      "id": "workspace-crosshair",
+      "group": "map-pointer-tools",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/map-pointer-tools/workspace-crosshair",
+      "runtime_enabled": false
+    },
+    {
+      "id": "pilot-physiology-panel",
+      "group": "pilot-physiology-panel",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/pilot-physiology-panel/pilot-physiology-panel",
+      "runtime_enabled": false
+    },
+    {
+      "id": "explorer-route-import",
+      "group": "route-import",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/route-import/explorer-route-import",
+      "runtime_enabled": false
+    },
+    {
+      "id": "route-task-planner",
+      "group": "route-planner",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/route-planner/route-task-planner",
+      "runtime_enabled": false
+    },
+    {
+      "id": "screen-recorder",
+      "group": "screen-recorder",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/screen-recorder/screen-recorder",
+      "runtime_enabled": false
+    },
+    {
+      "id": "skewt-panel",
+      "group": "skewt-instrument",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/skewt-instrument/skewt-panel",
+      "runtime_enabled": false
+    },
+    {
+      "id": "release-badge",
+      "group": "system-status-bar",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/system-status-bar/release-badge",
+      "runtime_enabled": false
+    },
+    {
+      "id": "release-footer",
+      "group": "system-status-bar",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/system-status-bar/release-footer",
+      "runtime_enabled": false
+    },
+    {
+      "id": "temp-profile-workbench",
+      "group": "temp-profile-workbench",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/temp-profile-workbench/temp-profile-workbench",
+      "runtime_enabled": false
+    },
+    {
+      "id": "temp-record-cleanup",
+      "group": "temp-source-manager",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/temp-source-manager/temp-record-cleanup",
+      "runtime_enabled": false
+    },
+    {
+      "id": "temp-source-selector",
+      "group": "temp-source-manager",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/temp-source-manager/temp-source-selector",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-legend",
+      "group": "terrain-legend",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/terrain-legend/terrain-legend",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-profile",
+      "group": "terrain-profile",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/terrain-profile/terrain-profile",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-profile-dock",
+      "group": "terrain-profile",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/terrain-profile/terrain-profile-dock",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-profile-follow",
+      "group": "terrain-profile",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/terrain-profile/terrain-profile-follow",
+      "runtime_enabled": false
+    },
+    {
+      "id": "source-manager",
+      "group": "terrain-source-manager",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/terrain-source-manager/source-manager",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-contours-layer",
+      "group": "terrain-visualization-layers",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/terrain-visualization-layers/terrain-contours-layer",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-design-layer",
+      "group": "terrain-visualization-layers",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/terrain-visualization-layers/terrain-design-layer",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-mesh-surface",
+      "group": "terrain-visualization-layers",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/terrain-visualization-layers/terrain-mesh-surface",
+      "runtime_enabled": false
+    },
+    {
+      "id": "terrain-mesh-wireframe",
+      "group": "terrain-visualization-layers",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/terrain-visualization-layers/terrain-mesh-wireframe",
+      "runtime_enabled": false
+    },
+    {
+      "id": "wind-cache-preview",
+      "group": "wind-video",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/wind-video/wind-cache-preview",
+      "runtime_enabled": false
+    },
+    {
+      "id": "wind-webm-export",
+      "group": "wind-video",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/wind-video/wind-webm-export",
+      "runtime_enabled": false
+    },
+    {
+      "id": "wind-control-panel",
+      "group": "wind-workbench",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/wind-workbench/wind-control-panel",
+      "runtime_enabled": false
+    },
+    {
+      "id": "wind-fps-indicator",
+      "group": "wind-workbench",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/wind-workbench/wind-fps-indicator",
+      "runtime_enabled": false
+    },
+    {
+      "id": "windy-adapter-monitor",
+      "group": "windy-map",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/windy-map/windy-adapter-monitor",
+      "runtime_enabled": false
+    },
+    {
+      "id": "windy-map-window",
+      "group": "windy-map",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/windy-map/windy-map-window",
+      "runtime_enabled": false
+    },
+    {
+      "id": "cesium-toolbar-offset",
+      "group": "workbench-shell",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/workbench-shell/cesium-toolbar-offset",
+      "runtime_enabled": false
+    },
+    {
+      "id": "quick-tool-dock",
+      "group": "workbench-shell",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/workbench-shell/quick-tool-dock",
+      "runtime_enabled": false
+    },
+    {
+      "id": "setup-launcher",
+      "group": "workbench-shell",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/workbench-shell/setup-launcher",
+      "runtime_enabled": false
+    },
+    {
+      "id": "test-page-link",
+      "group": "workbench-shell",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/workbench-shell/test-page-link",
+      "runtime_enabled": false
+    },
+    {
+      "id": "window-launcher-dock",
+      "group": "workbench-shell",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/workbench-shell/window-launcher-dock",
+      "runtime_enabled": false
+    },
+    {
+      "id": "workspace-navigation",
+      "group": "workbench-shell",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/workbench-shell/workspace-navigation",
+      "runtime_enabled": false
+    },
+    {
+      "id": "workspace-theme",
+      "group": "workbench-shell",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/workbench-shell/workspace-theme",
+      "runtime_enabled": false
+    }
+  ]
+}

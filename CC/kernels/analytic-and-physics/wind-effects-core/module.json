@@ -1,0 +1,21 @@
+{
+  "id": "wind-effects-core",
+  "group": "analytic-and-physics",
+  "section": "kernels",
+  "kind": "kernel",
+  "entry": "wind-effects-core.js",
+  "styles": [
+    "wind-effects-core.css"
+  ],
+  "origins": [
+    "XC/js/wind-effects-core.js"
+  ],
+  "copied_files": [
+    "source/XC__js__wind-effects-core.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

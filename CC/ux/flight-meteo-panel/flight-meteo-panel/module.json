@@ -1,0 +1,23 @@
+{
+  "id": "flight-meteo-panel",
+  "group": "flight-meteo-panel",
+  "section": "ux",
+  "kind": "module",
+  "entry": "flight-meteo-panel.js",
+  "styles": [
+    "flight-meteo-panel.css"
+  ],
+  "origins": [
+    "XC/index.php",
+    "XC/js/pilot-network.js"
+  ],
+  "copied_files": [
+    "source/XC__index.php",
+    "source/XC__js__pilot-network.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

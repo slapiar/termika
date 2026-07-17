@@ -1,0 +1,21 @@
+{
+  "id": "wind-effect-terrain",
+  "group": "analytic-and-physics",
+  "section": "kernels",
+  "kind": "kernel",
+  "entry": "wind-effect-terrain.js",
+  "styles": [
+    "wind-effect-terrain.css"
+  ],
+  "origins": [
+    "XC/js/wind-effect-terrain.js"
+  ],
+  "copied_files": [
+    "source/XC__js__wind-effect-terrain.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

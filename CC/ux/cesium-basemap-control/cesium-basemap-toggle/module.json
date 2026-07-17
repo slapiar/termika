@@ -1,0 +1,21 @@
+{
+  "id": "cesium-basemap-toggle",
+  "group": "cesium-basemap-control",
+  "section": "ux",
+  "kind": "module",
+  "entry": "cesium-basemap-toggle.js",
+  "styles": [
+    "cesium-basemap-toggle.css"
+  ],
+  "origins": [
+    "XC/js/terrain-basemap-visibility.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-basemap-visibility.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

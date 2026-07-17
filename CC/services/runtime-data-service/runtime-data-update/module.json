@@ -1,0 +1,21 @@
+{
+  "id": "runtime-data-update",
+  "group": "runtime-data-service",
+  "section": "services",
+  "kind": "service",
+  "entry": "runtime-data-update.js",
+  "styles": [
+    "runtime-data-update.css"
+  ],
+  "origins": [
+    "XC/update.php"
+  ],
+  "copied_files": [
+    "source/XC__update.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

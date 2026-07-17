@@ -1,0 +1,21 @@
+{
+  "id": "flight-track-renderer",
+  "group": "flight-playback",
+  "section": "ux",
+  "kind": "module",
+  "entry": "flight-track-renderer.js",
+  "styles": [
+    "flight-track-renderer.css"
+  ],
+  "origins": [
+    "XC/js/cesium-render.js"
+  ],
+  "copied_files": [
+    "source/XC__js__cesium-render.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

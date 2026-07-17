@@ -1,0 +1,23 @@
+{
+  "id": "terrain-design-layer",
+  "group": "terrain-visualization-layers",
+  "section": "ux",
+  "kind": "module",
+  "entry": "terrain-design-layer.js",
+  "styles": [
+    "terrain-design-layer.css"
+  ],
+  "origins": [
+    "XC/js/terrain-design.js",
+    "XC/js/terrain-design-ui.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-design.js",
+    "source/XC__js__terrain-design-ui.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

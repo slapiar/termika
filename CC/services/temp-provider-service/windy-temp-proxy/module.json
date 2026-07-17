@@ -1,0 +1,21 @@
+{
+  "id": "windy-temp-proxy",
+  "group": "temp-provider-service",
+  "section": "services",
+  "kind": "service",
+  "entry": "windy-temp-proxy.js",
+  "styles": [
+    "windy-temp-proxy.css"
+  ],
+  "origins": [
+    "XC/windy-temp-proxy.php"
+  ],
+  "copied_files": [
+    "source/XC__windy-temp-proxy.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

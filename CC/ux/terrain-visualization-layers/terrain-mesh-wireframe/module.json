@@ -1,0 +1,21 @@
+{
+  "id": "terrain-mesh-wireframe",
+  "group": "terrain-visualization-layers",
+  "section": "ux",
+  "kind": "module",
+  "entry": "terrain-mesh-wireframe.js",
+  "styles": [
+    "terrain-mesh-wireframe.css"
+  ],
+  "origins": [
+    "XC/js/terrain-mesh.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-mesh.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

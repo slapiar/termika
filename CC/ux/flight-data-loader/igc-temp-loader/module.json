@@ -1,0 +1,23 @@
+{
+  "id": "igc-temp-loader",
+  "group": "flight-data-loader",
+  "section": "ux",
+  "kind": "module",
+  "entry": "igc-temp-loader.js",
+  "styles": [
+    "igc-temp-loader.css"
+  ],
+  "origins": [
+    "XC/index.php",
+    "XC/js/pilot-network.js"
+  ],
+  "copied_files": [
+    "source/XC__index.php",
+    "source/XC__js__pilot-network.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

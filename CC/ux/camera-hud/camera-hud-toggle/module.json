@@ -1,0 +1,21 @@
+{
+  "id": "camera-hud-toggle",
+  "group": "camera-hud",
+  "section": "ux",
+  "kind": "module",
+  "entry": "camera-hud-toggle.js",
+  "styles": [
+    "camera-hud-toggle.css"
+  ],
+  "origins": [
+    "XC/js/workspace-hud-toggle.js"
+  ],
+  "copied_files": [
+    "source/XC__js__workspace-hud-toggle.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

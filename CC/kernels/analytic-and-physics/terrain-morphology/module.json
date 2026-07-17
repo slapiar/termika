@@ -1,0 +1,21 @@
+{
+  "id": "terrain-morphology",
+  "group": "analytic-and-physics",
+  "section": "kernels",
+  "kind": "kernel",
+  "entry": "terrain-morphology.js",
+  "styles": [
+    "terrain-morphology.css"
+  ],
+  "origins": [
+    "XC/js/terrain-morphology.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-morphology.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

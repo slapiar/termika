@@ -1,0 +1,23 @@
+{
+  "id": "release-version-service",
+  "group": "release-version-service",
+  "section": "services",
+  "kind": "service",
+  "entry": "release-version-service.js",
+  "styles": [
+    "release-version-service.css"
+  ],
+  "origins": [
+    "XC/release-version.php",
+    "XC/asset/RELEASE_VERSION.txt"
+  ],
+  "copied_files": [
+    "source/XC__release-version.php",
+    "source/XC__asset__RELEASE_VERSION.txt"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

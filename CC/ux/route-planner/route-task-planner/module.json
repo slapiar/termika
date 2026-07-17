@@ -1,0 +1,21 @@
+{
+  "id": "route-task-planner",
+  "group": "route-planner",
+  "section": "ux",
+  "kind": "module",
+  "entry": "route-task-planner.js",
+  "styles": [
+    "route-task-planner.css"
+  ],
+  "origins": [
+    "XC/explorer-core.php"
+  ],
+  "copied_files": [
+    "source/XC__explorer-core.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

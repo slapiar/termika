@@ -1,0 +1,21 @@
+{
+  "id": "terrain-camera-hud",
+  "group": "camera-hud",
+  "section": "ux",
+  "kind": "module",
+  "entry": "terrain-camera-hud.js",
+  "styles": [
+    "terrain-camera-hud.css"
+  ],
+  "origins": [
+    "XC/js/terrain-camera-hud.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-camera-hud.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

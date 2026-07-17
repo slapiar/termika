@@ -1,0 +1,21 @@
+{
+  "id": "camera-hud-coordinates",
+  "group": "camera-hud",
+  "section": "ux",
+  "kind": "module",
+  "entry": "camera-hud-coordinates.js",
+  "styles": [
+    "camera-hud-coordinates.css"
+  ],
+  "origins": [
+    "XC/js/terrain-camera-hud-coordinates.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-camera-hud-coordinates.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

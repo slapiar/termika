@@ -1,0 +1,21 @@
+{
+  "id": "release-badge",
+  "group": "system-status-bar",
+  "section": "ux",
+  "kind": "module",
+  "entry": "release-badge.js",
+  "styles": [
+    "release-badge.css"
+  ],
+  "origins": [
+    "XC/js/terrain-release-badge.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-release-badge.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

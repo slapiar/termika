@@ -1,0 +1,23 @@
+{
+  "id": "temp-record-cleanup",
+  "group": "temp-source-manager",
+  "section": "ux",
+  "kind": "module",
+  "entry": "temp-record-cleanup.js",
+  "styles": [
+    "temp-record-cleanup.css"
+  ],
+  "origins": [
+    "XC/terrain-analysis-test.php",
+    "XC/genauto.php"
+  ],
+  "copied_files": [
+    "source/XC__terrain-analysis-test.php",
+    "source/XC__genauto.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

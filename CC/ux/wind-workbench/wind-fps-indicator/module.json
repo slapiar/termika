@@ -1,0 +1,21 @@
+{
+  "id": "wind-fps-indicator",
+  "group": "wind-workbench",
+  "section": "ux",
+  "kind": "module",
+  "entry": "wind-fps-indicator.js",
+  "styles": [
+    "wind-fps-indicator.css"
+  ],
+  "origins": [
+    "XC/terrain-analysis-test.php"
+  ],
+  "copied_files": [
+    "source/XC__terrain-analysis-test.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

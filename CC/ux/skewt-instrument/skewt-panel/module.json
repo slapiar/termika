@@ -1,0 +1,21 @@
+{
+  "id": "skewt-panel",
+  "group": "skewt-instrument",
+  "section": "ux",
+  "kind": "module",
+  "entry": "skewt-panel.js",
+  "styles": [
+    "skewt-panel.css"
+  ],
+  "origins": [
+    "XC/js/skewt-render.js"
+  ],
+  "copied_files": [
+    "source/XC__js__skewt-render.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

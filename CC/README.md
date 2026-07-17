@@ -21,3 +21,16 @@ Každý prenesený modul musí zostať samostatný, uvádzať svoj pôvod a prav
 ## Prvá vlna
 
 Register prvej vlny je v `CC/registry/wave-1.json`. Jeho dnešné položky sú funkčné skupiny, ktoré sa pri prenose rozložia na samostatné vnorené moduly.
+
+## Hromadný prenos zdrojov
+
+Úplný register je v `CC/registry/modules.json`; adresárové skupiny sú v `CC/registry/groups.json`.
+
+- 69 identifikovaných prenositeľných položiek je uložených ako 69 samostatných modulov.
+- 12 analytických a fyzikálnych jadier je zachovaných osobitne v `CC/kernels/` a nie je vydávaných za UX moduly.
+- Každý modul má vlastný adresár, `module.json`, rovnako pomenovaný `.js` vstup a samostatnú `.css` hranicu.
+- Pôvodné zdroje sú bez obsahovej zmeny uložené v podadresári `source/` daného modulu.
+- `runtime_enabled: false` znamená, že samotný prenos zdroja modul automaticky nezapol.
+- Pri moduloch pochádzajúcich z inline PHP je zachovaný celý hostiteľský zdroj. Neskoršie vyčlenenie kontraktu sa preto dá vykonať bez straty pôvodnej implementácie.
+
+Strom je reprodukovateľný skriptom `tools/build-cc-module-tree.mjs`. Skript iba číta `XC` a zapisuje do `CC`; pôvodné zdroje nemení.

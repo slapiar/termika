@@ -1,0 +1,21 @@
+{
+  "id": "analysis-layer-toggle",
+  "group": "analysis-layer-control",
+  "section": "ux",
+  "kind": "module",
+  "entry": "analysis-layer-toggle.js",
+  "styles": [
+    "analysis-layer-toggle.css"
+  ],
+  "origins": [
+    "XC/terrain-analysis-test.php"
+  ],
+  "copied_files": [
+    "source/XC__terrain-analysis-test.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

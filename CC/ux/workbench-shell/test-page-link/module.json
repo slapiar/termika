@@ -1,0 +1,21 @@
+{
+  "id": "test-page-link",
+  "group": "workbench-shell",
+  "section": "ux",
+  "kind": "module",
+  "entry": "test-page-link.js",
+  "styles": [
+    "test-page-link.css"
+  ],
+  "origins": [
+    "XC/js/terrain-test-link.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-test-link.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "screen-recorder",
+  "group": "screen-recorder",
+  "section": "ux",
+  "kind": "module",
+  "entry": "screen-recorder.js",
+  "styles": [
+    "screen-recorder.css"
+  ],
+  "origins": [
+    "XC/terrain-analysis-test.php"
+  ],
+  "copied_files": [
+    "source/XC__terrain-analysis-test.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

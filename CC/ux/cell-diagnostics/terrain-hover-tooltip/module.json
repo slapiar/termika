@@ -1,0 +1,21 @@
+{
+  "id": "terrain-hover-tooltip",
+  "group": "cell-diagnostics",
+  "section": "ux",
+  "kind": "module",
+  "entry": "terrain-hover-tooltip.js",
+  "styles": [
+    "terrain-hover-tooltip.css"
+  ],
+  "origins": [
+    "XC/js/terrain-analysis-diagnostics.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-analysis-diagnostics.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

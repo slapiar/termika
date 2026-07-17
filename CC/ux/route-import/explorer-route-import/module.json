@@ -1,0 +1,21 @@
+{
+  "id": "explorer-route-import",
+  "group": "route-import",
+  "section": "ux",
+  "kind": "module",
+  "entry": "explorer-route-import.js",
+  "styles": [
+    "explorer-route-import.css"
+  ],
+  "origins": [
+    "XC/js/explorer-import.js"
+  ],
+  "copied_files": [
+    "source/XC__js__explorer-import.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

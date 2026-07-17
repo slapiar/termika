@@ -1,0 +1,23 @@
+{
+  "id": "cesium-toolbar-offset",
+  "group": "workbench-shell",
+  "section": "ux",
+  "kind": "module",
+  "entry": "cesium-toolbar-offset.js",
+  "styles": [
+    "cesium-toolbar-offset.css"
+  ],
+  "origins": [
+    "XC/js/workspace-cesium-toolbar-offset.js",
+    "XC/asset/workspace-cesium-toolbar-offset.css"
+  ],
+  "copied_files": [
+    "source/XC__js__workspace-cesium-toolbar-offset.js",
+    "source/XC__asset__workspace-cesium-toolbar-offset.css"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "terrain-mesh-controls",
+  "group": "analysis-layer-control",
+  "section": "ux",
+  "kind": "module",
+  "entry": "terrain-mesh-controls.js",
+  "styles": [
+    "terrain-mesh-controls.css"
+  ],
+  "origins": [
+    "XC/js/terrain-mesh.js",
+    "XC/js/terrain-mesh-surface.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-mesh.js",
+    "source/XC__js__terrain-mesh-surface.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

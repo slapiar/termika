@@ -1,0 +1,25 @@
+{
+  "id": "debug-console",
+  "group": "diagnostics-console",
+  "section": "ux",
+  "kind": "module",
+  "entry": "debug-console.js",
+  "styles": [
+    "debug-console.css"
+  ],
+  "origins": [
+    "XC/index.php",
+    "XC/terrain-analysis-test.php",
+    "XC/js/workspace-ui.js"
+  ],
+  "copied_files": [
+    "source/XC__index.php",
+    "source/XC__terrain-analysis-test.php",
+    "source/XC__js__workspace-ui.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

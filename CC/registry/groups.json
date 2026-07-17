@@ -1,0 +1,315 @@
+{
+  "generated_at": "2026-07-17",
+  "group_count": 40,
+  "groups": [
+    {
+      "section": "infrastructure",
+      "group": "communication-bus",
+      "modules": [
+        "tool-communication"
+      ]
+    },
+    {
+      "section": "infrastructure",
+      "group": "module-loader",
+      "modules": [
+        "style-loader"
+      ]
+    },
+    {
+      "section": "infrastructure",
+      "group": "window-core",
+      "modules": [
+        "window-manager"
+      ]
+    },
+    {
+      "section": "infrastructure",
+      "group": "windy-bridge-adapter",
+      "modules": [
+        "windy-map-adapter",
+        "windy-map-bridge"
+      ]
+    },
+    {
+      "section": "services",
+      "group": "generation-storage-service",
+      "modules": [
+        "genauto-service"
+      ]
+    },
+    {
+      "section": "services",
+      "group": "local-config-service",
+      "modules": [
+        "local-config-setup"
+      ]
+    },
+    {
+      "section": "services",
+      "group": "release-version-service",
+      "modules": [
+        "release-version-service"
+      ]
+    },
+    {
+      "section": "services",
+      "group": "runtime-data-service",
+      "modules": [
+        "runtime-data-update"
+      ]
+    },
+    {
+      "section": "services",
+      "group": "temp-provider-service",
+      "modules": [
+        "wind-temp-loader",
+        "windy-temp-proxy"
+      ]
+    },
+    {
+      "section": "services",
+      "group": "wind-render-service",
+      "modules": [
+        "wind-streamline-renderer"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "analysis-focus-control",
+      "modules": [
+        "analysis-focus-controls",
+        "analysis-focus-summary"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "analysis-layer-control",
+      "modules": [
+        "analysis-layer-toggle",
+        "terrain-mesh-controls"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "camera-hud",
+      "modules": [
+        "camera-hud-coordinates",
+        "camera-hud-toggle",
+        "terrain-camera-hud"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "camera-mode-controller",
+      "modules": [
+        "camera-mode-controller"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "cell-diagnostics",
+      "modules": [
+        "cell-diagnostics",
+        "terrain-hover-tooltip",
+        "terrain-morphology-diagnostics"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "cesium-basemap-control",
+      "modules": [
+        "cesium-basemap-toggle"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "diagnostics-console",
+      "modules": [
+        "debug-console"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "explorer-analysis-transfer",
+      "modules": [
+        "explorer-analysis-arrival",
+        "explorer-analysis-bridge"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "flight-data-loader",
+      "modules": [
+        "igc-temp-loader"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "flight-meteo-panel",
+      "modules": [
+        "flight-meteo-panel"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "flight-playback",
+      "modules": [
+        "flight-playback",
+        "flight-track-renderer"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "flight-simulator",
+      "modules": [
+        "flight-emergency-disengage",
+        "flight-simulator",
+        "flight-simulator-toggle"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "generation-manager",
+      "modules": [
+        "generation-manager"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "map-pointer-tools",
+      "modules": [
+        "cursor-coordinate-badge",
+        "workspace-crosshair"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "pilot-physiology-panel",
+      "modules": [
+        "pilot-physiology-panel"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "route-import",
+      "modules": [
+        "explorer-route-import"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "route-planner",
+      "modules": [
+        "route-task-planner"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "screen-recorder",
+      "modules": [
+        "screen-recorder"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "skewt-instrument",
+      "modules": [
+        "skewt-panel"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "system-status-bar",
+      "modules": [
+        "release-badge",
+        "release-footer"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "temp-profile-workbench",
+      "modules": [
+        "temp-profile-workbench"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "temp-source-manager",
+      "modules": [
+        "temp-record-cleanup",
+        "temp-source-selector"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "terrain-legend",
+      "modules": [
+        "terrain-legend"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "terrain-profile",
+      "modules": [
+        "terrain-profile",
+        "terrain-profile-dock",
+        "terrain-profile-follow"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "terrain-source-manager",
+      "modules": [
+        "source-manager"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "terrain-visualization-layers",
+      "modules": [
+        "terrain-contours-layer",
+        "terrain-design-layer",
+        "terrain-mesh-surface",
+        "terrain-mesh-wireframe"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "wind-video",
+      "modules": [
+        "wind-cache-preview",
+        "wind-webm-export"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "wind-workbench",
+      "modules": [
+        "wind-control-panel",
+        "wind-fps-indicator"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "windy-map",
+      "modules": [
+        "windy-adapter-monitor",
+        "windy-map-window"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "workbench-shell",
+      "modules": [
+        "cesium-toolbar-offset",
+        "quick-tool-dock",
+        "setup-launcher",
+        "test-page-link",
+        "window-launcher-dock",
+        "workspace-navigation",
+        "workspace-theme"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "flight-emergency-disengage",
+  "group": "flight-simulator",
+  "section": "ux",
+  "kind": "module",
+  "entry": "flight-emergency-disengage.js",
+  "styles": [
+    "flight-emergency-disengage.css"
+  ],
+  "origins": [
+    "XC/js/flight-emergency-disengage.js"
+  ],
+  "copied_files": [
+    "source/XC__js__flight-emergency-disengage.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

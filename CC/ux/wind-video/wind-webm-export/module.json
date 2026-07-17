@@ -1,0 +1,21 @@
+{
+  "id": "wind-webm-export",
+  "group": "wind-video",
+  "section": "ux",
+  "kind": "module",
+  "entry": "wind-webm-export.js",
+  "styles": [
+    "wind-webm-export.css"
+  ],
+  "origins": [
+    "XC/index.php"
+  ],
+  "copied_files": [
+    "source/XC__index.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

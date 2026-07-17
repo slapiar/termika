@@ -1,0 +1,23 @@
+{
+  "id": "camera-mode-controller",
+  "group": "camera-mode-controller",
+  "section": "ux",
+  "kind": "module",
+  "entry": "camera-mode-controller.js",
+  "styles": [
+    "camera-mode-controller.css"
+  ],
+  "origins": [
+    "XC/index.php",
+    "XC/js/pilot-network.js"
+  ],
+  "copied_files": [
+    "source/XC__index.php",
+    "source/XC__js__pilot-network.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

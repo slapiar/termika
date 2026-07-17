@@ -1,0 +1,23 @@
+{
+  "id": "local-config-setup",
+  "group": "local-config-service",
+  "section": "services",
+  "kind": "service",
+  "entry": "local-config-setup.js",
+  "styles": [
+    "local-config-setup.css"
+  ],
+  "origins": [
+    "XC/setup.php",
+    "XC/asset/local-config.php.example"
+  ],
+  "copied_files": [
+    "source/XC__setup.php",
+    "source/XC__asset__local-config.php.example"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

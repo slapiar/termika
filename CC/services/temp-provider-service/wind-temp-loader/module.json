@@ -1,0 +1,21 @@
+{
+  "id": "wind-temp-loader",
+  "group": "temp-provider-service",
+  "section": "services",
+  "kind": "service",
+  "entry": "wind-temp-loader.js",
+  "styles": [
+    "wind-temp-loader.css"
+  ],
+  "origins": [
+    "XC/js/wind-temp-loader.js"
+  ],
+  "copied_files": [
+    "source/XC__js__wind-temp-loader.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

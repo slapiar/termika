@@ -1,0 +1,21 @@
+{
+  "id": "terrain-morphology-diagnostics",
+  "group": "cell-diagnostics",
+  "section": "ux",
+  "kind": "module",
+  "entry": "terrain-morphology-diagnostics.js",
+  "styles": [
+    "terrain-morphology-diagnostics.css"
+  ],
+  "origins": [
+    "XC/js/terrain-morphology.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-morphology.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

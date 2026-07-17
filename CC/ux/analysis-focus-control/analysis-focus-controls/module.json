@@ -1,0 +1,23 @@
+{
+  "id": "analysis-focus-controls",
+  "group": "analysis-focus-control",
+  "section": "ux",
+  "kind": "module",
+  "entry": "analysis-focus-controls.js",
+  "styles": [
+    "analysis-focus-controls.css"
+  ],
+  "origins": [
+    "XC/terrain-analysis-test.php",
+    "XC/js/terrain-analysis-focus-ui.js"
+  ],
+  "copied_files": [
+    "source/XC__terrain-analysis-test.php",
+    "source/XC__js__terrain-analysis-focus-ui.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

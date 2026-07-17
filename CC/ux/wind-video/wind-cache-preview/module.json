@@ -1,0 +1,21 @@
+{
+  "id": "wind-cache-preview",
+  "group": "wind-video",
+  "section": "ux",
+  "kind": "module",
+  "entry": "wind-cache-preview.js",
+  "styles": [
+    "wind-cache-preview.css"
+  ],
+  "origins": [
+    "XC/index.php"
+  ],
+  "copied_files": [
+    "source/XC__index.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "meteo-core",
+  "group": "analytic-and-physics",
+  "section": "kernels",
+  "kind": "kernel",
+  "entry": "meteo-core.js",
+  "styles": [
+    "meteo-core.css"
+  ],
+  "origins": [
+    "XC/js/meteo-core.js"
+  ],
+  "copied_files": [
+    "source/XC__js__meteo-core.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

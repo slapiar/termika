@@ -1,0 +1,21 @@
+{
+  "id": "glider-core",
+  "group": "analytic-and-physics",
+  "section": "kernels",
+  "kind": "kernel",
+  "entry": "glider-core.js",
+  "styles": [
+    "glider-core.css"
+  ],
+  "origins": [
+    "XC/js/glider-core.js"
+  ],
+  "copied_files": [
+    "source/XC__js__glider-core.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

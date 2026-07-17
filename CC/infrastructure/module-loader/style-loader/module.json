@@ -1,0 +1,21 @@
+{
+  "id": "style-loader",
+  "group": "module-loader",
+  "section": "infrastructure",
+  "kind": "infrastructure",
+  "entry": "style-loader.js",
+  "styles": [
+    "style-loader.css"
+  ],
+  "origins": [
+    "XC/js/termika-style-loader.js"
+  ],
+  "copied_files": [
+    "source/XC__js__termika-style-loader.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

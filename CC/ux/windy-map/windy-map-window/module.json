@@ -1,0 +1,21 @@
+{
+  "id": "windy-map-window",
+  "group": "windy-map",
+  "section": "ux",
+  "kind": "module",
+  "entry": "windy-map-window.js",
+  "styles": [
+    "windy-map-window.css"
+  ],
+  "origins": [
+    "XC/terrain-analysis-test.php"
+  ],
+  "copied_files": [
+    "source/XC__terrain-analysis-test.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

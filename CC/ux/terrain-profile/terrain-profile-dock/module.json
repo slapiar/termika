@@ -1,0 +1,21 @@
+{
+  "id": "terrain-profile-dock",
+  "group": "terrain-profile",
+  "section": "ux",
+  "kind": "module",
+  "entry": "terrain-profile-dock.js",
+  "styles": [
+    "terrain-profile-dock.css"
+  ],
+  "origins": [
+    "XC/js/explorer-profile-dock.js"
+  ],
+  "copied_files": [
+    "source/XC__js__explorer-profile-dock.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

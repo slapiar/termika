@@ -1,0 +1,21 @@
+{
+  "id": "windy-map-adapter",
+  "group": "windy-bridge-adapter",
+  "section": "infrastructure",
+  "kind": "infrastructure",
+  "entry": "windy-map-adapter.js",
+  "styles": [
+    "windy-map-adapter.css"
+  ],
+  "origins": [
+    "XC/js/windy-map-adapter.js"
+  ],
+  "copied_files": [
+    "source/XC__js__windy-map-adapter.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

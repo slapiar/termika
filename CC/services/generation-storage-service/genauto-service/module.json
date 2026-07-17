@@ -1,0 +1,21 @@
+{
+  "id": "genauto-service",
+  "group": "generation-storage-service",
+  "section": "services",
+  "kind": "service",
+  "entry": "genauto-service.js",
+  "styles": [
+    "genauto-service.css"
+  ],
+  "origins": [
+    "XC/genauto.php"
+  ],
+  "copied_files": [
+    "source/XC__genauto.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

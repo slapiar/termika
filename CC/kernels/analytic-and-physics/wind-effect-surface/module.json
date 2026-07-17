@@ -1,0 +1,21 @@
+{
+  "id": "wind-effect-surface",
+  "group": "analytic-and-physics",
+  "section": "kernels",
+  "kind": "kernel",
+  "entry": "wind-effect-surface.js",
+  "styles": [
+    "wind-effect-surface.css"
+  ],
+  "origins": [
+    "XC/js/wind-effect-surface.js"
+  ],
+  "copied_files": [
+    "source/XC__js__wind-effect-surface.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

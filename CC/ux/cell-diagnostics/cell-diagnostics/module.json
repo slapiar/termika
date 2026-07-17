@@ -1,0 +1,23 @@
+{
+  "id": "cell-diagnostics",
+  "group": "cell-diagnostics",
+  "section": "ux",
+  "kind": "module",
+  "entry": "cell-diagnostics.js",
+  "styles": [
+    "cell-diagnostics.css"
+  ],
+  "origins": [
+    "XC/terrain-analysis-test.php",
+    "XC/js/terrain-analysis-diagnostics.js"
+  ],
+  "copied_files": [
+    "source/XC__terrain-analysis-test.php",
+    "source/XC__js__terrain-analysis-diagnostics.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

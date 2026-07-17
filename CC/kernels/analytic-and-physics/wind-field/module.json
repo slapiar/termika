@@ -1,0 +1,21 @@
+{
+  "id": "wind-field",
+  "group": "analytic-and-physics",
+  "section": "kernels",
+  "kind": "kernel",
+  "entry": "wind-field.js",
+  "styles": [
+    "wind-field.css"
+  ],
+  "origins": [
+    "XC/js/wind-field.js"
+  ],
+  "copied_files": [
+    "source/XC__js__wind-field.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "id": "terrain-analysis-diagnostics",
+  "group": "analytic-and-physics",
+  "section": "kernels",
+  "kind": "kernel",
+  "entry": "terrain-analysis-diagnostics.js",
+  "styles": [
+    "terrain-analysis-diagnostics.css"
+  ],
+  "origins": [
+    "XC/js/terrain-analysis-diagnostics.js"
+  ],
+  "copied_files": [
+    "source/XC__js__terrain-analysis-diagnostics.js"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}

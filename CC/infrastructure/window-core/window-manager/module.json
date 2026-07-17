@@ -1,0 +1,23 @@
+{
+  "id": "window-manager",
+  "group": "window-core",
+  "section": "infrastructure",
+  "kind": "module",
+  "entry": "window-manager.js",
+  "styles": [
+    "window-manager.css"
+  ],
+  "origins": [
+    "XC/js/workspace-ui.js",
+    "XC/terrain-analysis-test.php"
+  ],
+  "copied_files": [
+    "source/XC__js__workspace-ui.js",
+    "source/XC__terrain-analysis-test.php"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "NEOVERENE",
+    "runtime_enabled": false
+  }
+}
