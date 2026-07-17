@@ -1,0 +1,10 @@
+{
+  "common.action.close": "Zavrieť",
+  "common.action.open": "Otvoriť",
+  "common.action.reset": "Obnoviť",
+  "common.action.save": "Uložiť",
+  "common.status.loading": "Načítava sa…",
+  "common.status.ready": "Pripravené",
+  "common.status.error": "Chyba",
+  "common.language.name": "Slovenčina"
+}
