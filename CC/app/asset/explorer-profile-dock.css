@@ -1,0 +1,143 @@
+/* TermikaXC Explorer – spodné ukotvenie výškového profilu */
+
+#explorerProfileBottomDock {
+    position: absolute;
+    z-index: 38;
+    right: 0;
+    bottom: var(--explorer-profile-bottom-offset, 0px);
+    left: 0;
+    height: clamp(250px, 34vh, 380px);
+    border-top: 1px solid var(--explorer-nav-border);
+    background: var(--explorer-nav-panel);
+    box-shadow: 0 -12px 30px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+}
+
+#explorerProfileBottomDock[hidden] {
+    display: none !important;
+}
+
+#explorerProfileBottomDock .explorer-profile-section {
+    display: grid !important;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 8px 10px 10px !important;
+    border: 0 !important;
+    background: transparent;
+    overflow: hidden;
+}
+
+#explorerProfileBottomDock .explorer-profile-section > h2,
+#explorerProfileBottomDock .explorer-profile-section > .status,
+#explorerProfileBottomDock .explorer-profile-section > .hint {
+    display: none !important;
+}
+
+#explorerProfileBottomDock .explorer-profile-toolbar {
+    min-height: 34px;
+    margin: 0;
+}
+
+#explorerProfileBottomDock .explorer-profile-copy span {
+    display: none;
+}
+
+#explorerProfileBottomDock .explorer-profile-copy strong {
+    font-size: 11px;
+    letter-spacing: 0.085em;
+    text-transform: uppercase;
+}
+
+#explorerProfileDockToggle {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 7px 10px;
+    white-space: nowrap;
+}
+
+#explorerProfileBottomDock .explorer-profile-stats {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+    margin: 0;
+}
+
+#explorerProfileBottomDock .explorer-profile-stats > div {
+    padding: 4px 6px;
+}
+
+#explorerProfileBottomDock .explorer-profile-stats strong {
+    font-size: 12px;
+}
+
+#explorerProfileBottomDock .explorer-profile-stats span {
+    margin-top: 1px;
+    font-size: 8px;
+}
+
+#explorerProfileBottomDock .explorer-profile-chart-wrap {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    border-radius: 4px;
+}
+
+#explorerProfileBottomDock #explorerProfileCanvas {
+    width: 100%;
+    height: 100% !important;
+    min-height: 0;
+}
+
+body[data-explorer-theme="light"] #explorerProfileBottomDock {
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 -10px 26px rgba(31, 65, 82, 0.16);
+}
+
+body[data-explorer-profile-placement="bottom"] #mapOverlay {
+    bottom: calc(clamp(250px, 34vh, 380px) + 10px) !important;
+}
+
+@media (max-width: 920px) {
+    #explorerProfileBottomDock {
+        height: clamp(260px, 42vh, 410px);
+    }
+
+    #explorerProfileBottomDock .explorer-profile-toolbar {
+        flex-wrap: nowrap;
+    }
+
+    #explorerProfileBottomDock .explorer-profile-copy {
+        display: none;
+    }
+
+    #explorerProfileBottomDock .explorer-profile-stats {
+        overflow-x: auto;
+        grid-template-columns: repeat(5, minmax(110px, 1fr));
+        scrollbar-width: thin;
+    }
+
+    body[data-explorer-profile-placement="bottom"] #mapOverlay {
+        bottom: calc(clamp(260px, 42vh, 410px) + 8px) !important;
+    }
+}
+
+@media (max-width: 560px) {
+    #explorerProfileBottomDock {
+        height: 46vh;
+    }
+
+    #explorerProfileBottomDock .explorer-profile-section {
+        padding: 6px !important;
+    }
+
+    #explorerProfileBottomDock .explorer-profile-samples {
+        display: none;
+    }
+
+    body[data-explorer-profile-placement="bottom"] #mapOverlay {
+        bottom: calc(46vh + 6px) !important;
+    }
+}

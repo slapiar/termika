@@ -1,0 +1,30 @@
+/* TermikaXC Terrain Analysis – svetlé labely presne podľa Explorer.php. */
+
+body[data-theme="light"] .nav-shell label,
+body[data-theme="light"] .floating-window label,
+body[data-theme="light"] .nav-shell .label,
+body[data-theme="light"] .floating-window .label,
+body[data-theme="light"] .nav-dock-picker,
+body[data-theme="light"] .compare-row span,
+body[data-theme="light"] .legend-item span,
+body[data-theme="light"] .diagnostic-grid dt,
+body[data-theme="light"] .diagnostic-reasons li,
+body[data-theme="light"] .temp-summary-pill span,
+body[data-theme="light"] .temp-empty,
+body[data-theme="light"] .future,
+body[data-theme="light"] #windyMapFocusLabel,
+body:not([data-theme]) .nav-shell label,
+body:not([data-theme]) .floating-window label,
+body:not([data-theme]) .nav-shell .label,
+body:not([data-theme]) .floating-window .label,
+body:not([data-theme]) .nav-dock-picker,
+body:not([data-theme]) .compare-row span,
+body:not([data-theme]) .legend-item span,
+body:not([data-theme]) .diagnostic-grid dt,
+body:not([data-theme]) .diagnostic-reasons li,
+body:not([data-theme]) .temp-summary-pill span,
+body:not([data-theme]) .temp-empty,
+body:not([data-theme]) .future,
+body:not([data-theme]) #windyMapFocusLabel {
+    color: #536b77 !important;
+}

@@ -1,0 +1,1 @@
+<footer id="appFooter">© PIAR Team <?php echo htmlspecialchars((string)$currentYear, ENT_QUOTES, 'UTF-8'); ?><?php if ($releaseVersion !== null): ?> · v<?php echo htmlspecialchars($releaseVersion, ENT_QUOTES, 'UTF-8'); ?><?php else: ?> · VERZIA NEDOSTUPNÁ<?php endif; ?></footer>

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "designManualVersion": "1.0.0",
+  "generatedAt": "2026-07-16T08:00:00+02:00",
+  "families": {
+    "workbench": {
+      "version": "1.0.0",
+      "asset": "asset/ui/bundles/workbench.bundle.css",
+      "pages": [
+        "explorer.php",
+        "terrain-analysis-test.php",
+        "analysis.php"
+      ],
+      "sources": [
+        "asset/ui/foundations/tokens.css",
+        "asset/ui/foundations/typography-focus.css",
+        "asset/ui/components/controls.css",
+        "asset/ui/components/window-base.css",
+        "asset/ui/families/workbench.css"
+      ]
+    }
+  },
+  "windows": {
+    "base": {
+      "includedIn": ["workbench"],
+      "source": "asset/ui/components/window-base.css"
+    },
+    "legend": { "status": "legacy-compatible" },
+    "diagnostics": { "status": "legacy-compatible" },
+    "debugger": { "status": "legacy-compatible" },
+    "temp": { "status": "legacy-compatible" },
+    "windy": { "status": "legacy-compatible" }
+  }
+}

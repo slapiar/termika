@@ -1,0 +1,384 @@
+{
+  "generated_at": "2026-07-17",
+  "host": "CC/app",
+  "javascript_proxy_count": 47,
+  "proxies": [
+    {
+      "source": "XC/js/cesium-render.js",
+      "owner": "flight-track-renderer",
+      "module": "CC/ux/flight-playback/flight-track-renderer",
+      "proxy": "CC/app/js/cesium-render.js"
+    },
+    {
+      "source": "XC/js/explorer-analysis-arrival.js",
+      "owner": "explorer-analysis-arrival",
+      "module": "CC/ux/explorer-analysis-transfer/explorer-analysis-arrival",
+      "proxy": "CC/app/js/explorer-analysis-arrival.js"
+    },
+    {
+      "source": "XC/js/explorer-analysis-bridge.js",
+      "owner": "explorer-analysis-bridge",
+      "module": "CC/ux/explorer-analysis-transfer/explorer-analysis-bridge",
+      "proxy": "CC/app/js/explorer-analysis-bridge.js"
+    },
+    {
+      "source": "XC/js/explorer-import.js",
+      "owner": "explorer-route-import",
+      "module": "CC/ux/route-import/explorer-route-import",
+      "proxy": "CC/app/js/explorer-import.js"
+    },
+    {
+      "source": "XC/js/explorer-nav.js",
+      "owner": "workspace-navigation",
+      "module": "CC/ux/workbench-shell/workspace-navigation",
+      "proxy": "CC/app/js/explorer-nav.js"
+    },
+    {
+      "source": "XC/js/explorer-profile-dock.js",
+      "owner": "terrain-profile-dock",
+      "module": "CC/ux/terrain-profile/terrain-profile-dock",
+      "proxy": "CC/app/js/explorer-profile-dock.js"
+    },
+    {
+      "source": "XC/js/explorer-profile-follow.js",
+      "owner": "terrain-profile-follow",
+      "module": "CC/ux/terrain-profile/terrain-profile-follow",
+      "proxy": "CC/app/js/explorer-profile-follow.js"
+    },
+    {
+      "source": "XC/js/explorer-profile.js",
+      "owner": "terrain-profile",
+      "module": "CC/ux/terrain-profile/terrain-profile",
+      "proxy": "CC/app/js/explorer-profile.js"
+    },
+    {
+      "source": "XC/js/explorer-theme.js",
+      "owner": "workspace-theme",
+      "module": "CC/ux/workbench-shell/workspace-theme",
+      "proxy": "CC/app/js/explorer-theme.js"
+    },
+    {
+      "source": "XC/js/flight-emergency-disengage.js",
+      "owner": "flight-emergency-disengage",
+      "module": "CC/ux/flight-simulator/flight-emergency-disengage",
+      "proxy": "CC/app/js/flight-emergency-disengage.js"
+    },
+    {
+      "source": "XC/js/flight-simulator.js",
+      "owner": "flight-simulator",
+      "module": "CC/ux/flight-simulator/flight-simulator",
+      "proxy": "CC/app/js/flight-simulator.js"
+    },
+    {
+      "source": "XC/js/glider-core.js",
+      "owner": "glider-core",
+      "module": "CC/kernels/analytic-and-physics/glider-core",
+      "proxy": "CC/app/js/glider-core.js"
+    },
+    {
+      "source": "XC/js/meteo-core.js",
+      "owner": "meteo-core",
+      "module": "CC/kernels/analytic-and-physics/meteo-core",
+      "proxy": "CC/app/js/meteo-core.js"
+    },
+    {
+      "source": "XC/js/pilot-network.js",
+      "owner": "camera-mode-controller",
+      "module": "CC/ux/camera-mode-controller/camera-mode-controller",
+      "proxy": "CC/app/js/pilot-network.js"
+    },
+    {
+      "source": "XC/js/skewt-render.js",
+      "owner": "skewt-panel",
+      "module": "CC/ux/skewt-instrument/skewt-panel",
+      "proxy": "CC/app/js/skewt-render.js"
+    },
+    {
+      "source": "XC/js/termika-style-loader.js",
+      "owner": "style-loader",
+      "module": "CC/infrastructure/module-loader/style-loader",
+      "proxy": "CC/app/js/termika-style-loader.js"
+    },
+    {
+      "source": "XC/js/terrain-analysis-core.js",
+      "owner": "terrain-analysis-core",
+      "module": "CC/kernels/analytic-and-physics/terrain-analysis-core",
+      "proxy": "CC/app/js/terrain-analysis-core.js"
+    },
+    {
+      "source": "XC/js/terrain-analysis-diagnostics.js",
+      "owner": "terrain-analysis-diagnostics",
+      "module": "CC/kernels/analytic-and-physics/terrain-analysis-diagnostics",
+      "proxy": "CC/app/js/terrain-analysis-diagnostics.js"
+    },
+    {
+      "source": "XC/js/terrain-analysis-focus-ui.js",
+      "owner": "analysis-focus-controls",
+      "module": "CC/ux/analysis-focus-control/analysis-focus-controls",
+      "proxy": "CC/app/js/terrain-analysis-focus-ui.js"
+    },
+    {
+      "source": "XC/js/terrain-analysis-geometry.js",
+      "owner": "terrain-analysis-geometry",
+      "module": "CC/kernels/analytic-and-physics/terrain-analysis-geometry",
+      "proxy": "CC/app/js/terrain-analysis-geometry.js"
+    },
+    {
+      "source": "XC/js/terrain-analysis.js",
+      "owner": "terrain-analysis",
+      "module": "CC/kernels/analytic-and-physics/terrain-analysis",
+      "proxy": "CC/app/js/terrain-analysis.js"
+    },
+    {
+      "source": "XC/js/terrain-basemap-visibility.js",
+      "owner": "cesium-basemap-toggle",
+      "module": "CC/ux/cesium-basemap-control/cesium-basemap-toggle",
+      "proxy": "CC/app/js/terrain-basemap-visibility.js"
+    },
+    {
+      "source": "XC/js/terrain-camera-hud-coordinates.js",
+      "owner": "camera-hud-coordinates",
+      "module": "CC/ux/camera-hud/camera-hud-coordinates",
+      "proxy": "CC/app/js/terrain-camera-hud-coordinates.js"
+    },
+    {
+      "source": "XC/js/terrain-camera-hud.js",
+      "owner": "terrain-camera-hud",
+      "module": "CC/ux/camera-hud/terrain-camera-hud",
+      "proxy": "CC/app/js/terrain-camera-hud.js"
+    },
+    {
+      "source": "XC/js/terrain-contours.js",
+      "owner": "terrain-contours-layer",
+      "module": "CC/ux/terrain-visualization-layers/terrain-contours-layer",
+      "proxy": "CC/app/js/terrain-contours.js"
+    },
+    {
+      "source": "XC/js/terrain-design-ui.js",
+      "owner": "terrain-design-layer",
+      "module": "CC/ux/terrain-visualization-layers/terrain-design-layer",
+      "proxy": "CC/app/js/terrain-design-ui.js"
+    },
+    {
+      "source": "XC/js/terrain-design.js",
+      "owner": "terrain-design-layer",
+      "module": "CC/ux/terrain-visualization-layers/terrain-design-layer",
+      "proxy": "CC/app/js/terrain-design.js"
+    },
+    {
+      "source": "XC/js/terrain-mesh-surface.js",
+      "owner": "terrain-mesh-controls",
+      "module": "CC/ux/analysis-layer-control/terrain-mesh-controls",
+      "proxy": "CC/app/js/terrain-mesh-surface.js"
+    },
+    {
+      "source": "XC/js/terrain-mesh.js",
+      "owner": "terrain-mesh",
+      "module": "CC/kernels/analytic-and-physics/terrain-mesh",
+      "proxy": "CC/app/js/terrain-mesh.js"
+    },
+    {
+      "source": "XC/js/terrain-morphology.js",
+      "owner": "terrain-morphology",
+      "module": "CC/kernels/analytic-and-physics/terrain-morphology",
+      "proxy": "CC/app/js/terrain-morphology.js"
+    },
+    {
+      "source": "XC/js/terrain-release-badge.js",
+      "owner": "release-badge",
+      "module": "CC/ux/system-status-bar/release-badge",
+      "proxy": "CC/app/js/terrain-release-badge.js"
+    },
+    {
+      "source": "XC/js/terrain-test-link.js",
+      "owner": "test-page-link",
+      "module": "CC/ux/workbench-shell/test-page-link",
+      "proxy": "CC/app/js/terrain-test-link.js"
+    },
+    {
+      "source": "XC/js/tool-communication.js",
+      "owner": "tool-communication",
+      "module": "CC/infrastructure/communication-bus/tool-communication",
+      "proxy": "CC/app/js/tool-communication.js"
+    },
+    {
+      "source": "XC/js/wind-effect-surface.js",
+      "owner": "wind-effect-surface",
+      "module": "CC/kernels/analytic-and-physics/wind-effect-surface",
+      "proxy": "CC/app/js/wind-effect-surface.js"
+    },
+    {
+      "source": "XC/js/wind-effect-terrain.js",
+      "owner": "wind-effect-terrain",
+      "module": "CC/kernels/analytic-and-physics/wind-effect-terrain",
+      "proxy": "CC/app/js/wind-effect-terrain.js"
+    },
+    {
+      "source": "XC/js/wind-effects-core.js",
+      "owner": "wind-effects-core",
+      "module": "CC/kernels/analytic-and-physics/wind-effects-core",
+      "proxy": "CC/app/js/wind-effects-core.js"
+    },
+    {
+      "source": "XC/js/wind-field.js",
+      "owner": "wind-field",
+      "module": "CC/kernels/analytic-and-physics/wind-field",
+      "proxy": "CC/app/js/wind-field.js"
+    },
+    {
+      "source": "XC/js/wind-render.js",
+      "owner": "wind-streamline-renderer",
+      "module": "CC/services/wind-render-service/wind-streamline-renderer",
+      "proxy": "CC/app/js/wind-render.js"
+    },
+    {
+      "source": "XC/js/wind-temp-loader.js",
+      "owner": "wind-temp-loader",
+      "module": "CC/services/temp-provider-service/wind-temp-loader",
+      "proxy": "CC/app/js/wind-temp-loader.js"
+    },
+    {
+      "source": "XC/js/wind-ui.js",
+      "owner": "wind-control-panel",
+      "module": "CC/ux/wind-workbench/wind-control-panel",
+      "proxy": "CC/app/js/wind-ui.js"
+    },
+    {
+      "source": "XC/js/windy-map-adapter.js",
+      "owner": "windy-map-adapter",
+      "module": "CC/infrastructure/windy-bridge-adapter/windy-map-adapter",
+      "proxy": "CC/app/js/windy-map-adapter.js"
+    },
+    {
+      "source": "XC/js/windy-map-bridge.js",
+      "owner": "windy-map-bridge",
+      "module": "CC/infrastructure/windy-bridge-adapter/windy-map-bridge",
+      "proxy": "CC/app/js/windy-map-bridge.js"
+    },
+    {
+      "source": "XC/js/workspace-cesium-toolbar-offset.js",
+      "owner": "cesium-toolbar-offset",
+      "module": "CC/ux/workbench-shell/cesium-toolbar-offset",
+      "proxy": "CC/app/js/workspace-cesium-toolbar-offset.js"
+    },
+    {
+      "source": "XC/js/workspace-crosshair.js",
+      "owner": "workspace-crosshair",
+      "module": "CC/ux/map-pointer-tools/workspace-crosshair",
+      "proxy": "CC/app/js/workspace-crosshair.js"
+    },
+    {
+      "source": "XC/js/workspace-flight-toggle.js",
+      "owner": "flight-simulator-toggle",
+      "module": "CC/ux/flight-simulator/flight-simulator-toggle",
+      "proxy": "CC/app/js/workspace-flight-toggle.js"
+    },
+    {
+      "source": "XC/js/workspace-hud-toggle.js",
+      "owner": "camera-hud-toggle",
+      "module": "CC/ux/camera-hud/camera-hud-toggle",
+      "proxy": "CC/app/js/workspace-hud-toggle.js"
+    },
+    {
+      "source": "XC/js/workspace-ui.js",
+      "owner": "window-manager",
+      "module": "CC/infrastructure/window-core/window-manager",
+      "proxy": "CC/app/js/workspace-ui.js"
+    }
+  ],
+  "css_proxies": [
+    {
+      "source": "XC/asset/workspace-cesium-toolbar-offset.css",
+      "module": "CC/ux/workbench-shell/cesium-toolbar-offset/source/XC__asset__workspace-cesium-toolbar-offset.css",
+      "owner": "cesium-toolbar-offset"
+    }
+  ],
+  "extracted_view_count": 14,
+  "views": [
+    {
+      "host": "CC/ux/workbench-shell/quick-tool-dock/quick-tool-dock.view.php",
+      "selector": "#cursorCoordsBadge",
+      "owner": "CC/ux/map-pointer-tools/cursor-coordinate-badge",
+      "view": "CC/ux/map-pointer-tools/cursor-coordinate-badge/cursor-coordinate-badge.view.php"
+    },
+    {
+      "host": "CC/app/terrain-analysis-test.php",
+      "selector": "#appFooter",
+      "owner": "CC/ux/system-status-bar/release-footer",
+      "view": "CC/ux/system-status-bar/release-footer/release-footer.view.php"
+    },
+    {
+      "host": "CC/app/terrain-analysis-test.php",
+      "selector": "#legend",
+      "owner": "CC/ux/terrain-legend/terrain-legend",
+      "view": "CC/ux/terrain-legend/terrain-legend/terrain-legend.view.php"
+    },
+    {
+      "host": "CC/app/terrain-analysis-test.php",
+      "selector": "#cellDiagnostics",
+      "owner": "CC/ux/cell-diagnostics/cell-diagnostics",
+      "view": "CC/ux/cell-diagnostics/cell-diagnostics/cell-diagnostics.view.php"
+    },
+    {
+      "host": "CC/app/terrain-analysis-test.php",
+      "selector": "#windyMapWindow",
+      "owner": "CC/ux/windy-map/windy-map-window",
+      "view": "CC/ux/windy-map/windy-map-window/windy-map-window.view.php"
+    },
+    {
+      "host": "CC/app/terrain-analysis-test.php",
+      "selector": "#debugConsole",
+      "owner": "CC/ux/diagnostics-console/debug-console",
+      "view": "CC/ux/diagnostics-console/debug-console/debug-console.terrain.view.php"
+    },
+    {
+      "host": "CC/app/terrain-analysis-test.php",
+      "selector": "#quickToolDock",
+      "owner": "CC/ux/workbench-shell/quick-tool-dock",
+      "view": "CC/ux/workbench-shell/quick-tool-dock/quick-tool-dock.view.php"
+    },
+    {
+      "host": "CC/app/terrain-analysis-test.php",
+      "selector": "#navShell",
+      "owner": "CC/ux/workbench-shell/workspace-navigation",
+      "view": "CC/ux/workbench-shell/workspace-navigation/workspace-navigation.terrain.view.php"
+    },
+    {
+      "host": "CC/app/index.php",
+      "selector": "#windCachePreview",
+      "owner": "CC/ux/wind-video/wind-cache-preview",
+      "view": "CC/ux/wind-video/wind-cache-preview/wind-cache-preview.view.php"
+    },
+    {
+      "host": "CC/app/index.php",
+      "selector": "#flightControls",
+      "owner": "CC/ux/flight-playback/flight-playback",
+      "view": "CC/ux/flight-playback/flight-playback/flight-playback-controls.view.php"
+    },
+    {
+      "host": "CC/app/index.php",
+      "selector": "#leftPanel",
+      "owner": "CC/ux/pilot-physiology-panel/pilot-physiology-panel",
+      "view": "CC/ux/pilot-physiology-panel/pilot-physiology-panel/pilot-physiology-panel.view.php"
+    },
+    {
+      "host": "CC/app/index.php",
+      "selector": "#rightPanel",
+      "owner": "CC/ux/flight-meteo-panel/flight-meteo-panel",
+      "view": "CC/ux/flight-meteo-panel/flight-meteo-panel/flight-meteo-panel.view.php"
+    },
+    {
+      "host": "CC/app/index.php",
+      "selector": "#debugConsole",
+      "owner": "CC/ux/diagnostics-console/debug-console",
+      "view": "CC/ux/diagnostics-console/debug-console/debug-console.index.view.php"
+    },
+    {
+      "host": "CC/app/index.php",
+      "selector": "#skewTPanel",
+      "owner": "CC/ux/skewt-instrument/skewt-panel",
+      "view": "CC/ux/skewt-instrument/skewt-panel/skewt-panel.view.php"
+    }
+  ],
+  "inline_script_extraction_status": "PENDING"
+}

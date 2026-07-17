@@ -1,0 +1,246 @@
+/* TermikaXC – spoločná typografia pracovných stránok a vlásočnicový zameriavač */
+
+:root {
+    --workspace-ui-font: "Segoe UI", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --workspace-heading-spacing: 0.085em;
+}
+
+/*
+ * Typografia tlačidiel nadväzuje na technické nadpisy typu „SÚHRN“:
+ * menšie písmo, pevnejšia kresba a pokojný rozostup znakov.
+ */
+.explorer-nav-tab,
+.explorer-nav-route,
+.explorer-nav-dock-picker select,
+#sidebar.explorer-nav-drawer button:not(.point-actions button),
+.nav-tab,
+.nav-dock-picker select,
+.drawer-card button,
+.window-body button,
+#windowDock button {
+    font-family: var(--workspace-ui-font);
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    line-height: 1.15;
+    letter-spacing: var(--workspace-heading-spacing);
+    text-transform: uppercase;
+}
+
+.explorer-nav-tab,
+.explorer-nav-route,
+.nav-tab {
+    min-height: 32px;
+    padding: 7px 10px;
+}
+
+/* Ikonové ovládače si ponechávajú prirodzený tvar znaku. */
+.explorer-nav-close,
+.explorer-theme-toggle,
+.nav-close-button,
+.nav-theme-toggle,
+.point-actions button,
+.window-action,
+.quick-tool-dock button {
+    font-family: var(--workspace-ui-font);
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+/* Veľké exportné tlačidlá už nemajú formulárovú typografiu. */
+#sidebar.explorer-nav-drawer .footer-actions button {
+    min-height: 38px;
+    font-size: 11px !important;
+    letter-spacing: 0.09em;
+}
+
+/* Rovnaký vizuálny jazyk nadpisov na oboch pracovných stránkach. */
+#sidebar.explorer-nav-drawer .section > h2,
+.drawer-card h3,
+.window-title {
+    font-family: var(--workspace-ui-font);
+    font-size: 11px !important;
+    font-weight: 700;
+    letter-spacing: var(--workspace-heading-spacing);
+    text-transform: uppercase;
+}
+
+.explorer-nav-brand strong,
+.nav-brand strong {
+    font-family: var(--workspace-ui-font);
+    font-weight: 700;
+    letter-spacing: 0.055em;
+}
+
+/*
+ * Vlásočnicový zameriavací kríž.
+ * Biela kresba s mix-blend-mode:difference sa farebne invertuje voči mape.
+ */
+@media (pointer: fine) {
+    body.workspace-crosshair-enabled #cesiumContainer,
+    body.workspace-crosshair-enabled #cesiumContainer canvas,
+    body.workspace-crosshair-enabled .cesium-widget,
+    body.workspace-crosshair-enabled .cesium-widget canvas {
+        cursor: none !important;
+    }
+
+    body.workspace-crosshair-enabled #cesiumContainer :is(
+        button,
+        input,
+        select,
+        textarea,
+        a,
+        .cesium-viewer-toolbar,
+        .cesium-viewer-toolbar *,
+        .cesium-navigation-help,
+        .cesium-navigation-help *,
+        .cesium-baseLayerPicker-dropDown,
+        .cesium-baseLayerPicker-dropDown *,
+        .cesium-geocoder-searchButton,
+        .cesium-geocoder-input
+    ) {
+        cursor: auto !important;
+    }
+}
+
+.workspace-reticle {
+    position: fixed;
+    z-index: 2147483000;
+    top: 0;
+    left: 0;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    opacity: 0;
+    pointer-events: none;
+    mix-blend-mode: difference;
+    transform: translate3d(-50%, -50%, 0);
+    transition: opacity 70ms linear;
+    will-change: left, top, opacity;
+}
+
+.workspace-reticle.is-visible {
+    opacity: 1;
+}
+
+.workspace-reticle::before,
+.workspace-reticle::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    content: "";
+    background-repeat: no-repeat;
+    transform: translate(-50%, -50%);
+}
+
+.workspace-reticle::before {
+    width: 48px;
+    height: 1px;
+    background-image: linear-gradient(
+        to right,
+        #fff 0,
+        #fff 39%,
+        transparent 39%,
+        transparent 61%,
+        #fff 61%,
+        #fff 100%
+    );
+}
+
+.workspace-reticle::after {
+    width: 1px;
+    height: 48px;
+    background-image: linear-gradient(
+        to bottom,
+        #fff 0,
+        #fff 39%,
+        transparent 39%,
+        transparent 61%,
+        #fff 61%,
+        #fff 100%
+    );
+}
+
+.workspace-reticle-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: #fff;
+    transform: translate(-50%, -50%);
+}
+
+.workspace-reticle.is-pressed {
+    width: 28px;
+    height: 28px;
+}
+
+@media (pointer: coarse) {
+    .workspace-reticle {
+        display: none !important;
+    }
+}
+
+/*
+ * Spoločný rýchly prepínač Kamerového HUD-u.
+ * Na každom pracovisku preberá rozmery a tvar lokálneho prepínača témy.
+ */
+.workspace-hud-toggle {
+    position: relative;
+    font-family: var(--workspace-ui-font) !important;
+    font-size: 8px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.035em !important;
+    text-transform: uppercase !important;
+    transition: border-color 120ms ease, background 120ms ease, color 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+}
+
+.workspace-hud-toggle::after {
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    content: "";
+    opacity: 0.28;
+}
+
+.workspace-hud-toggle.is-active {
+    border-color: #16a2bd !important;
+    background: rgba(182, 239, 249, 0.94) !important;
+    color: #00647b !important;
+    box-shadow: 0 0 0 1px rgba(22, 162, 189, 0.18) inset, 0 0 10px rgba(22, 162, 189, 0.18);
+}
+
+.workspace-hud-toggle.is-active::after {
+    opacity: 1;
+    box-shadow: 0 0 5px currentColor;
+}
+
+.workspace-hud-toggle.is-pending {
+    cursor: wait;
+    opacity: 0.58;
+}
+
+body[data-explorer-theme="dark"] .workspace-hud-toggle.is-active,
+body[data-theme="dark"] .workspace-hud-toggle.is-active {
+    border-color: #70e8ff !important;
+    background: #174152 !important;
+    color: #bff6ff !important;
+}
+
+#explorerNavShell .workspace-hud-toggle {
+    width: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+#navShell .workspace-hud-toggle {
+    min-width: 38px;
+}

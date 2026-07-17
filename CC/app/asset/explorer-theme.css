@@ -1,0 +1,214 @@
+/* TermikaXC Explorer – svetlý/tmavý režim navigácie a bezpečný odstup Cesium toolbaru */
+
+#explorerNavShell[data-dock="top"] {
+    top: 0;
+    right: 0;
+    left: 0;
+    gap: 0;
+    max-height: 100vh;
+}
+
+#explorerNavShell[data-dock="top"] .explorer-nav-bar {
+    border-width: 0 0 1px;
+    border-radius: 0;
+}
+
+#explorerNavShell[data-dock="top"] #sidebar.explorer-nav-drawer {
+    border-top: 0;
+    border-radius: 0 0 12px 12px;
+}
+
+#explorerNavShell[data-dock="bottom"] {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    gap: 0;
+}
+
+#explorerNavShell[data-dock="bottom"] .explorer-nav-bar {
+    border-width: 1px 0 0;
+    border-radius: 0;
+}
+
+#explorerNavShell[data-dock="bottom"] #sidebar.explorer-nav-drawer {
+    border-bottom: 0;
+    border-radius: 12px 12px 0 0;
+}
+
+/* Cesium toolbar sa pri hornej lište posunie pod ňu. */
+body[data-explorer-dock="top"] .cesium-viewer-toolbar {
+    top: 62px !important;
+}
+
+/* Pri pravom dokovaní nech zostane toolbar viditeľný vedľa navigácie. */
+body[data-explorer-dock="right"] .cesium-viewer-toolbar {
+    right: min(442px, calc(100vw - 12px)) !important;
+}
+
+.explorer-theme-toggle {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border: 1px solid var(--explorer-nav-border);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    color: var(--explorer-nav-text);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.explorer-theme-toggle:hover,
+.explorer-theme-toggle:focus-visible {
+    border-color: var(--explorer-nav-accent);
+    outline: none;
+    transform: translateY(-1px);
+}
+
+/* Svetlý režim je predvolený. */
+body[data-explorer-theme="light"] {
+    --explorer-nav-bg: rgba(255, 255, 255, 0.88);
+    --explorer-nav-panel: rgba(250, 253, 255, 0.97);
+    --explorer-nav-border: #9db0bb;
+    --explorer-nav-border-soft: #c9d4da;
+    --explorer-nav-accent: #007f9f;
+    --explorer-nav-text: #17313e;
+    --explorer-nav-muted: #536b77;
+}
+
+body[data-explorer-theme="light"] .explorer-nav-bar {
+    box-shadow: 0 5px 16px rgba(24, 53, 68, 0.18);
+    color: var(--explorer-nav-text);
+}
+
+body[data-explorer-theme="light"] .explorer-nav-brand strong {
+    color: #006e8a;
+}
+
+body[data-explorer-theme="light"] .explorer-nav-tab,
+body[data-explorer-theme="light"] .explorer-nav-route,
+body[data-explorer-theme="light"] .explorer-nav-close,
+body[data-explorer-theme="light"] .explorer-nav-dock-picker select {
+    border-color: #9db0bb;
+    background: rgba(255, 255, 255, 0.72);
+    color: #17313e;
+}
+
+body[data-explorer-theme="light"] .explorer-nav-tab:hover,
+body[data-explorer-theme="light"] .explorer-nav-tab:focus-visible,
+body[data-explorer-theme="light"] .explorer-nav-route:hover,
+body[data-explorer-theme="light"] .explorer-nav-route:focus-visible,
+body[data-explorer-theme="light"] .explorer-nav-close:hover,
+body[data-explorer-theme="light"] .explorer-nav-close:focus-visible,
+body[data-explorer-theme="light"] .explorer-nav-tab.is-active {
+    border-color: #007f9f;
+    background: rgba(198, 239, 248, 0.9);
+    color: #084454;
+}
+
+body[data-explorer-theme="light"] .explorer-theme-toggle {
+    border-color: #9db0bb;
+    background: rgba(255, 255, 255, 0.78);
+    color: #805f00;
+}
+
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer {
+    box-shadow: 0 12px 26px rgba(24, 53, 68, 0.22);
+    color: #17313e;
+}
+
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .section,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .footer-actions {
+    background: transparent;
+    color: #17313e;
+}
+
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .section > h2 {
+    color: #006e8a;
+}
+
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .field label,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .field-label,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .hint,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .point-meta,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .summary-item span {
+    color: #536b77;
+}
+
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer input,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer select,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer button {
+    border-color: #a9bac3;
+    background: rgba(255, 255, 255, 0.92);
+    color: #17313e;
+}
+
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer button:hover,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer button:focus-visible {
+    border-color: #007f9f;
+    background: #dff5fa;
+}
+
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer button.primary,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer button.success {
+    border-color: #1685a0;
+    background: #d5f2f8;
+    color: #073f4d;
+}
+
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .point-card,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .summary-item,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .status,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .empty-state {
+    border-color: #bfd0d8;
+    background: rgba(238, 247, 250, 0.88);
+    color: #17313e;
+}
+
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .summary-item strong,
+body[data-explorer-theme="light"] #sidebar.explorer-nav-drawer .point-index {
+    color: #007f9f;
+}
+
+body[data-explorer-theme="light"] .map-chip {
+    border-color: rgba(134, 158, 170, 0.9);
+    background: rgba(255, 255, 255, 0.84);
+    color: #17313e;
+    box-shadow: 0 5px 18px rgba(24, 53, 68, 0.16);
+}
+
+body[data-explorer-theme="light"] .map-chip strong {
+    color: #007f9f;
+}
+
+/* Tmavý režim zostáva pôvodný, iba prepínač dostane mesačný charakter. */
+body[data-explorer-theme="dark"] .explorer-theme-toggle {
+    background: #10212b;
+    color: #dbe9ff;
+}
+
+@media (max-width: 920px) {
+    #explorerNavShell[data-dock="top"] {
+        top: 0;
+        right: 0;
+        left: 0;
+        max-height: 100vh;
+    }
+
+    #explorerNavShell[data-dock="bottom"] {
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+
+    body[data-explorer-dock="top"] .cesium-viewer-toolbar {
+        top: 145px !important;
+    }
+
+    body[data-explorer-dock="right"] .cesium-viewer-toolbar {
+        right: 8px !important;
+    }
+}

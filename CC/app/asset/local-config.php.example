@@ -1,0 +1,17 @@
+<?php
+// Copy to local-config.php and fill values through setup.php or manually.
+return [
+    'cesium_access_token' => '',
+    'windy_api_key' => '',
+    'windy_map_key' => '',
+    'windy_webcams_key' => '',
+    'windy_plugins_key' => '',
+    'telegram_bot_token' => '',
+    'telegram_chat_id' => '',
+    'update_shared_key' => '',
+    'db_name' => '',
+    'db_user' => '',
+    'db_password' => '',
+    'db_host' => '127.0.0.1',
+    'db_charset' => 'utf8',
+];

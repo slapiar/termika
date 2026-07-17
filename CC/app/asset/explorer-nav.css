@@ -1,0 +1,411 @@
+/* TermikaXC Explorer – dokovateľná navigácia a roletové panely */
+:root {
+    --explorer-nav-bg: rgba(7, 16, 24, 0.94);
+    --explorer-nav-panel: rgba(7, 16, 24, 0.975);
+    --explorer-nav-border: #426277;
+    --explorer-nav-border-soft: #35505f;
+    --explorer-nav-accent: #70e8ff;
+    --explorer-nav-text: #dff7ff;
+    --explorer-nav-muted: #8fa9b8;
+}
+
+#app {
+    position: relative;
+    display: block !important;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+#mapWrap {
+    position: absolute !important;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+}
+
+#explorerNavShell {
+    position: absolute;
+    z-index: 40;
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: calc(100vh - 24px);
+    pointer-events: none;
+}
+
+#explorerNavShell[data-dock="bottom"] {
+    top: auto;
+    bottom: 12px;
+    flex-direction: column-reverse;
+}
+
+#explorerNavShell[data-dock="left"],
+#explorerNavShell[data-dock="right"] {
+    top: 12px;
+    bottom: 12px;
+    width: min(430px, calc(100vw - 24px));
+    max-height: none;
+}
+
+#explorerNavShell[data-dock="left"] {
+    right: auto;
+}
+
+#explorerNavShell[data-dock="right"] {
+    left: auto;
+}
+
+.explorer-nav-bar,
+#sidebar.explorer-nav-drawer {
+    pointer-events: auto;
+}
+
+.explorer-nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 52px;
+    padding: 8px 10px;
+    border: 1px solid var(--explorer-nav-border);
+    border-radius: 10px;
+    background: var(--explorer-nav-bg);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.38);
+    color: var(--explorer-nav-text);
+    backdrop-filter: blur(8px);
+}
+
+.explorer-nav-brand {
+    display: flex;
+    flex: 0 1 230px;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 150px;
+    overflow: hidden;
+}
+
+.explorer-nav-brand strong {
+    overflow: hidden;
+    color: var(--explorer-nav-accent);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.explorer-nav-brand span {
+    overflow: hidden;
+    color: var(--explorer-nav-muted);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.explorer-nav-primary {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.explorer-nav-tab,
+.explorer-nav-route,
+.explorer-nav-close {
+    min-height: 34px;
+    padding: 7px 10px;
+    border: 1px solid #54778a;
+    border-radius: 8px;
+    background: #10212b;
+    color: var(--explorer-nav-text);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.explorer-nav-tab:hover,
+.explorer-nav-tab:focus-visible,
+.explorer-nav-route:hover,
+.explorer-nav-route:focus-visible,
+.explorer-nav-close:hover,
+.explorer-nav-close:focus-visible,
+.explorer-nav-tab.is-active {
+    border-color: var(--explorer-nav-accent);
+    background: #1c3b4b;
+    outline: none;
+}
+
+.explorer-nav-tab.is-active {
+    box-shadow: 0 0 0 1px rgba(112, 232, 255, 0.18) inset;
+}
+
+.explorer-nav-route {
+    color: #c9e7f2;
+    font-weight: 600;
+}
+
+.explorer-nav-meta {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 7px;
+}
+
+.explorer-nav-dock-picker {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--explorer-nav-muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.explorer-nav-dock-picker select {
+    width: auto;
+    min-width: 74px;
+    min-height: 32px;
+    padding: 5px 7px;
+    border: 1px solid var(--explorer-nav-border);
+    border-radius: 6px;
+    background: #10212b;
+    color: #eef;
+    font-size: 11px;
+}
+
+.explorer-nav-close {
+    width: 32px;
+    min-width: 32px;
+    padding: 0;
+    font-size: 17px;
+}
+
+#sidebar.explorer-nav-drawer {
+    position: relative !important;
+    inset: auto !important;
+    z-index: auto;
+    display: none;
+    flex: 0 1 auto;
+    width: 100% !important;
+    min-width: 0;
+    max-width: none;
+    max-height: min(70vh, 720px);
+    border: 1px solid var(--explorer-nav-border);
+    border-radius: 12px;
+    background: var(--explorer-nav-panel);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.42);
+    overflow: auto;
+    resize: none;
+    transform: none !important;
+}
+
+#sidebar.explorer-nav-drawer.is-open {
+    display: block;
+}
+
+#explorerNavShell[data-dock="left"] #sidebar.explorer-nav-drawer,
+#explorerNavShell[data-dock="right"] #sidebar.explorer-nav-drawer {
+    flex: 1 1 auto;
+    height: auto;
+    max-height: none;
+}
+
+#sidebar.explorer-nav-drawer > .brand {
+    display: none;
+}
+
+#sidebar.explorer-nav-drawer #sidebarScroll {
+    display: block;
+    overflow: visible;
+}
+
+#sidebar.explorer-nav-drawer .section {
+    display: none;
+    padding: 14px;
+    border: 0;
+}
+
+#sidebar.explorer-nav-drawer .section.is-active {
+    display: block;
+}
+
+#sidebar.explorer-nav-drawer .section > h2 {
+    margin-bottom: 12px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--explorer-nav-border-soft);
+    color: var(--explorer-nav-accent);
+    font-size: 13px;
+}
+
+#sidebar.explorer-nav-drawer .section > h2 small {
+    color: var(--explorer-nav-muted);
+}
+
+#sidebar.explorer-nav-drawer .footer-actions {
+    display: none;
+}
+
+#sidebar.explorer-nav-drawer .section[data-explorer-panel="export"] .footer-actions {
+    display: grid;
+    margin: 12px -14px -14px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--explorer-nav-border-soft);
+    border-radius: 0 0 11px 11px;
+}
+
+#sidebar.explorer-nav-drawer .grid-2,
+#sidebar.explorer-nav-drawer .grid-3 {
+    gap: 10px;
+}
+
+#sidebar.explorer-nav-drawer .field label,
+#sidebar.explorer-nav-drawer .field-label {
+    font-size: 11px;
+}
+
+#sidebar.explorer-nav-drawer .point-card {
+    background: rgba(11, 24, 34, 0.86);
+}
+
+#sidebar.explorer-nav-drawer .status {
+    margin-top: 12px;
+}
+
+#mobileToggle {
+    display: none !important;
+}
+
+#mapOverlay {
+    top: auto !important;
+    right: 12px;
+    bottom: 12px;
+    left: 12px !important;
+}
+
+body[data-explorer-dock="bottom"] #mapOverlay {
+    top: 12px !important;
+    bottom: auto;
+}
+
+body[data-explorer-dock="left"] #mapOverlay {
+    left: min(454px, calc(100vw - 12px)) !important;
+}
+
+body[data-explorer-dock="right"] #mapOverlay {
+    right: min(454px, calc(100vw - 12px));
+}
+
+#explorerNavShell[data-dock="left"] .explorer-nav-bar,
+#explorerNavShell[data-dock="right"] .explorer-nav-bar {
+    align-items: stretch;
+    flex-direction: column;
+}
+
+#explorerNavShell[data-dock="left"] .explorer-nav-brand,
+#explorerNavShell[data-dock="right"] .explorer-nav-brand {
+    flex-basis: auto;
+    min-width: 0;
+}
+
+#explorerNavShell[data-dock="left"] .explorer-nav-primary,
+#explorerNavShell[data-dock="right"] .explorer-nav-primary {
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+#explorerNavShell[data-dock="left"] .explorer-nav-meta,
+#explorerNavShell[data-dock="right"] .explorer-nav-meta {
+    justify-content: space-between;
+}
+
+@media (max-width: 1180px) {
+    .explorer-nav-brand {
+        flex-basis: 180px;
+    }
+
+    .explorer-nav-route {
+        display: none;
+    }
+}
+
+@media (max-width: 920px) {
+    #explorerNavShell {
+        top: 8px;
+        right: 8px;
+        left: 8px;
+        max-height: calc(100vh - 16px);
+    }
+
+    #explorerNavShell[data-dock="bottom"] {
+        bottom: 8px;
+    }
+
+    #explorerNavShell[data-dock="left"],
+    #explorerNavShell[data-dock="right"] {
+        top: 8px;
+        bottom: 8px;
+        width: calc(100vw - 16px);
+    }
+
+    .explorer-nav-bar {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .explorer-nav-brand {
+        flex-basis: auto;
+        min-width: 0;
+    }
+
+    .explorer-nav-primary {
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: thin;
+    }
+
+    .explorer-nav-meta {
+        justify-content: space-between;
+    }
+
+    #sidebar.explorer-nav-drawer {
+        max-height: calc(100vh - 170px);
+    }
+
+    #sidebar.explorer-nav-drawer .grid-2,
+    #sidebar.explorer-nav-drawer .grid-3,
+    #sidebar.explorer-nav-drawer .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    body[data-explorer-dock="left"] #mapOverlay,
+    body[data-explorer-dock="right"] #mapOverlay {
+        right: 8px;
+        left: 8px !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .explorer-nav-dock-picker > span {
+        display: none;
+    }
+
+    .explorer-nav-tab,
+    .explorer-nav-route {
+        padding-right: 9px;
+        padding-left: 9px;
+        font-size: 11px;
+    }
+
+    #coordinateChip {
+        display: none;
+    }
+}

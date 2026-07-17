@@ -1,0 +1,549 @@
+/* TermikaXC Terrain Analysis – Explorer visual system for every menu and floating window. */
+
+body[data-theme="light"],
+body:not([data-theme]) {
+    color-scheme: light;
+    --tx-ui-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --tx-ui-bg: rgba(250, 253, 255, 0.98);
+    --tx-ui-panel: rgba(255, 255, 255, 0.98);
+    --tx-ui-panel-raised: rgba(238, 247, 250, 0.96);
+    --tx-ui-panel-soft: rgba(247, 251, 253, 0.98);
+    --tx-ui-control: rgba(255, 255, 255, 0.98);
+    --tx-ui-control-hover: #dff5fa;
+    --tx-ui-border: #9db0bb;
+    --tx-ui-border-soft: #c9d4da;
+    --tx-ui-text: #17313e;
+    --tx-ui-muted: #536b77;
+    --tx-ui-accent: #007f9f;
+    --tx-ui-accent-strong: #006e8a;
+    --tx-ui-heading: #084454;
+    --tx-ui-header: linear-gradient(135deg, rgba(226, 244, 249, 0.99), rgba(250, 253, 255, 0.99));
+    --tx-ui-shadow: 0 14px 34px rgba(24, 53, 68, 0.22);
+    --tx-ui-shadow-soft: 0 7px 20px rgba(24, 53, 68, 0.16);
+    --tx-ui-success: #17633f;
+    --tx-ui-danger: #a22f42;
+    --tx-ui-warning: #7a5900;
+}
+
+body[data-theme="dark"] {
+    color-scheme: dark;
+    --tx-ui-font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --tx-ui-bg: rgba(7, 16, 24, 0.97);
+    --tx-ui-panel: rgba(10, 22, 32, 0.98);
+    --tx-ui-panel-raised: rgba(16, 31, 43, 0.96);
+    --tx-ui-panel-soft: rgba(11, 24, 34, 0.94);
+    --tx-ui-control: #0d1a24;
+    --tx-ui-control-hover: #132837;
+    --tx-ui-border: #426277;
+    --tx-ui-border-soft: #2a4557;
+    --tx-ui-text: #edf7fb;
+    --tx-ui-muted: #91a8b6;
+    --tx-ui-accent: #35d8ff;
+    --tx-ui-accent-strong: #70e8ff;
+    --tx-ui-heading: #dff8ff;
+    --tx-ui-header: linear-gradient(135deg, rgba(19, 57, 76, 0.97), rgba(9, 21, 31, 0.99));
+    --tx-ui-shadow: 0 16px 38px rgba(0, 0, 0, 0.44);
+    --tx-ui-shadow-soft: 0 8px 22px rgba(0, 0, 0, 0.34);
+    --tx-ui-success: #56e39f;
+    --tx-ui-danger: #ff6376;
+    --tx-ui-warning: #ffe16a;
+}
+
+.nav-shell,
+.floating-window,
+.quick-tool-dock,
+#windowDock,
+#aimHint,
+#terrain-analysis-hover-tooltip {
+    font-family: var(--tx-ui-font);
+    color: var(--tx-ui-text);
+    font-size: 13px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+.nav-shell *,
+.floating-window *,
+.quick-tool-dock *,
+#windowDock * {
+    box-sizing: border-box;
+}
+
+.nav-shell button,
+.nav-shell input,
+.nav-shell select,
+.nav-shell textarea,
+.floating-window button,
+.floating-window input,
+.floating-window select,
+.floating-window textarea,
+.quick-tool-dock button,
+#windowDock button {
+    font: inherit;
+}
+
+/* Main navigation, drawer and every card */
+.nav-bar {
+    min-height: 52px;
+    padding: 8px 10px;
+    border-color: var(--tx-ui-border);
+    background: var(--tx-ui-bg);
+    color: var(--tx-ui-text);
+    box-shadow: var(--tx-ui-shadow-soft);
+    backdrop-filter: blur(10px);
+}
+
+.nav-brand strong {
+    color: var(--tx-ui-accent-strong);
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.055em;
+}
+
+.nav-brand span,
+.nav-dock-picker {
+    color: var(--tx-ui-muted);
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.nav-tab,
+.nav-close-button,
+.nav-theme-toggle,
+.nav-dock-picker select,
+.drawer-card button,
+.window-body button,
+#windowDock button,
+.quick-tool-dock button {
+    min-height: 34px;
+    padding: 7px 10px;
+    border: 1px solid var(--tx-ui-border);
+    border-radius: 8px;
+    background: var(--tx-ui-control);
+    color: var(--tx-ui-text);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.15;
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.nav-tab:hover,
+.nav-tab:focus-visible,
+.nav-tab.is-active,
+.nav-close-button:hover,
+.nav-close-button:focus-visible,
+.nav-theme-toggle:hover,
+.nav-theme-toggle:focus-visible,
+.drawer-card button:hover,
+.drawer-card button:focus-visible,
+.window-body button:hover,
+.window-body button:focus-visible,
+#windowDock button:hover,
+#windowDock button:focus-visible,
+.quick-tool-dock button:hover,
+.quick-tool-dock button:focus-visible {
+    border-color: var(--tx-ui-accent);
+    background: var(--tx-ui-control-hover);
+    color: var(--tx-ui-heading);
+    outline: none;
+}
+
+.nav-tab.is-active {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--tx-ui-accent) 24%, transparent) inset;
+}
+
+.nav-close-button,
+.nav-theme-toggle {
+    min-width: 36px;
+    padding-inline: 9px;
+}
+
+.nav-theme-toggle {
+    color: var(--tx-ui-warning);
+}
+
+.nav-drawer {
+    border-color: var(--tx-ui-border);
+    background: var(--tx-ui-panel);
+    color: var(--tx-ui-text);
+    box-shadow: var(--tx-ui-shadow);
+    scrollbar-color: var(--tx-ui-border) transparent;
+}
+
+.nav-drawer-section {
+    padding: 14px;
+}
+
+.drawer-grid {
+    gap: 10px;
+}
+
+.drawer-card {
+    padding: 13px;
+    border-color: var(--tx-ui-border-soft);
+    border-radius: 10px;
+    background: var(--tx-ui-panel-raised);
+    color: var(--tx-ui-text);
+}
+
+.drawer-card .drawer-card {
+    background: var(--tx-ui-panel-soft);
+}
+
+.drawer-card h3,
+.diagnostic-section h3 {
+    margin: 0 0 10px;
+    color: var(--tx-ui-accent-strong);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.drawer-card p,
+.window-body p,
+.legend-note,
+.diagnostic-intro,
+.diagnostic-pending,
+.temp-empty {
+    color: var(--tx-ui-muted);
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+.drawer-card p[style] {
+    color: var(--tx-ui-muted) !important;
+    font-size: 11.5px !important;
+}
+
+.drawer-card label,
+.window-body label,
+.compare-row span,
+.row .label {
+    color: var(--tx-ui-muted);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.drawer-card label {
+    align-items: center;
+    gap: 8px;
+    margin: 7px 0;
+}
+
+.row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 5px 0;
+}
+
+.row .val,
+.row strong,
+.diagnostic-grid dd {
+    color: var(--tx-ui-text);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* All form controls */
+.nav-shell input[type="text"],
+.nav-shell input[type="number"],
+.nav-shell select,
+.floating-window input[type="text"],
+.floating-window input[type="number"],
+.floating-window select,
+.compare-select {
+    min-height: 34px;
+    padding: 7px 9px;
+    border: 1px solid var(--tx-ui-border);
+    border-radius: 7px;
+    background: var(--tx-ui-control);
+    color: var(--tx-ui-text);
+    font-family: var(--tx-ui-font);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.nav-shell input[type="text"]:focus,
+.nav-shell input[type="number"]:focus,
+.nav-shell select:focus,
+.floating-window input[type="text"]:focus,
+.floating-window input[type="number"]:focus,
+.floating-window select:focus,
+.compare-select:focus {
+    border-color: var(--tx-ui-accent);
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--tx-ui-accent) 14%, transparent);
+}
+
+.nav-shell input::placeholder,
+.floating-window input::placeholder {
+    color: var(--tx-ui-muted);
+    opacity: 0.78;
+}
+
+.nav-shell input[type="checkbox"],
+.floating-window input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    min-height: 17px;
+    flex: 0 0 17px;
+    accent-color: var(--tx-ui-accent);
+}
+
+.future {
+    color: var(--tx-ui-muted);
+    opacity: 0.68;
+}
+
+/* Floating windows */
+.floating-window {
+    border-color: var(--tx-ui-border);
+    border-radius: 12px;
+    background: var(--tx-ui-panel);
+    color: var(--tx-ui-text);
+    box-shadow: var(--tx-ui-shadow);
+}
+
+.window-header {
+    min-height: 44px;
+    padding: 8px 10px 8px 12px;
+    border-bottom-color: var(--tx-ui-border);
+    background: var(--tx-ui-header);
+}
+
+.window-title {
+    color: var(--tx-ui-accent-strong);
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: 0.045em;
+}
+
+.window-action {
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    min-height: 28px;
+    padding: 0;
+    border: 1px solid var(--tx-ui-border);
+    border-radius: 7px;
+    background: var(--tx-ui-control);
+    color: var(--tx-ui-text);
+    font-family: var(--tx-ui-font);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.window-action:hover,
+.window-action:focus-visible {
+    border-color: var(--tx-ui-accent);
+    background: var(--tx-ui-control-hover);
+    color: var(--tx-ui-heading);
+    outline: none;
+}
+
+.window-body {
+    padding: 14px;
+    color: var(--tx-ui-text);
+    scrollbar-color: var(--tx-ui-border) transparent;
+}
+
+.window-body fieldset {
+    border-color: var(--tx-ui-border-soft);
+    border-radius: 8px;
+    background: var(--tx-ui-panel-raised);
+}
+
+.window-body legend {
+    color: var(--tx-ui-accent-strong);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+/* Legend, diagnostics and status */
+.legend-item strong {
+    color: var(--tx-ui-text);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.legend-item span,
+.diagnostic-grid dt,
+.diagnostic-reasons li {
+    color: var(--tx-ui-muted);
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+.legend-note,
+.diagnostic-section {
+    border-color: var(--tx-ui-border-soft);
+}
+
+.diagnostic-pending {
+    border-color: var(--tx-ui-border);
+    background: var(--tx-ui-panel-raised);
+}
+
+#status {
+    color: var(--tx-ui-text);
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+}
+
+.ok {
+    color: var(--tx-ui-success);
+}
+
+.err {
+    color: var(--tx-ui-danger);
+}
+
+/* TEMP views */
+.temp-summary-pill,
+.temp-graph-wrap,
+.temp-table-wrap {
+    border-color: var(--tx-ui-border-soft);
+    background: var(--tx-ui-panel-soft);
+}
+
+.temp-summary-pill strong {
+    color: var(--tx-ui-text);
+    font-size: 13px;
+}
+
+.temp-summary-pill span {
+    color: var(--tx-ui-muted);
+    font-size: 10.5px;
+}
+
+.temp-table {
+    color: var(--tx-ui-text);
+    font-family: var(--tx-ui-font);
+    font-size: 11.5px;
+}
+
+.temp-table th,
+.temp-table td {
+    border-bottom-color: var(--tx-ui-border-soft);
+}
+
+.temp-table thead th {
+    background: var(--tx-ui-panel-raised);
+    color: var(--tx-ui-accent-strong);
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.025em;
+}
+
+/* Auxiliary docks and map hints */
+.quick-tool-dock,
+#windowDock {
+    border-color: var(--tx-ui-border);
+    background: var(--tx-ui-bg);
+    box-shadow: var(--tx-ui-shadow-soft);
+    backdrop-filter: blur(10px);
+}
+
+.quick-tool-dock button {
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0;
+}
+
+#aimHint {
+    border-color: var(--tx-ui-border);
+    background: var(--tx-ui-bg);
+    color: var(--tx-ui-text);
+    box-shadow: var(--tx-ui-shadow-soft);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.3;
+    backdrop-filter: blur(8px);
+}
+
+.wind-generation-radio-group label {
+    color: var(--tx-ui-text);
+    font-size: 11.5px;
+}
+
+.compare-row span {
+    min-width: 68px;
+}
+
+.record-badge {
+    font-size: 11px;
+}
+
+/* Windy embedded window contains legacy inline colors; normalize them too. */
+#windyMapWindow .window-body > div:last-child {
+    border-top-color: var(--tx-ui-border) !important;
+    background: var(--tx-ui-panel-raised) !important;
+}
+
+#windyMapFocusLabel {
+    color: var(--tx-ui-muted) !important;
+    font-family: var(--tx-ui-font) !important;
+    font-size: 11.5px !important;
+}
+
+#windyUseFocusButton {
+    border-color: var(--tx-ui-accent) !important;
+    background: var(--tx-ui-control) !important;
+    color: var(--tx-ui-heading) !important;
+    font-family: var(--tx-ui-font) !important;
+    font-size: 12px !important;
+}
+
+#windyUseFocusButton:hover,
+#windyUseFocusButton:focus-visible {
+    background: var(--tx-ui-control-hover) !important;
+}
+
+/* Tooltip is created with inline styles by diagnostics JS. */
+#terrain-analysis-hover-tooltip {
+    border-color: var(--tx-ui-accent) !important;
+    border-radius: 8px !important;
+    background: var(--tx-ui-panel) !important;
+    color: var(--tx-ui-text) !important;
+    box-shadow: var(--tx-ui-shadow-soft) !important;
+    font-family: var(--tx-ui-font) !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+}
+
+body[data-theme="light"] #terrain-analysis-hover-tooltip strong,
+body:not([data-theme]) #terrain-analysis-hover-tooltip strong {
+    color: var(--tx-ui-accent-strong) !important;
+}
+
+body[data-theme="light"] #terrain-analysis-hover-tooltip span,
+body:not([data-theme]) #terrain-analysis-hover-tooltip span {
+    color: var(--tx-ui-muted) !important;
+}
+
+@media (max-width: 760px) {
+    .nav-shell,
+    .floating-window {
+        font-size: 12.5px;
+    }
+
+    .nav-drawer-section,
+    .window-body {
+        padding: 12px;
+    }
+
+    .drawer-card {
+        padding: 11px;
+    }
+}

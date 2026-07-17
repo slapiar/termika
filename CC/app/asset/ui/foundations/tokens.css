@@ -1,0 +1,92 @@
+/* TermikaXC UI – foundations/tokens.css */
+
+@layer tx-foundations {
+    :root {
+        --tx-font-ui: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --tx-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+
+        --tx-font-size-workspace: 18px;
+        --tx-font-size-window: 13px;
+        --tx-font-size-section: 12px;
+        --tx-font-size-body: 12.5px;
+        --tx-font-size-label: 11.5px;
+        --tx-font-size-help: 11px;
+        --tx-font-size-table: 11.5px;
+
+        --tx-space-1: 2px;
+        --tx-space-2: 4px;
+        --tx-space-3: 6px;
+        --tx-space-4: 8px;
+        --tx-space-5: 12px;
+        --tx-space-6: 16px;
+        --tx-space-7: 24px;
+        --tx-space-8: 32px;
+
+        --tx-radius-control: 7px;
+        --tx-radius-card: 10px;
+        --tx-radius-window: 12px;
+        --tx-radius-pill: 999px;
+
+        --tx-control-height: 34px;
+        --tx-touch-control-height: 42px;
+
+        --tx-z-map: 0;
+        --tx-z-map-overlay: 20;
+        --tx-z-toolbar: 40;
+        --tx-z-window: 100;
+        --tx-z-window-active: 120;
+        --tx-z-popover: 200;
+        --tx-z-modal-backdrop: 300;
+        --tx-z-modal: 320;
+        --tx-z-toast: 400;
+        --tx-z-tooltip: 500;
+    }
+
+    body[data-tx-family="workbench"][data-theme="light"] {
+        color-scheme: light;
+        --tx-page-bg: #f5fafc;
+        --tx-surface: rgba(255, 255, 255, 0.98);
+        --tx-surface-raised: rgba(238, 247, 250, 0.97);
+        --tx-surface-soft: rgba(247, 251, 253, 0.98);
+        --tx-control-bg: rgba(255, 255, 255, 0.99);
+        --tx-control-hover: #dff5fa;
+        --tx-text-primary: #17313e;
+        --tx-text-secondary: #536b77;
+        --tx-text-heading: #084454;
+        --tx-accent: #007f9f;
+        --tx-accent-strong: #006e8a;
+        --tx-border: #9db0bb;
+        --tx-border-subtle: #c9d4da;
+        --tx-success: #17633f;
+        --tx-warning: #7a5900;
+        --tx-danger: #a22f42;
+        --tx-focus-ring: rgba(0, 127, 159, 0.18);
+        --tx-header-bg: linear-gradient(135deg, rgba(226, 244, 249, 0.99), rgba(250, 253, 255, 0.99));
+        --tx-shadow-panel: 0 7px 20px rgba(24, 53, 68, 0.16);
+        --tx-shadow-window: 0 14px 34px rgba(24, 53, 68, 0.22);
+    }
+
+    body[data-tx-family="workbench"][data-theme="dark"] {
+        color-scheme: dark;
+        --tx-page-bg: #071018;
+        --tx-surface: rgba(10, 22, 32, 0.98);
+        --tx-surface-raised: rgba(16, 31, 43, 0.96);
+        --tx-surface-soft: rgba(11, 24, 34, 0.94);
+        --tx-control-bg: #0d1a24;
+        --tx-control-hover: #132837;
+        --tx-text-primary: #edf7fb;
+        --tx-text-secondary: #91a8b6;
+        --tx-text-heading: #dff8ff;
+        --tx-accent: #35d8ff;
+        --tx-accent-strong: #70e8ff;
+        --tx-border: #426277;
+        --tx-border-subtle: #2a4557;
+        --tx-success: #56e39f;
+        --tx-warning: #ffe16a;
+        --tx-danger: #ff6376;
+        --tx-focus-ring: rgba(53, 216, 255, 0.14);
+        --tx-header-bg: linear-gradient(135deg, rgba(19, 57, 76, 0.97), rgba(9, 21, 31, 0.99));
+        --tx-shadow-panel: 0 8px 22px rgba(0, 0, 0, 0.34);
+        --tx-shadow-window: 0 16px 38px rgba(0, 0, 0, 0.44);
+    }
+}

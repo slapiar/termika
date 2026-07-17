@@ -1,0 +1,70 @@
+/* TermikaXC Explorer – načítanie plánovacieho IGC */
+.explorer-import-box {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 12px;
+    padding: 11px 12px;
+    border: 1px solid #35505f;
+    border-radius: 9px;
+    background: rgba(16, 33, 43, 0.72);
+}
+
+.explorer-import-copy {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.explorer-import-copy strong {
+    color: #70e8ff;
+    font-size: 12px;
+}
+
+.explorer-import-copy span {
+    color: #a9c0cc;
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+#explorerIgcLoadButton {
+    min-width: 132px;
+    border-color: #2c829a;
+    background: #123746;
+    color: #e6fbff;
+}
+
+#explorerIgcLoadButton:disabled {
+    cursor: progress;
+    opacity: 0.65;
+}
+
+body[data-explorer-theme="light"] .explorer-import-box {
+    border-color: #bfd0d8;
+    background: rgba(238, 247, 250, 0.9);
+}
+
+body[data-explorer-theme="light"] .explorer-import-copy strong {
+    color: #006e8a;
+}
+
+body[data-explorer-theme="light"] .explorer-import-copy span {
+    color: #536b77;
+}
+
+body[data-explorer-theme="light"] #explorerIgcLoadButton {
+    border-color: #1685a0;
+    background: #d5f2f8;
+    color: #073f4d;
+}
+
+@media (max-width: 680px) {
+    .explorer-import-box {
+        grid-template-columns: 1fr;
+    }
+
+    #explorerIgcLoadButton {
+        width: 100%;
+    }
+}

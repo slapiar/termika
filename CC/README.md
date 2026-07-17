@@ -34,3 +34,5 @@ Register prvej vlny je v `CC/registry/wave-1.json`. Jeho dnešné položky sú f
 - Pri moduloch pochádzajúcich z inline PHP je zachovaný celý hostiteľský zdroj. Neskoršie vyčlenenie kontraktu sa preto dá vykonať bez straty pôvodnej implementácie.
 
 Strom je reprodukovateľný skriptom `tools/build-cc-module-tree.mjs`. Skript iba číta `XC` a zapisuje do `CC`; pôvodné zdroje nemení.
+
+Paralelný hostiteľ bez duplicitných samostatných JavaScriptov vzniká v `CC/app` pomocou `tools/build-cc-app.mjs`. Aktuálny rozsah oddelenia a zostávajúci inline dlh sú uvedené v `CC/HOST-SEPARATION.md`.

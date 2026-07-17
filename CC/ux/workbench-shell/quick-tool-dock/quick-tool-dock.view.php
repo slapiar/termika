@@ -1,0 +1,11 @@
+<nav id="quickToolDock" class="quick-tool-dock" aria-label="Rýchle mapové nástroje">
+    <button type="button" id="quickOpenSourcesButton" title="Zdroje a nastavenia">◎</button>
+    <button type="button" id="quickAnalyzeButton" title="Spustiť analýzu">▶</button>
+    <button type="button" id="quickClearButton" title="Skryť výsledky">■</button>
+    <button type="button" id="quickCursorModeButton" title="Prepnúť režim myši (zameriavací/štandardný)">✛</button>
+    <button type="button" data-show-window="legend" title="Legenda">L</button>
+    <button type="button" data-show-window="debugConsole" title="Debugger">D</button>
+    <button type="button" data-show-window="cellDiagnostics" title="Diagnostika bunky">?</button>
+    <button type="button" data-show-window="windyMapWindow" title="Windy mapa">W</button>
+    <?php require __DIR__ . '/../ux/map-pointer-tools/cursor-coordinate-badge/cursor-coordinate-badge.view.php'; ?>
+</nav>

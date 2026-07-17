@@ -1,0 +1,10 @@
+/* Výška hornej lišty sa zapisuje z explorer-theme.js podľa skutočného rozmeru. */
+body[data-explorer-dock="top"] .cesium-viewer-toolbar {
+    top: calc(var(--explorer-nav-bar-height, 52px) + 8px) !important;
+}
+
+@media (max-width: 920px) {
+    body[data-explorer-dock="top"] .cesium-viewer-toolbar {
+        top: calc(var(--explorer-nav-bar-height, 132px) + 8px) !important;
+    }
+}

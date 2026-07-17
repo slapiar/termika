@@ -1,0 +1,133 @@
+/* TermikaXC UI – components/controls.css */
+
+@layer tx-components {
+    body[data-tx-family="workbench"] .tx-button,
+    body[data-tx-family="workbench"] .tx-control,
+    body[data-tx-family="workbench"] .nav-tab,
+    body[data-tx-family="workbench"] .nav-close-button,
+    body[data-tx-family="workbench"] .nav-theme-toggle,
+    body[data-tx-family="workbench"] .nav-dock-picker select,
+    body[data-tx-family="workbench"] .drawer-card button,
+    body[data-tx-family="workbench"] .window-body button,
+    body[data-tx-family="workbench"] #windowDock button,
+    body[data-tx-family="workbench"] .quick-tool-dock button {
+        min-height: var(--tx-control-height);
+        padding: 7px 10px;
+        border: 1px solid var(--tx-border);
+        border-radius: var(--tx-radius-control);
+        background: var(--tx-control-bg);
+        color: var(--tx-text-primary);
+        font-family: var(--tx-font-ui);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.15;
+        transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    }
+
+    body[data-tx-family="workbench"] .tx-button:hover,
+    body[data-tx-family="workbench"] .tx-button:focus-visible,
+    body[data-tx-family="workbench"] .nav-tab:hover,
+    body[data-tx-family="workbench"] .nav-tab:focus-visible,
+    body[data-tx-family="workbench"] .nav-tab.is-active,
+    body[data-tx-family="workbench"] .nav-close-button:hover,
+    body[data-tx-family="workbench"] .nav-theme-toggle:hover,
+    body[data-tx-family="workbench"] .drawer-card button:hover,
+    body[data-tx-family="workbench"] .window-body button:hover,
+    body[data-tx-family="workbench"] #windowDock button:hover,
+    body[data-tx-family="workbench"] .quick-tool-dock button:hover {
+        border-color: var(--tx-accent);
+        background: var(--tx-control-hover);
+        color: var(--tx-text-heading);
+    }
+
+    body[data-tx-family="workbench"] .tx-control,
+    body[data-tx-family="workbench"] .nav-shell input[type="text"],
+    body[data-tx-family="workbench"] .nav-shell input[type="number"],
+    body[data-tx-family="workbench"] .nav-shell select,
+    body[data-tx-family="workbench"] .floating-window input[type="text"],
+    body[data-tx-family="workbench"] .floating-window input[type="number"],
+    body[data-tx-family="workbench"] .floating-window select,
+    body[data-tx-family="workbench"] .compare-select {
+        min-height: var(--tx-control-height);
+        padding: 7px 9px;
+        border: 1px solid var(--tx-border);
+        border-radius: var(--tx-radius-control);
+        background: var(--tx-control-bg);
+        color: var(--tx-text-primary);
+        font-family: var(--tx-font-ui);
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+
+    body[data-tx-family="workbench"] input::placeholder,
+    body[data-tx-family="workbench"] textarea::placeholder {
+        color: var(--tx-text-secondary);
+        opacity: 0.78;
+    }
+
+    body[data-tx-family="workbench"] input[type="checkbox"],
+    body[data-tx-family="workbench"] input[type="radio"] {
+        width: 17px;
+        height: 17px;
+        min-height: 17px;
+        flex: 0 0 17px;
+        accent-color: var(--tx-accent);
+    }
+
+    body[data-tx-family="workbench"] .tx-field {
+        display: flex;
+        flex-direction: column;
+        gap: var(--tx-space-2);
+    }
+
+    body[data-tx-family="workbench"] .tx-label,
+    body[data-tx-family="workbench"] .drawer-card label,
+    body[data-tx-family="workbench"] .window-body label,
+    body[data-tx-family="workbench"] .compare-row span,
+    body[data-tx-family="workbench"] .row .label {
+        color: var(--tx-text-secondary);
+        font-size: var(--tx-font-size-label);
+        font-weight: 600;
+        line-height: 1.35;
+    }
+
+    body[data-tx-family="workbench"] .tx-help,
+    body[data-tx-family="workbench"] .drawer-card p,
+    body[data-tx-family="workbench"] .window-body p,
+    body[data-tx-family="workbench"] .legend-note,
+    body[data-tx-family="workbench"] .diagnostic-intro,
+    body[data-tx-family="workbench"] .diagnostic-pending,
+    body[data-tx-family="workbench"] .temp-empty {
+        color: var(--tx-text-secondary);
+        font-size: var(--tx-font-size-help);
+        line-height: 1.45;
+    }
+
+    body[data-tx-family="workbench"] .tx-status[data-state="success"],
+    body[data-tx-family="workbench"] .ok {
+        color: var(--tx-success);
+    }
+
+    body[data-tx-family="workbench"] .tx-status[data-state="warning"] {
+        color: var(--tx-warning);
+    }
+
+    body[data-tx-family="workbench"] .tx-status[data-state="error"],
+    body[data-tx-family="workbench"] .err {
+        color: var(--tx-danger);
+    }
+
+    body[data-tx-family="workbench"] :where(button, input, select, textarea):disabled,
+    body[data-tx-family="workbench"] .future {
+        cursor: not-allowed;
+        opacity: 0.68;
+    }
+
+    @media (pointer: coarse) {
+        body[data-tx-family="workbench"] .tx-button,
+        body[data-tx-family="workbench"] .tx-control {
+            min-height: var(--tx-touch-control-height);
+        }
+    }
+}
