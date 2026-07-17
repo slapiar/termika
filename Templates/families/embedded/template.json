@@ -1,0 +1,13 @@
+{
+  "id": "embedded",
+  "body_attributes": {
+    "data-tx-family": "embedded",
+    "data-theme": "dark"
+  },
+  "styles": [
+    "asset/ui/bundles/embedded.bundle.css"
+  ],
+  "slots": ["head", "content", "scripts"],
+  "language_domains": ["common", "embedded"],
+  "implementation_status": "SCAFFOLDED"
+}
