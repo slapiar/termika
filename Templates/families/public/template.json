@@ -1,0 +1,13 @@
+{
+  "id": "public",
+  "body_attributes": {
+    "data-tx-family": "public",
+    "data-theme": "light"
+  },
+  "styles": [
+    "asset/ui/bundles/public.bundle.css"
+  ],
+  "slots": ["head", "header", "content", "footer", "scripts"],
+  "language_domains": ["common", "public"],
+  "implementation_status": "SCAFFOLDED"
+}
