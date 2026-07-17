@@ -128,7 +128,7 @@
             #terrainCameraHud[hidden]{display:none!important}
             .terrain-hud-heading{
                 position:absolute;
-                top:48px;
+                top:calc(var(--workspace-nav-inset-top,60px) + 8px);
                 left:50%;
                 width:min(650px,58vw);
                 height:70px;

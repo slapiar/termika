@@ -85,7 +85,7 @@ if (stripos($html, 'js/workspace-crosshair.js') === false) {
     $bodyScripts .= '    <script src="js/workspace-crosshair.js?v=20260715-01"></script>' . "\n";
 }
 if (stripos($html, 'js/workspace-hud-toggle.js') === false) {
-    $bodyScripts .= '    <script src="js/workspace-hud-toggle.js?v=20260717-01"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/workspace-hud-toggle.js?v=20260717-02"></script>' . "\n";
 }
 if (stripos($html, 'js/terrain-camera-hud-coordinates.js') === false) {
     $bodyScripts .= '    <script src="js/terrain-camera-hud-coordinates.js?v=20260715-01"></script>' . "\n";

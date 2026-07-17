@@ -5,13 +5,9 @@
 
   // Niektoré stránky (napr. terrain-analysis-test.php cez wind-effect-surface.js)
   // tento proxy vkladajú aj druhýkrát dynamicky. document.write() mimo
-  // synchrónneho parsovania stránky vyhadzuje InvalidStateError, preto v takom
-  // prípade vložíme skript cez createElement namiesto document.write.
-  if (document.readyState === 'loading' && currentScript && currentScript.parentNode) {
-    document.write('<script src="' + moduleUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;') + '"><\/script>');
-    return;
-  }
-
+  // parsovania stránky vyhadzuje InvalidStateError a document.readyState nie
+  // je spoľahlivý indikátor (dynamicky vložený skript môže vykonať ešte počas
+  // 'loading'). Preto používame vždy createElement namiesto document.write.
   const moduleScript = document.createElement('script');
   moduleScript.src = moduleUrl;
   moduleScript.async = false;

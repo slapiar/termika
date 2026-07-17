@@ -22,7 +22,7 @@ if ($headAssets !== '') {
 
 $bodyScripts = '';
 if (stripos($html, 'js/workspace-cesium-toolbar-offset.js') === false) {
-    $bodyScripts .= '    <script src="js/workspace-cesium-toolbar-offset.js?v=20260715-02" data-workspace-cesium-toolbar-offset="true"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/workspace-cesium-toolbar-offset.js?v=20260717-02" data-workspace-cesium-toolbar-offset="true"></script>' . "\n";
 }
 if (stripos($html, 'js/terrain-camera-hud-coordinates.js') === false) {
     $bodyScripts .= '    <script src="js/terrain-camera-hud-coordinates.js?v=20260715-01" data-terrain-camera-hud-coordinates="true"></script>' . "\n";

@@ -1,7 +1,20 @@
 /* CC host proxy. Implementácia patrí modulu cesium-toolbar-offset. */
 (() => {
-  const moduleUrl = new URL("../../ux/workbench-shell/cesium-toolbar-offset/source/XC__js__workspace-cesium-toolbar-offset.js", document.currentScript.src).href;
-  document.write('<script src="' + moduleUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;') + '"><\/script>');
+  const currentScript = document.currentScript;
+  const moduleUrl = new URL("../../ux/workbench-shell/cesium-toolbar-offset/source/XC__js__workspace-cesium-toolbar-offset.js", currentScript.src).href;
+
+  // Tento proxy sa vkladá aj dynamicky (cez wind-effect-surface.js). document.write()
+  // mimo parsovania stránky vyhadzuje InvalidStateError, ktorý by zastavil celý
+  // zvyšok tohto skriptu (vrátane výpočtu --workspace-nav-inset-top nižšie).
+  // Preto používame vždy createElement namiesto document.write.
+  const moduleScript = document.createElement('script');
+  moduleScript.src = moduleUrl;
+  moduleScript.async = false;
+  if (currentScript && currentScript.parentNode) {
+    currentScript.parentNode.insertBefore(moduleScript, currentScript.nextSibling);
+  } else {
+    document.head.appendChild(moduleScript);
+  }
 
   const navShell = document.getElementById('navShell');
   const navBar = navShell?.querySelector('.nav-bar');

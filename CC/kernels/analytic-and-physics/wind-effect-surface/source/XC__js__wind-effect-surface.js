@@ -79,7 +79,7 @@
 
         if (!document.querySelector('script[data-workspace-cesium-toolbar-offset="true"]')) {
             const script = document.createElement("script");
-            script.src = "js/workspace-cesium-toolbar-offset.js?v=20260715-02";
+            script.src = "js/workspace-cesium-toolbar-offset.js?v=20260717-02";
             script.defer = true;
             script.dataset.workspaceCesiumToolbarOffset = "true";
             document.body.appendChild(script);

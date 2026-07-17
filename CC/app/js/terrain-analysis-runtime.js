@@ -1550,7 +1550,8 @@
         timeline: false,
         infoBox: false,
         selectionIndicator: false,
-        geocoder: false
+        geocoder: false,
+        navigationHelpButton: false
     });
     window.TermikaHostContext?.set('cesium-viewer', viewer);
     window.TermikaCC3DObjectLoader?.attachViewer(viewer);

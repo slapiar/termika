@@ -5,7 +5,7 @@
     window.__termikaWorkspaceHudToggleLoaded = true;
 
     const STORAGE_KEY = 'termikaXC.cameraHud.visible.v1';
-    const MODULE_URL = 'js/terrain-camera-hud.js?v=20260717-01';
+    const MODULE_URL = 'js/terrain-camera-hud.js?v=20260717-02';
     const MAX_INSTALL_ATTEMPTS = 100;
 
     let hudButton = null;

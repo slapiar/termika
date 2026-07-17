@@ -9,7 +9,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     http_response_code(500);
     exit('Chýba CESIUM_ACCESS_TOKEN.');
 }
-$assetVersion = '20260717-01';
+$assetVersion = '20260717-02';
 $currentYear = gmdate('Y');
 $releaseVersion = null;
 $releaseVersionPath = __DIR__ . '/asset/RELEASE_VERSION.txt';
