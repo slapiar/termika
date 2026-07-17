@@ -57,7 +57,7 @@ for (const entry of cssOwnership) {
 function extractElement(hostRelative, id, modulePath, outputName) {
   const hostPath = path.join(appRoot, hostRelative);
   let host = fs.readFileSync(hostPath, 'utf8');
-  const idPattern = new RegExp(`<([a-zA-Z][\\w:-]*)\\b[^>]*\\bid=["']${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["'][^>]*>`);
+  const idPattern = new RegExp(`<([a-zA-Z][\\w:-]*)\\b[^>]*\\bid=["']${id.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&')}["'][^>]*>`);
   const opening = idPattern.exec(host);
   if (!opening) throw new Error(`Missing #${id} in ${hostRelative}`);
   const tag = opening[1];
@@ -108,6 +108,45 @@ for (const mapping of viewMappings) views.push(extractElement(...mapping));
 const cursorView = views.find(view => view.selector === '#cursorCoordsBadge');
 if (cursorView) cursorView.host = 'CC/ux/workbench-shell/quick-tool-dock/quick-tool-dock.view.php';
 
+const styleModules = new Map();
+for (const view of views) {
+  const manifestPath = path.join(root, view.owner, 'module.json');
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  for (const style of manifest.styles ?? []) {
+    const stylePath = path.join(root, view.owner, style);
+    if (!fs.existsSync(stylePath)) throw new Error(`Missing module stylesheet ${view.owner}/${style}`);
+    styleModules.set(`${view.owner}/${style}`, { owner: manifest.id, path: stylePath });
+  }
+}
+for (const modulePath of [
+  'CC/infrastructure/window-core/window-manager',
+  'CC/infrastructure/host-context/host-context',
+]) {
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, modulePath, 'module.json'), 'utf8'));
+  for (const style of manifest.styles ?? []) {
+    const stylePath = path.join(root, modulePath, style);
+    if (!fs.existsSync(stylePath)) throw new Error(`Missing module stylesheet ${modulePath}/${style}`);
+    styleModules.set(`${modulePath}/${style}`, { owner: manifest.id, path: stylePath });
+  }
+}
+
+const moduleStyleBundlePath = path.join(appRoot, 'asset', 'cc-module-styles.css');
+const moduleStyleImports = [...styleModules.values()]
+  .sort((a, b) => a.owner.localeCompare(b.owner))
+  .map(entry => {
+    const relative = path.relative(path.dirname(moduleStyleBundlePath), entry.path).replaceAll('\\', '/');
+    return `@import url(${JSON.stringify(relative)});`;
+  });
+fs.writeFileSync(moduleStyleBundlePath, `/* CC host stylesheet bundle. Každý modul zostáva vlastníkom svojho CSS. */\n${moduleStyleImports.join('\n')}\n`);
+
+const sharedHostStylePath = path.join(appRoot, 'asset', 'workspace-flight-simulator.css');
+const moduleBundleImport = '@import url("./cc-module-styles.css");';
+let sharedHostStyle = fs.readFileSync(sharedHostStylePath, 'utf8');
+if (!sharedHostStyle.includes(moduleBundleImport)) {
+  sharedHostStyle = `${moduleBundleImport}\n\n${sharedHostStyle}`;
+  fs.writeFileSync(sharedHostStylePath, sharedHostStyle);
+}
+
 function writeClassicProxy(appRelative, moduleRelative, owner) {
   const appFile = path.join(appRoot, appRelative);
   const moduleFile = path.join(root, moduleRelative);
@@ -150,6 +189,8 @@ fs.writeFileSync(path.join(ccRoot, 'registry', 'host-code-owners.json'), `${JSON
   javascript_proxy_count: proxies.length,
   proxies,
   css_proxies: cssOwnership,
+  module_stylesheet_bundle: 'CC/app/asset/cc-module-styles.css',
+  module_stylesheet_count: styleModules.size,
   extracted_view_count: views.length,
   views,
   inline_script_extraction_status: 'HOST_RUNTIME_EXTRACTED',
@@ -157,4 +198,4 @@ fs.writeFileSync(path.join(ccRoot, 'registry', 'host-code-owners.json'), `${JSON
   extracted_runtime_modules: ['window-manager'],
 }, null, 2)}\n`);
 
-console.log(`Created CC/app with ${proxies.length} JavaScript module proxies and ${views.length} extracted views.`);
+console.log(`Created CC/app with ${proxies.length} JavaScript module proxies, ${styleModules.size} module styles and ${views.length} extracted views.`);
