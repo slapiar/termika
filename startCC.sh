@@ -11,6 +11,18 @@ HEALTH_PATH="${TERMIKA_HEALTH_PATH:-app/index.php}"
 START_PATH="${TERMIKA_START_PATH:-app/index.php}"
 MODULE_PATH="ux/skewt-instrument/skewt-panel/source/XC__js__skewt-render.js"
 
+if [[ ! -f "$APP_ROOT/index.php" ]]; then
+  echo "ERROR: Missing entrypoint: $APP_ROOT/index.php"
+  exit 1
+fi
+
+if command -v node >/dev/null 2>&1; then
+  node "$ROOT_DIR/tools/prepare-cc-runtime.mjs"
+else
+  echo "ERROR: Node.js is required to prepare the CC runtime."
+  exit 1
+fi
+
 if [[ -z "${TERMIKA_LOCAL_CONFIG_PATH:-}" ]]; then
   if [[ -f "$APP_ROOT/asset/local-config.php" ]]; then
     export TERMIKA_LOCAL_CONFIG_PATH="$APP_ROOT/asset/local-config.php"
@@ -51,15 +63,12 @@ cache_bust_url() {
   fi
 }
 
-if [[ ! -f "$APP_ROOT/index.php" ]]; then
-  echo "ERROR: Missing entrypoint: $APP_ROOT/index.php"
-  exit 1
-fi
-
 pkill -f "php -S.*:${PORT}" >/dev/null 2>&1 || true
-PID_ON_PORT="$(ss -ltnp 2>/dev/null | awk -v p=":${PORT}" '$4 ~ p { if (match($0, /pid=[0-9]+/)) { print substr($0, RSTART+4, RLENGTH-4); exit } }')"
-if [[ -n "${PID_ON_PORT}" ]]; then
-  kill "$PID_ON_PORT" >/dev/null 2>&1 || true
+if command -v ss >/dev/null 2>&1; then
+  PID_ON_PORT="$(ss -ltnp 2>/dev/null | awk -v p=":${PORT}" '$4 ~ p { if (match($0, /pid=[0-9]+/)) { print substr($0, RSTART+4, RLENGTH-4); exit } }')"
+  if [[ -n "${PID_ON_PORT}" ]]; then
+    kill "$PID_ON_PORT" >/dev/null 2>&1 || true
+  fi
 fi
 
 cd "$ROOT_DIR"
