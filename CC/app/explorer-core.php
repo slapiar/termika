@@ -14,7 +14,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     exit('V asset/config.php chýba konštanta CESIUM_ACCESS_TOKEN.');
 }
 
-$assetVersion = '20260715-01';
+$assetVersion = '20260717-05';
 $cesiumTokenJson = json_encode(CESIUM_ACCESS_TOKEN, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 ?>
 <!doctype html>
@@ -177,6 +177,14 @@ $cesiumTokenJson = json_encode(CESIUM_ACCESS_TOKEN, JSON_UNESCAPED_SLASHES | JSO
         }
 
         .back-link:hover { color: var(--cyan); }
+
+        .brand-nav {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
 
         #sidebarScroll {
             flex: 1;
@@ -463,7 +471,11 @@ $cesiumTokenJson = json_encode(CESIUM_ACCESS_TOKEN, JSON_UNESCAPED_SLASHES | JSO
         <header class="brand">
             <div class="brand-top">
                 <h1><span>PRIESKUMNÍK</span> · TermikaXC</h1>
-                <a class="back-link" href="index.php">← 3D let</a>
+                <nav class="brand-nav" aria-label="Navigácia TermikaXC">
+                    <a class="back-link" href="index.php">← 3D let</a>
+                    <a class="back-link" href="terrain-analysis-test.php">Test terénu</a>
+                    <a class="back-link" href="setup.php">Nastavenie</a>
+                </nav>
             </div>
             <p>Nacvakaj trasu, nastav súťažnú štartovú pásku a vytvor plánovací súbor IGC.</p>
         </header>

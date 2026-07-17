@@ -123,7 +123,8 @@
         lines.forEach((line) => {
             const coordinate = parseCoordinateRecord(line);
             if (coordinate) {
-                coordinates.push(coordinate);
+                const isNullPlaceholder = Math.abs(coordinate.lat) < 1e-10 && Math.abs(coordinate.lon) < 1e-10;
+                if (!isNullPlaceholder) coordinates.push(coordinate);
                 return;
             }
 

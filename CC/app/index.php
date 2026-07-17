@@ -21,7 +21,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
 }
 
 // Zmena verzie prinúti prehliadač načítať nové JS/CSS namiesto starej cache.
-$assetVersion = '20260715-03';
+$assetVersion = '20260717-02';
 
 $jsDirectory = __DIR__ . '/js';
 $jsPriority = [
@@ -42,7 +42,14 @@ $jsPriority = [
 ];
 $jsFiles = glob($jsDirectory . '/*.js') ?: [];
 $jsFiles = array_map('basename', $jsFiles);
-$jsFiles = array_values(array_unique($jsFiles));
+$mainOnlyExcludedScripts = [
+    'terrain-analysis-runtime.js',
+    'cc-host-context.js',
+  ];
+$jsFiles = array_values(array_unique(array_filter(
+    $jsFiles,
+    static fn(string $file): bool => !in_array($file, $mainOnlyExcludedScripts, true)
+)));
 
 usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
     $aIndex = array_search($a, $jsPriority, true);
@@ -102,6 +109,9 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
                     <button id="toggleDebugButton" type="button" title="Skryť alebo zobraziť diagnostický pult">▤ Skryť diagnostiku</button>
                     <button id="resetPanelLayoutButton" type="button" title="Vrátiť pracovné panely na pôvodné miesta">↺ Panely</button>
                     <button id="toggleFullscreenButton" type="button" title="Roztiahnuť mapu na celú obrazovku">⛶ Celá obrazovka</button>
+                    <button type="button" onclick="window.location.href='terrain-analysis-test.php'" title="Otvoriť testovaciu stránku analýzy terénu">⌁ Test terénu</button>
+                    <button type="button" onclick="window.location.href='explorer-core.php'" title="Otvoriť plánovač preletu">⌖ Prieskumník</button>
+                    <button type="button" onclick="window.location.href='setup.php'" title="Otvoriť nastavenie lokálnych kľúčov">⚙ Nastavenie</button>
                 </div>
 
                 <div class="camera-toolbar" role="group" aria-label="Režim kamery">

@@ -127,12 +127,20 @@ $exampleExists = is_file($examplePath);
         .err { background:#401b1b; border:1px solid #c35a5a; }
         .info { background:#1f2e3a; border:1px solid #4a6b82; }
         .meta { font-size:13px; color:#a4bfd1; }
+        .cc-page-nav { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+        .cc-page-nav a { padding:8px 10px; border:1px solid #4e7a93; border-radius:8px; background:#0d1a23; color:#dff8ff; text-decoration:none; }
+        .cc-page-nav a:hover { border-color:#35d8ff; }
         @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 <div class="wrap">
     <div class="card">
+        <nav class="cc-page-nav" aria-label="Navigácia TermikaXC">
+            <a href="index.php">3D pracovisko</a>
+            <a href="terrain-analysis-test.php">Test terénu</a>
+            <a href="explorer-core.php">Prieskumník</a>
+        </nav>
         <h1>TermikaXC setup bez terminalu</h1>
         <p>Vypln hodnoty a uloz. Toto je urcene pre hostovanie, kde nechces riesit serverove env premenne.</p>
         <p class="meta">Subor: <?php echo e($configPath); ?> | Existuje: <?php echo $configExists ? 'ano' : 'nie'; ?> | Priecinok zapisovatelny: <?php echo $assetWritable ? 'ano' : 'nie'; ?> | Example subor: <?php echo $exampleExists ? 'ano' : 'nie'; ?></p>
@@ -201,7 +209,7 @@ $exampleExists = is_file($examplePath);
     </form>
 
     <div class="card">
-        <p><strong>Dalej:</strong> po ulozeni otvor index.php alebo terrain-analysis-test.php a skontroluj, ze Cesium mapa nabehne.</p>
+        <p><strong>Ďalej:</strong> po uložení sa vráť do 3D pracoviska, testu terénu alebo Prieskumníka cez navigáciu vyššie.</p>
         <p>Ak pouzijes UPDATE_SHARED_KEY, klient musi posielat HTTP header <code>X-Termika-Key</code>.</p>
     </div>
 </div>
