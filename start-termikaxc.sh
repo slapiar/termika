@@ -5,18 +5,30 @@ PORT="${1:-${TERMIKA_BIND_PORT:-8000}}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCROOT="$ROOT_DIR/CC"
 APP_ROOT="$DOCROOT/app"
+CC_LOCAL_CONFIG="$APP_ROOT/asset/local-config.php"
+XC_LOCAL_CONFIG="$ROOT_DIR/XC/asset/local-config.php"
+ROOT_LOCAL_CONFIG="$ROOT_DIR/.local-config.php"
 LOG_FILE="/tmp/termikaxc-php.log"
 LOCAL_URL="http://127.0.0.1:${PORT}/"
 HEALTH_PATH="${TERMIKA_HEALTH_PATH:-app/index.php}"
 START_PATH="${TERMIKA_START_PATH:-app/terrain-analysis-test.php}"
 
-if [[ -z "${TERMIKA_LOCAL_CONFIG_PATH:-}" ]]; then
-  if [[ -f "$ROOT_DIR/XC/asset/local-config.php" ]]; then
-    export TERMIKA_LOCAL_CONFIG_PATH="$ROOT_DIR/XC/asset/local-config.php"
-  elif [[ -f "$ROOT_DIR/.local-config.php" ]]; then
-    export TERMIKA_LOCAL_CONFIG_PATH="$ROOT_DIR/.local-config.php"
+# CC je samostatná živá inštancia. Ak ešte nemá vlastnú lokálnu konfiguráciu,
+# prevezme ju pri prvom štarte z XC alebo z koreňového súboru. Existujúca
+# konfigurácia CC sa nikdy automaticky neprepíše, pretože ju spravuje setup.php.
+mkdir -p "$(dirname "$CC_LOCAL_CONFIG")"
+if [[ ! -f "$CC_LOCAL_CONFIG" ]]; then
+  if [[ -f "$XC_LOCAL_CONFIG" ]]; then
+    cp "$XC_LOCAL_CONFIG" "$CC_LOCAL_CONFIG"
+    echo "CC config: copied from XC/asset/local-config.php"
+  elif [[ -f "$ROOT_LOCAL_CONFIG" ]]; then
+    cp "$ROOT_LOCAL_CONFIG" "$CC_LOCAL_CONFIG"
+    echo "CC config: copied from .local-config.php"
   fi
 fi
+
+# setup.php aj asset/config.php musia čítať a zapisovať ten istý živý súbor CC.
+export TERMIKA_LOCAL_CONFIG_PATH="$CC_LOCAL_CONFIG"
 
 set_codespace_ports_private() {
   if [[ -z "${CODESPACE_NAME:-}" ]]; then
