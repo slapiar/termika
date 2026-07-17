@@ -8,6 +8,6 @@
     "asset/ui/bundles/setup.bundle.css"
   ],
   "slots": ["head", "header", "content", "status", "scripts"],
-  "language_domains": ["common", "setup"],
+  "language_catalog": "selected",
   "implementation_status": "SCAFFOLDED"
 }
