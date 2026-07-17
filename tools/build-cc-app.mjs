@@ -7,6 +7,12 @@ const ccRoot = path.join(root, 'CC');
 const appRoot = path.join(ccRoot, 'app');
 const registry = JSON.parse(fs.readFileSync(path.join(ccRoot, 'registry', 'modules.json'), 'utf8'));
 
+const ccLocalConfigPath = path.join(appRoot, 'asset', 'local-config.php');
+const xcLocalConfigPath = path.join(xcRoot, 'asset', 'local-config.php');
+const preservedLocalConfig = fs.existsSync(ccLocalConfigPath)
+  ? fs.readFileSync(ccLocalConfigPath)
+  : (fs.existsSync(xcLocalConfigPath) ? fs.readFileSync(xcLocalConfigPath) : null);
+
 if (fs.existsSync(appRoot)) fs.rmSync(appRoot, { recursive: true });
 fs.cpSync(xcRoot, appRoot, {
   recursive: true,
@@ -15,6 +21,11 @@ fs.cpSync(xcRoot, appRoot, {
     return relative !== 'asset/local-config.php' && relative !== '.local-config.php';
   },
 });
+
+if (preservedLocalConfig) {
+  fs.mkdirSync(path.dirname(ccLocalConfigPath), { recursive: true });
+  fs.writeFileSync(ccLocalConfigPath, preservedLocalConfig);
+}
 
 const ownership = new Map();
 const rank = { kernel: 0, infrastructure: 1, service: 2, module: 3 };
@@ -176,6 +187,10 @@ terrainRuntime = terrainRuntime.slice(0, windowManagerStart).trimEnd() + '\n';
 terrainRuntime = terrainRuntime.replace(
   "<?php echo json_encode(CESIUM_ACCESS_TOKEN, JSON_UNESCAPED_SLASHES); ?>",
   'window.TERMIKA_CC_CONFIG.cesiumAccessToken'
+);
+terrainRuntime = terrainRuntime.replace(
+  "    viewer.clock.shouldAnimate = true;\n",
+  "    if (typeof Cesium.viewerCesiumNavigationMixin === 'function') {\n        viewer.extend(Cesium.viewerCesiumNavigationMixin, {});\n    } else {\n        console.warn('Cesium navigation mixin nie je načítaný.');\n    }\n    viewer.clock.shouldAnimate = true;\n"
 );
 fs.writeFileSync(path.join(appRoot, 'js', 'terrain-analysis-runtime.js'), terrainRuntime);
 
