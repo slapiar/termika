@@ -9,6 +9,31 @@
   const events = new EventTarget();
   const cleanup = new Set();
 
+  function activateTemplateFamily() {
+    const body = document.body;
+    if (!body) return;
+
+    const pageName = location.pathname.split('/').filter(Boolean).pop() || 'index.php';
+    const configuredFamily = window.TERMIKA_CC_CONFIG?.templateFamily;
+    const family = configuredFamily || body.dataset.txFamily || (
+      pageName === 'setup.php' ? 'setup' : 'workbench'
+    );
+
+    body.dataset.txFamily = family;
+    if (!body.dataset.theme) body.dataset.theme = 'dark';
+
+    const bundleHref = `asset/ui/bundles/${family}.bundle.css`;
+    if (!document.querySelector(`link[data-tx-style="family:${family}"]`)) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = bundleHref;
+      link.dataset.txStyle = `family:${family}`;
+      document.head.append(link);
+    }
+  }
+
+  activateTemplateFamily();
+
   const context = Object.freeze({
     get(key, fallback = null) {
       return state.has(key) ? state.get(key) : fallback;
