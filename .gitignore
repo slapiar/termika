@@ -1,5 +1,6 @@
 releases/
 *.zip
 XC/asset/local-config.php
+CC/app/asset/local-config.php
 GENauto/
 .termika-runtime/
