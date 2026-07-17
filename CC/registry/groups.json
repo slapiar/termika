@@ -1,6 +1,6 @@
 {
   "generated_at": "2026-07-17",
-  "group_count": 41,
+  "group_count": 42,
   "groups": [
     {
       "section": "infrastructure",
@@ -188,6 +188,13 @@
       "modules": [
         "cursor-coordinate-badge",
         "workspace-crosshair"
+      ]
+    },
+    {
+      "section": "ux",
+      "group": "object-library",
+      "modules": [
+        "three-d-object-loader"
       ]
     },
     {

@@ -67,6 +67,7 @@ Nástroje majú byť postupne spravované samostatným registrom doplnkov, praco
 | `mesh-surface` | Dominantná alebo šedá plošná výplň meshu | `ROZPRACOVANÉ` | Testovacia analýza terénu | `XC/js/terrain-mesh-surface.js` | [`tools/MESH.md`](tools/MESH.md) |
 | `basemap-visibility` | Prepínač základnej mapy Cesium | `ROZPRACOVANÉ` | Testovacia 3D analýza terénu | `XC/js/terrain-basemap-visibility.js` | [`tools/BASEMAP.md`](tools/BASEMAP.md) |
 | `communication-tool` | Univerzálny komunikačný modul pre nástroje a integrácie | `ROZPRACOVANÉ` | Medzimodulová komunikácia a externé prepojenia | `XC/js/tool-communication.js` | [`tools/COMMUNICATION.md`](tools/COMMUNICATION.md) |
+| `three-d-object-loader` | Loader hotových 3D objektov (Cesium sample assets) | `AKTÍVNE` | CC testovacia stránka terénnej analýzy | `CC/ux/object-library/three-d-object-loader/three-d-object-loader.js`, `CC/app/js/three-d-object-loader.js`, `CC/3D_obj/*.glb` | `TOOLS.md`, `CHANGELOG.md` |
 | `windy-map-bridge` | Integrácia Windy Map Forecast API ako doplnkového mapového vizuálu | `NÁVRH` | Workflow pilotov: orientácia na Windy, detail v TermikaXC | návrh implementácie | [`tools/WINDY.md`](tools/WINDY.md) |
 | `cell-diagnostics` | Diagnostika geometrickej bunky | `AKTÍVNE` | Testovacia analýza terénu | `XC/terrain-analysis-test.php`, `XC/js/terrain-design-ui.js`, ďalšie diagnostické moduly | pripraví sa |
 | `terrain-test-link` | Rýchly vstup na test terénu | `AKTÍVNE` | Hlavná stránka TermikaXC | `XC/js/terrain-test-link.js` | pripraví sa |

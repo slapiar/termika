@@ -1,0 +1,22 @@
+{
+  "id": "three-d-object-loader",
+  "group": "object-library",
+  "section": "ux",
+  "kind": "module",
+  "entry": "three-d-object-loader.js",
+  "styles": [
+    "three-d-object-loader.css"
+  ],
+  "origins": [
+    "CC/3D_obj/manifest.json",
+    "CC/app/terrain-analysis-test.php"
+  ],
+  "copied_files": [
+    "source/CC__3D_obj__manifest.json"
+  ],
+  "migration": {
+    "source_copied": true,
+    "functional_status": "WRAPPED_CC",
+    "runtime_enabled": true
+  }
+}

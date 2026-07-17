@@ -1,0 +1,36 @@
+{
+  "source": "CesiumGS/cesium Apps/SampleData/models",
+  "license_hint": "CesiumJS is Apache-2.0; verify third-party model-specific notices before redistribution.",
+  "models": [
+    {
+      "id": "cesium_air",
+      "file": "Cesium_Air.glb",
+      "url": "https://raw.githubusercontent.com/CesiumGS/cesium/main/Apps/SampleData/models/CesiumAir/Cesium_Air.glb",
+      "recommended_for": ["aircraft", "fixed-wing", "general_flight"]
+    },
+    {
+      "id": "cesium_drone",
+      "file": "CesiumDrone.glb",
+      "url": "https://raw.githubusercontent.com/CesiumGS/cesium/main/Apps/SampleData/models/CesiumDrone/CesiumDrone.glb",
+      "recommended_for": ["drone", "uav", "quadcopter"]
+    },
+    {
+      "id": "cesium_balloon",
+      "file": "CesiumBalloon.glb",
+      "url": "https://raw.githubusercontent.com/CesiumGS/cesium/main/Apps/SampleData/models/CesiumBalloon/CesiumBalloon.glb",
+      "recommended_for": ["hot_air_balloon", "thermal_demo"]
+    },
+    {
+      "id": "ground_vehicle",
+      "file": "GroundVehicle.glb",
+      "url": "https://raw.githubusercontent.com/CesiumGS/cesium/main/Apps/SampleData/models/GroundVehicle/GroundVehicle.glb",
+      "recommended_for": ["ground_reference", "camera_follow_test"]
+    },
+    {
+      "id": "cesium_milk_truck",
+      "file": "CesiumMilkTruck.glb",
+      "url": "https://raw.githubusercontent.com/CesiumGS/cesium/main/Apps/SampleData/models/CesiumMilkTruck/CesiumMilkTruck.glb",
+      "recommended_for": ["ground_vehicle", "entity_tracking"]
+    }
+  ]
+}

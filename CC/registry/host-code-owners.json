@@ -1,7 +1,7 @@
 {
   "generated_at": "2026-07-17",
   "host": "CC/app",
-  "javascript_proxy_count": 47,
+  "javascript_proxy_count": 48,
   "proxies": [
     {
       "source": "XC/js/cesium-render.js",
@@ -194,6 +194,12 @@
       "owner": "test-page-link",
       "module": "CC/ux/workbench-shell/test-page-link",
       "proxy": "CC/app/js/terrain-test-link.js"
+    },
+    {
+      "source": "CC/ux/object-library/three-d-object-loader/three-d-object-loader.js",
+      "owner": "three-d-object-loader",
+      "module": "CC/ux/object-library/three-d-object-loader",
+      "proxy": "CC/app/js/three-d-object-loader.js"
     },
     {
       "source": "XC/js/tool-communication.js",

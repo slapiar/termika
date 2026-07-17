@@ -228,6 +228,7 @@ window.TERMIKA_CC_CONFIG = Object.freeze({
 </script>
 <script src="js/cc-host-context.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
 <script src="../infrastructure/window-core/window-manager/window-manager.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+<script src="js/three-d-object-loader.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
 <script src="js/terrain-analysis-runtime.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
 </body>
 </html>

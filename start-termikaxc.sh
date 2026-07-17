@@ -3,8 +3,8 @@ set -euo pipefail
 
 PORT="${1:-${TERMIKA_BIND_PORT:-8000}}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCROOT="$ROOT_DIR/CC"
-APP_ROOT="$DOCROOT/app"
+DOCROOT="$ROOT_DIR/XC"
+
 LOG_FILE="/tmp/termikaxc-php.log"
 LOCAL_URL="http://127.0.0.1:${PORT}/"
 HEALTH_PATH="${TERMIKA_HEALTH_PATH:-app/index.php}"

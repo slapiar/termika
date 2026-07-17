@@ -1,2 +1,25 @@
 /* CC host proxy. Štýl patrí modulu cesium-toolbar-offset. */
 @import url("../../ux/workbench-shell/cesium-toolbar-offset/source/XC__asset__workspace-cesium-toolbar-offset.css");
+
+/* Host override: align top-right controls to current inner edge of nav bar. */
+.cesium-viewer-toolbar {
+	top: calc(var(--workspace-nav-inset-top, 0px) + 8px) !important;
+	right: calc(var(--workspace-nav-inset-right, 0px) + 12px) !important;
+}
+
+.cesium-viewer-fullscreenContainer,
+.cesium-viewer-vrContainer {
+	right: calc(var(--workspace-nav-inset-right, 0px) + 12px) !important;
+}
+
+@media (min-width: 761px) {
+	.quick-tool-dock {
+		top: calc(
+			var(--workspace-nav-inset-top, 0px)
+			+ 8px
+			+ var(--workspace-cesium-toolbar-height, 40px)
+			+ 8px
+		) !important;
+		right: calc(var(--workspace-nav-inset-right, 0px) + 12px) !important;
+	}
+}

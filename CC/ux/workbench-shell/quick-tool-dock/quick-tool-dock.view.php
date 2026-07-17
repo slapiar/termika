@@ -7,5 +7,5 @@
     <button type="button" data-show-window="debugConsole" title="Debugger">D</button>
     <button type="button" data-show-window="cellDiagnostics" title="Diagnostika bunky">?</button>
     <button type="button" data-show-window="windyMapWindow" title="Windy mapa">W</button>
-    <?php require __DIR__ . '/../ux/map-pointer-tools/cursor-coordinate-badge/cursor-coordinate-badge.view.php'; ?>
+    <?php require __DIR__ . '/../../map-pointer-tools/cursor-coordinate-badge/cursor-coordinate-badge.view.php'; ?>
 </nav>

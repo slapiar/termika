@@ -8,13 +8,71 @@
   let initialized = false;
   const disposers = [];
 
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function readWorkspaceBounds(windowEl = null) {
+    const navShell = document.getElementById('navShell');
+    const dock = ['top', 'bottom', 'left', 'right'].includes(navShell?.dataset?.dock)
+      ? navShell.dataset.dock
+      : 'top';
+    const navRect = navShell?.getBoundingClientRect?.() || null;
+
+    let minLeft = 0;
+    let minTop = 0;
+    let maxRight = window.innerWidth;
+    let maxBottom = window.innerHeight;
+
+    if (navRect) {
+      if (dock === 'top') {
+        minTop = Math.max(0, Math.ceil(navRect.bottom));
+      } else if (dock === 'bottom') {
+        maxBottom = Math.min(window.innerHeight, Math.floor(navRect.top));
+      } else if (dock === 'left') {
+        minLeft = Math.max(0, Math.ceil(navRect.right));
+      } else if (dock === 'right') {
+        maxRight = Math.min(window.innerWidth, Math.floor(navRect.left));
+      }
+    }
+
+    if (maxRight <= minLeft) {
+      minLeft = 0;
+      maxRight = window.innerWidth;
+    }
+    if (maxBottom <= minTop) {
+      minTop = 0;
+      maxBottom = window.innerHeight;
+    }
+
+    const width = Math.max(0, windowEl?.offsetWidth || 0);
+    const height = Math.max(0, windowEl?.offsetHeight || 0);
+    const maxLeft = Math.max(minLeft, maxRight - width);
+    const maxTop = Math.max(minTop, maxBottom - height);
+
+    return { minLeft, minTop, maxRight, maxBottom, maxLeft, maxTop };
+  }
+
   function keepInViewport(windowEl) {
     if (!windowEl) return;
     const rect = windowEl.getBoundingClientRect();
-    const maxLeft = Math.max(0, window.innerWidth - Math.min(rect.width, window.innerWidth));
-    const maxTop = Math.max(0, window.innerHeight - 42);
-    windowEl.style.left = Math.min(Math.max(0, rect.left), maxLeft) + 'px';
-    windowEl.style.top = Math.min(Math.max(0, rect.top), maxTop) + 'px';
+    const bounds = readWorkspaceBounds(windowEl);
+    const maxWidth = Math.max(180, bounds.maxRight - bounds.minLeft);
+    const maxHeight = Math.max(120, bounds.maxBottom - bounds.minTop);
+
+    const width = Math.min(rect.width, maxWidth);
+    const height = Math.min(rect.height, maxHeight);
+    const left = clamp(rect.left, bounds.minLeft, bounds.maxRight - width);
+    const top = clamp(rect.top, bounds.minTop, bounds.maxBottom - height);
+
+    if (Math.abs(rect.width - width) > 0.5) {
+      windowEl.style.width = Math.round(width) + 'px';
+    }
+    if (Math.abs(rect.height - height) > 0.5) {
+      windowEl.style.height = Math.round(height) + 'px';
+    }
+    windowEl.style.left = Math.round(left) + 'px';
+    windowEl.style.top = Math.round(top) + 'px';
     windowEl.style.right = 'auto';
     windowEl.style.bottom = 'auto';
     windowEl.style.transform = 'none';
@@ -54,8 +112,11 @@
       });
       listen(header, 'pointermove', (event) => {
         if (!dragState) return;
-        windowEl.style.left = Math.max(0, Math.min(dragState.left + event.clientX - dragState.x, window.innerWidth - 80)) + 'px';
-        windowEl.style.top = Math.max(0, Math.min(dragState.top + event.clientY - dragState.y, window.innerHeight - 36)) + 'px';
+        const bounds = readWorkspaceBounds(windowEl);
+        const nextLeft = dragState.left + event.clientX - dragState.x;
+        const nextTop = dragState.top + event.clientY - dragState.y;
+        windowEl.style.left = clamp(nextLeft, bounds.minLeft, bounds.maxLeft) + 'px';
+        windowEl.style.top = clamp(nextTop, bounds.minTop, bounds.maxTop) + 'px';
       });
       const stopDrag = () => { dragState = null; };
       listen(header, 'pointerup', stopDrag);
@@ -77,6 +138,16 @@
       });
     });
     listen(window, 'resize', () => root.querySelectorAll('.floating-window:not([hidden])').forEach(keepInViewport));
+
+    const navShell = document.getElementById('navShell');
+    if (navShell) {
+      const dockObserver = new MutationObserver(() => {
+        root.querySelectorAll('.floating-window:not([hidden])').forEach(keepInViewport);
+      });
+      dockObserver.observe(navShell, { attributes: true, attributeFilter: ['data-dock'] });
+      disposers.push(() => dockObserver.disconnect());
+    }
+
     window.TermikaHostContext?.provide('window-manager', api);
     return api;
   }

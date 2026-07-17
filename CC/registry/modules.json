@@ -1,9 +1,9 @@
 {
   "generated_at": "2026-07-17",
-  "transferable_module_count": 69,
+  "transferable_module_count": 70,
   "architectural_module_count": 1,
   "preserved_kernel_count": 12,
-  "total_entry_count": 82,
+  "total_entry_count": 83,
   "modules": [
     {
       "id": "tool-communication",
@@ -404,6 +404,14 @@
       "kind": "module",
       "path": "CC/ux/map-pointer-tools/workspace-crosshair",
       "runtime_enabled": false
+    },
+    {
+      "id": "three-d-object-loader",
+      "group": "object-library",
+      "section": "ux",
+      "kind": "module",
+      "path": "CC/ux/object-library/three-d-object-loader",
+      "runtime_enabled": true
     },
     {
       "id": "pilot-physiology-panel",

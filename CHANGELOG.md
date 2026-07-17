@@ -30,6 +30,12 @@ Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie 
 
 ### Pridané
 
+- Modulový loader hotových 3D objektov pre CC testovacie pracovisko.
+  - nový modul `CC/ux/object-library/three-d-object-loader` s API `window.TermikaCC3DObjectLoader`,
+  - hostiteľský proxy vstup `CC/app/js/three-d-object-loader.js` načítaný v `CC/app/terrain-analysis-test.php`,
+  - runtime po inicializácii mapy pripája Cesium viewer do loadera (`attachViewer(viewer)`),
+  - modelové assety sú sprístupnené pod `CC/3D_obj/` (Cesium Air, Drone, Balloon, GroundVehicle, MilkTruck) spolu s `manifest.json` a `SHA256SUMS.txt`.
+
 - Automatické ukladanie TEMP profilu do GENauto DB po úspešnom načítaní zo zdroja Windy.
   - po kliknutí na bod a úspešnom načítaní cez Windy sa TEMP profil uloží bez potreby manuálneho tlačidla,
   - auto-save používa ochranu proti duplicitnému zápisu toho istého profilu na tom istom bode,
