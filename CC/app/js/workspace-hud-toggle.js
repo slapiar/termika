@@ -1,20 +1,23 @@
 /* CC host proxy. Implementácia patrí modulu camera-hud-toggle. */
 (() => {
-  const moduleUrl = new URL("../../ux/camera-hud/camera-hud-toggle/source/XC__js__workspace-hud-toggle.js", document.currentScript.src).href;
-  document.write('<script src="' + moduleUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;') + '"><\/script>');
+  const currentScript = document.currentScript;
+  const moduleUrl = new URL("../../ux/camera-hud/camera-hud-toggle/source/XC__js__workspace-hud-toggle.js", currentScript.src).href;
 
-  function triggerHudToggle() {
-    const hudButton = document.getElementById('workspaceHudToggle');
-    if (!hudButton || hudButton.disabled) return false;
-    hudButton.click();
-    return true;
+  // Niektoré stránky (napr. terrain-analysis-test.php cez wind-effect-surface.js)
+  // tento proxy vkladajú aj druhýkrát dynamicky. document.write() mimo
+  // synchrónneho parsovania stránky vyhadzuje InvalidStateError, preto v takom
+  // prípade vložíme skript cez createElement namiesto document.write.
+  if (document.readyState === 'loading' && currentScript && currentScript.parentNode) {
+    document.write('<script src="' + moduleUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;') + '"><\/script>');
+    return;
   }
 
-  // Host-level bridge: buttons with this action route to the existing HUD toggle.
-  document.addEventListener('click', (event) => {
-    const actionButton = event.target.closest('[data-workspace-action="toggle-hud"]');
-    if (!actionButton) return;
-    event.preventDefault();
-    triggerHudToggle();
-  });
+  const moduleScript = document.createElement('script');
+  moduleScript.src = moduleUrl;
+  moduleScript.async = false;
+  if (currentScript && currentScript.parentNode) {
+    currentScript.parentNode.insertBefore(moduleScript, currentScript.nextSibling);
+  } else {
+    document.head.appendChild(moduleScript);
+  }
 })();

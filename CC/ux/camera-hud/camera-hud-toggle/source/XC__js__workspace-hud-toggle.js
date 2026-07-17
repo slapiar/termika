@@ -18,11 +18,11 @@
     function readSavedVisibility() {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved === null) return true;
+            if (saved === null) return false;
             return saved !== 'false';
         } catch (error) {
             console.warn('Stav HUD-u sa nepodarilo načítať:', error);
-            return true;
+            return false;
         }
     }
 
@@ -50,7 +50,7 @@
         hudButton.classList.toggle('is-active', Boolean(visible) && !pending);
         hudButton.classList.toggle('is-pending', pending);
         hudButton.setAttribute('aria-pressed', visible && !pending ? 'true' : 'false');
-        hudButton.disabled = pending;
+        hudButton.disabled = false;
         hudButton.textContent = 'HUD';
 
         if (pending) {
@@ -92,7 +92,7 @@
             else navMeta.appendChild(hudButton);
         }
 
-        updateButton(readSavedVisibility(), true);
+        updateButton(false, false);
         return hudButton;
     }
 
@@ -161,6 +161,14 @@
             createCompatibilityMarker();
 
             if (!window.TerrainCameraHUD) await loadScript(MODULE_URL);
+
+            // Proxy skript modulu sa niekedy vkladá dynamicky, takže jeho
+            // vlastná 'load' udalosť môže nastať skôr, než je globál
+            // TerrainCameraHUD reálne priradený. Počkáme naň krátko.
+            for (let attempt = 0; attempt < MAX_INSTALL_ATTEMPTS && !window.TerrainCameraHUD; attempt += 1) {
+                await delay(100);
+            }
+
             hudApi = window.TerrainCameraHUD || null;
             if (!hudApi) throw new Error('Modul TerrainCameraHUD nie je dostupný.');
 

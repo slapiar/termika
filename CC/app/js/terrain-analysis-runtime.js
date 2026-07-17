@@ -109,28 +109,6 @@
     let runtimeCleanupDone = false;
     let sceneInputHandler = null;
 
-    function ensureHudActionsInTerrainNav() {
-        const actionRows = Array.from(document.querySelectorAll('.nav-drawer .drawer-card .action-row'));
-        actionRows.forEach((row) => {
-            if (row.querySelector('[data-workspace-action="toggle-hud"]')) {
-                return;
-            }
-
-            const firstWindowButton = row.querySelector('[data-show-window]');
-            if (!firstWindowButton) {
-                return;
-            }
-
-            const hudButton = document.createElement('button');
-            hudButton.type = 'button';
-            hudButton.setAttribute('data-workspace-action', 'toggle-hud');
-            hudButton.textContent = 'HUD kamera';
-            row.insertBefore(hudButton, firstWindowButton);
-        });
-    }
-
-    ensureHudActionsInTerrainNav();
-
     function formatCenter(point) {
         return point.lat.toFixed(5) + ', ' + point.lon.toFixed(5);
     }
