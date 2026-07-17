@@ -1,3 +1,3 @@
 # terrain-legend
 
-Prvý jednoduchý kandidát na neskorší funkčný obal. Obsah legendy zostáva zatiaľ v `XC/terrain-analysis-test.php` a neprenáša sa pred `VERIFIED_XC`.
+Funkčná skupina pre samostatný modul legendy terénu. Prenos do CC je povolený aj pred `VERIFIED_XC`, pričom skutočný stav overenia musí zostať uvedený v manifeste.

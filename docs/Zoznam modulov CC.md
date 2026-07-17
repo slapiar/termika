@@ -5,9 +5,9 @@
 **Skúmaná vetva:** `main`  
 **Skúmaný commit:** `b2b32855701c2c17f1316e3276b0adc4fcaf3461`
 
-## Záväzná migračná brána
+## Evidencia migrácie
 
-> Do CC sa nesmie preniesť žiadny modul, ktorý nebol najprv odladený a funkčne overený vo svojom pôvodnom prostredí XC. Zaradenie do tohto zoznamu nie je povolením na presun, prepis ani refaktor.
+> Rozhodnutím používateľa zo 17. júla 2026 možno identifikované moduly preniesť do CC aj pred funkčným overením v XC. Pôvod a skutočný stav overenia sa musia naďalej evidovať; prenos nesmie byť vydávaný za potvrdenie funkčnosti.
 
 Tento zoznam vznikol priamym prechodom zdrojových stránok, inline skriptov, samostatných JavaScriptov, CSS a serverových koncových bodov. Kandidátom nie je automaticky každý `.js` súbor. Kandidát musí predstavovať používateľsky alebo prevádzkovo rozpoznateľnú funkciu, ktorú možno oddeliť jasným kontraktom.
 
@@ -17,9 +17,9 @@ Stav `NEOVERENÉ` znamená, že existencia a zapojenie boli nájdené v kóde, a
 
 Pôvodných 69 evidovaných položiek nie je 69 samostatných modulov. Po funkčnom zoskupení vzniká tento pracovný katalóg. Toto je rozhodujúca vrstva pre ďalší postup; podrobná inventúra nižšie zostáva dôkazovým rozpisom zdrojov.
 
-### Samostatné používateľské moduly CC
+### Funkčné skupiny používateľských modulov CC
 
-| # | Cieľový modul | Zlučuje alebo vlastní dnešné položky | Migračná vlna |
+| # | Cieľová skupina | Obsahuje alebo zastrešuje dnešné samostatné moduly | Migračná vlna |
 |---:|---|---|---:|
 | 1 | `system-status-bar` | `release-footer`, `release-badge`; budúce segmenty zariadenia, siete a externých zdrojov | 1 |
 | 2 | `window-core` | `window-manager` a spoločné správanie presunu, resize, fokusu, z-indexu, skrytia a obnovy okien | 1 |
@@ -53,7 +53,9 @@ Pôvodných 69 evidovaných položiek nie je 69 samostatných modulov. Po funkč
 | 30 | `wind-video` | `wind-webm-export`, `wind-cache-preview` | 3 |
 | 31 | `terrain-visualization-layers` | spoločný hostiteľ pre `terrain-contours-layer`, `terrain-design-layer`, `terrain-mesh-wireframe`, `terrain-mesh-surface`; jednotlivé renderery zostávajú zásuvnými vrstvami | 4 |
 
-Výsledok: **31 samostatných používateľských modulov**, nie 69.
+Výsledok: **31 funkčných skupín**. Identifikované nástroje, prístroje, adaptéry, okná a pomocné prvky v nich zostávajú samostatnými modulmi s vlastnými súbormi; skupina nie je povolením na ich zlúčenie.
+
+Záväzná adresárová a súborová zásada je zapísaná v `postupy/2026-07-17_06-06_CC-modularna-struktura-a-kontrola-postupov.md`.
 
 ### Infraštruktúrne a servisné moduly CC
 
@@ -265,10 +267,10 @@ Tieto nálezy sú dôvodom, prečo existencia súboru ešte nedokazuje pripraven
 
 ## Ďalší spôsob práce
 
-Každý kandidát musí pred akýmkoľvek presunom prejsť samostatnou kartou overenia:
+Každý samostatný modul musí mať vlastný manifest a evidenciu stavu:
 
 ```text
 DISCOVERED → DEBUGGING_XC → VERIFIED_XC → WRAPPED_CC → VERIFIED_CC → ACCEPTED
 ```
 
-Táto inventúra prideľuje iba stav `DISCOVERED`. Ďalší krok sa robí po jednom module v jeho skutočnom hostiteľskom prostredí.
+Stavový reťazec eviduje poznanie a overenie modulu, ale už nie je bránou samotného kopírovania zdroja do CC. Moduly sa prenášajú samostatne vo vnútri funkčných skupín.

@@ -1,8 +1,8 @@
 # Overenie prvej vlny v XC
 
-Žiadny kandidát sa nezapojí do runtime `CC`, kým nemá zaznamenané `VERIFIED_XC`.
+Overenie v XC sa eviduje samostatne od prenosu zdrojov do CC. Neoverený modul musí zostať takto označený; jeho zapojenie do runtime je osobitné rozhodnutie.
 
-| Modul | Hostiteľské pracoviská | Aktuálny stav | Povinný dôkaz pred prenosom |
+| Skupina | Hostiteľské pracoviská | Aktuálny stav | Potrebný dôkaz funkčnosti |
 |---|---|---|---|
 | `system-status-bar` | `XC/terrain-analysis-test.php` | DEBUGGING_XC | po nasadení zobrazuje vlastníka, rok a `3.1.0` z `XC/asset/RELEASE_VERSION.txt`; chýbajúci/neplatný súbor dá jasný chybový stav |
 | `window-core` | `XC/index.php`, `XC/terrain-analysis-test.php` | DISCOVERED | presun, resize, focus, z-index, zatvorenie, opätovné otvorenie a reset bez duplicitných listenerov |
