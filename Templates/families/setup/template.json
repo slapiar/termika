@@ -1,0 +1,13 @@
+{
+  "id": "setup",
+  "body_attributes": {
+    "data-tx-family": "setup",
+    "data-theme": "dark"
+  },
+  "styles": [
+    "asset/ui/bundles/setup.bundle.css"
+  ],
+  "slots": ["head", "header", "content", "status", "scripts"],
+  "language_domains": ["common", "setup"],
+  "implementation_status": "SCAFFOLDED"
+}
