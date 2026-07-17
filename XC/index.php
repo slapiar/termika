@@ -65,6 +65,7 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
 
     <link href="asset/style.css?v=<?php echo rawurlencode($assetVersion); ?>" rel="stylesheet">
+    <script src="ux/igc-parser.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
 
 <?php foreach ($jsFiles as $jsFile): ?>
     <script src="js/<?php echo rawurlencode($jsFile); ?>?v=<?php echo rawurlencode($assetVersion); ?>"></script>

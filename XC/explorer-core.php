@@ -27,6 +27,7 @@ $cesiumTokenJson = json_encode(CESIUM_ACCESS_TOKEN, JSON_UNESCAPED_SLASHES | JSO
 
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Cesium.js"></script>
     <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Widgets/widgets.css">
+    <script src="ux/igc-parser.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
 
     <style>
         :root {

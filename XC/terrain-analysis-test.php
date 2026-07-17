@@ -41,6 +41,8 @@ foreach ($releaseVersionPaths as $releaseVersionPath) {
     <title>TermikaXC v2.6 – Terrain Analysis</title>
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Cesium.js"></script>
     <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Widgets/widgets.css">
+    <link rel="stylesheet" href="asset/workspace-polish.css?v=<?php echo rawurlencode($assetVersion); ?>">
+    <link rel="stylesheet" href="asset/workspace-flight-simulator.css?v=<?php echo rawurlencode($assetVersion); ?>">
     <script src="js/terrain-analysis.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-analysis-diagnostics.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/terrain-analysis-core.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
@@ -53,6 +55,15 @@ foreach ($releaseVersionPaths as $releaseVersionPath) {
     <script src="js/wind-effect-surface.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-render.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/wind-ui.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/cesium-render.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="ux/igc-parser.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/pilot-network.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/workspace-crosshair.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/workspace-hud-toggle.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/terrain-camera-hud-coordinates.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/flight-simulator.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/workspace-flight-toggle.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
+    <script src="js/flight-emergency-disengage.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/tool-communication.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/windy-map-bridge.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
     <script src="js/windy-map-adapter.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
@@ -1334,41 +1345,6 @@ foreach ($releaseVersionPaths as $releaseVersionPath) {
         return normalizeTempProfileRows(raw);
     }
 
-    function parseIgcPoint(line) {
-        if (typeof line !== 'string' || !line.startsWith('B') || line.length < 24) return null;
-        const latRaw = line.slice(7, 14);
-        const latHem = line.slice(14, 15);
-        const lonRaw = line.slice(15, 23);
-        const lonHem = line.slice(23, 24);
-        const latDeg = Number(latRaw.slice(0, 2));
-        const latMin = Number(latRaw.slice(2, 7)) / 1000;
-        const lonDeg = Number(lonRaw.slice(0, 3));
-        const lonMin = Number(lonRaw.slice(3, 8)) / 1000;
-        if (![latDeg, latMin, lonDeg, lonMin].every(Number.isFinite)) return null;
-        let lat = latDeg + latMin / 60;
-        let lon = lonDeg + lonMin / 60;
-        if (latHem === 'S') lat *= -1;
-        if (lonHem === 'W') lon *= -1;
-        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-        return { lat, lon };
-    }
-
-    function parseIgcTextLocal(text) {
-        const points = [];
-        for (const line of String(text || '').split(/\r?\n/)) {
-            const point = parseIgcPoint(line.trim());
-            if (point) points.push(point);
-        }
-        if (!points.length) {
-            throw new Error('IGC neobsahuje žiadne validné B-záznamy.');
-        }
-        const mid = points[Math.floor(points.length / 2)] || points[0];
-        return {
-            points,
-            center: mid
-        };
-    }
-
     function formatElapsedRecording(ms) {
         const totalSec = Math.max(0, Math.floor(Number(ms || 0) / 1000));
         const mm = Math.floor(totalSec / 60).toString().padStart(2, '0');
@@ -2338,18 +2314,40 @@ foreach ($releaseVersionPaths as $releaseVersionPath) {
         loadIgcButton.textContent = '... načítavam';
         try {
             const igcText = await file.text();
-            const parsed = parseIgcTextLocal(igcText);
-            selectedCenter = parsed.center;
-            previewCenter = { ...parsed.center };
-            selectedPoint.position = Cesium.Cartesian3.fromDegrees(parsed.center.lon, parsed.center.lat);
-            syncCenterUi(parsed.center);
+            const sharedParser = window.TermikaUxIgcParser?.parseBTrack;
+            if (typeof sharedParser !== 'function') {
+                throw new Error('Spoločný IGC parser nie je dostupný (TermikaUxIgcParser.parseBTrack).');
+            }
+
+            const parsedShared = sharedParser(igcText);
+            const points = Array.isArray(parsedShared?.body) ? parsedShared.body : [];
+            if (!points.length) {
+                throw new Error('IGC neobsahuje žiadne validné B-záznamy.');
+            }
+
+            if (typeof window.CesiumRender?.pripravCelyLet !== 'function') {
+                throw new Error('Cesium render modul nie je dostupný (CesiumRender.pripravCelyLet).');
+            }
+
+            if (points.length < 2) {
+                throw new Error('IGC má príliš málo bodov na vykreslenie dráhy.');
+            }
+
+            window.CesiumRender.pripravCelyLet(viewer, points);
+            window.CesiumRender.nastavRezimKamery?.(viewer, 'overview', points, 0);
+
+            const center = parsedShared?.center || points[Math.floor(points.length / 2)] || points[0];
+            selectedCenter = { lat: Number(center.lat), lon: Number(center.lon) };
+            previewCenter = { ...selectedCenter };
+            selectedPoint.position = Cesium.Cartesian3.fromDegrees(selectedCenter.lon, selectedCenter.lat);
+            syncCenterUi(selectedCenter);
             loadedIgcName.textContent = file.name;
             loadedIgcName.title = file.name;
             viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(parsed.center.lon, parsed.center.lat, 3000),
+                destination: Cesium.Cartesian3.fromDegrees(selectedCenter.lon, selectedCenter.lat, 3000),
                 duration: 1.5
             });
-            logStatus('IGC načítaný: ' + file.name + ', body=' + parsed.points.length + ', nový stred ' + formatCenter(parsed.center) + '.', 'success');
+            logStatus('IGC načítaný: ' + file.name + ', body=' + points.length + ', nový stred ' + formatCenter(selectedCenter) + '.', 'success');
             setActiveNavSection('analysis', false);
         } catch (error) {
             logStatus('IGC súbor sa nepodarilo načítať: ' + (error?.message || String(error)), 'error');

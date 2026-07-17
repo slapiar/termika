@@ -339,6 +339,10 @@ window.PilotNetwork = {
     },
 
     parsujIgc: function (igcText) {
+        if (window.TermikaUxIgcParser?.parseBTrack) {
+            return window.TermikaUxIgcParser.parseBTrack(igcText);
+        }
+
         const riadky = igcText.split(/\r?\n/);
         const body = [];
         let pilot = "";

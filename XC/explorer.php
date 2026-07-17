@@ -57,6 +57,9 @@ if ($headAssets !== '') {
 }
 
 $bodyScripts = '';
+if (stripos($html, 'ux/igc-parser.js') === false) {
+    $bodyScripts .= '    <script src="ux/igc-parser.js?v=20260716-01"></script>' . "\n";
+}
 if (stripos($html, 'js/termika-style-loader.js') === false) {
     $bodyScripts .= '    <script src="js/termika-style-loader.js?v=1.0.0"></script>' . "\n";
 }
