@@ -13,6 +13,84 @@ Tento zoznam vznikol priamym prechodom zdrojových stránok, inline skriptov, sa
 
 Stav `NEOVERENÉ` znamená, že existencia a zapojenie boli nájdené v kóde, ale modul ešte neprešiel samostatným funkčným a regresným testom potrebným pre migráciu.
 
+## Výsledok hromadnej triáže
+
+Pôvodných 69 evidovaných položiek nie je 69 samostatných modulov. Po funkčnom zoskupení vzniká tento pracovný katalóg. Toto je rozhodujúca vrstva pre ďalší postup; podrobná inventúra nižšie zostáva dôkazovým rozpisom zdrojov.
+
+### Samostatné používateľské moduly CC
+
+| # | Cieľový modul | Zlučuje alebo vlastní dnešné položky | Migračná vlna |
+|---:|---|---|---:|
+| 1 | `system-status-bar` | `release-footer`, `release-badge`; budúce segmenty zariadenia, siete a externých zdrojov | 1 |
+| 2 | `window-core` | `window-manager` a spoločné správanie presunu, resize, fokusu, z-indexu, skrytia a obnovy okien | 1 |
+| 3 | `workbench-shell` | `workspace-theme`, `workspace-navigation`, `quick-tool-dock`, `window-launcher-dock`, `cesium-toolbar-offset`, `setup-launcher` | 1 |
+| 4 | `map-pointer-tools` | `workspace-crosshair`, `cursor-coordinate-badge` | 1 |
+| 5 | `camera-hud` | `terrain-camera-hud`, `camera-hud-coordinates`, `camera-hud-toggle` | 1 |
+| 6 | `cesium-basemap-control` | `cesium-basemap-toggle` | 1 |
+| 7 | `diagnostics-console` | obe dnešné implementácie `debug-console` | 1 |
+| 8 | `terrain-legend` | `terrain-legend` | 1 |
+| 9 | `route-planner` | `route-task-planner` | 2 |
+| 10 | `route-import` | `explorer-route-import` | 2 |
+| 11 | `terrain-profile` | `terrain-profile`, `terrain-profile-dock`, `terrain-profile-follow` | 2 |
+| 12 | `explorer-analysis-transfer` | `explorer-analysis-bridge`, `explorer-analysis-arrival` | 2 |
+| 13 | `flight-data-loader` | `igc-temp-loader` pre IGC časť; TEMP vstup odovzdáva modulu TEMP | 2 |
+| 14 | `flight-playback` | `flight-playback`, používateľské ovládanie `flight-track-renderer` a časová os | 2 |
+| 15 | `camera-mode-controller` | `camera-mode-controller` | 2 |
+| 16 | `pilot-physiology-panel` | `pilot-physiology-panel` | 2 |
+| 17 | `flight-meteo-panel` | `flight-meteo-panel` | 2 |
+| 18 | `skewt-instrument` | `skewt-panel` | 2 |
+| 19 | `flight-simulator` | `flight-simulator`, `flight-simulator-toggle`, `flight-emergency-disengage` | 3 |
+| 20 | `terrain-source-manager` | `source-manager` | 3 |
+| 21 | `temp-source-manager` | `temp-source-selector`, `wind-temp-loader`, používateľská časť `temp-record-cleanup` | 3 |
+| 22 | `analysis-focus-control` | `analysis-focus-controls`, `analysis-focus-summary` | 3 |
+| 23 | `analysis-layer-control` | `analysis-layer-toggle`, používateľské prepínače `terrain-mesh-controls` | 3 |
+| 24 | `cell-diagnostics` | `cell-diagnostics`, `terrain-hover-tooltip`, prezentačná časť `terrain-morphology-diagnostics` | 3 |
+| 25 | `wind-workbench` | `wind-control-panel`, `wind-fps-indicator` | 3 |
+| 26 | `windy-map` | `windy-map-window`, `windy-adapter-monitor`; používa bridge a adaptér ako vnútorné služby | 3 |
+| 27 | `temp-profile-workbench` | `temp-profile-workbench` | 3 |
+| 28 | `screen-recorder` | `screen-recorder` | 3 |
+| 29 | `generation-manager` | `generation-manager` pre WIND/MAP/TEMP prevádzkové záznamy | 3 |
+| 30 | `wind-video` | `wind-webm-export`, `wind-cache-preview` | 3 |
+| 31 | `terrain-visualization-layers` | spoločný hostiteľ pre `terrain-contours-layer`, `terrain-design-layer`, `terrain-mesh-wireframe`, `terrain-mesh-surface`; jednotlivé renderery zostávajú zásuvnými vrstvami | 4 |
+
+Výsledok: **31 samostatných používateľských modulov**, nie 69.
+
+### Infraštruktúrne a servisné moduly CC
+
+Tieto položky sa pripravujú raz ako spoločná infraštruktúra. Netestujú sa ako samostatné používateľské okná.
+
+| Modul | Zlučuje alebo nahrádza |
+|---|---|
+| `module-loader` | `style-loader` a budúce načítanie JS/CSS/manifestov |
+| `communication-bus` | `tool-communication` |
+| `release-version-service` | `release-version-service`; jediný zdroj `XC/asset/RELEASE_VERSION.txt` počas overovania v XC |
+| `windy-bridge-adapter` | `windy-map-bridge`, `windy-map-adapter` ako vnútorné služby modulu `windy-map` |
+| `temp-provider-service` | servisná časť `wind-temp-loader`, `windy-temp-proxy` |
+| `generation-storage-service` | `genauto-service` |
+| `local-config-service` | `local-config-setup` |
+| `runtime-data-service` | `runtime-data-update` |
+
+### Nemigrovať ako UX modul
+
+Tieto položky zostávajú analytickým alebo fyzikálnym jadrom. UX moduly ich smú používať iba cez kontrakt:
+
+- `terrain-analysis.js`,
+- `terrain-analysis-core.js`,
+- `terrain-analysis-geometry.js`,
+- výpočtová časť `terrain-analysis-diagnostics.js`,
+- `terrain-morphology.js`,
+- výpočtová topológia `terrain-mesh.js`,
+- `wind-field.js`,
+- `wind-effects-core.js`,
+- `wind-effect-terrain.js`,
+- `wind-effect-surface.js` po oddelení dnes primiešaného UI bootstrapu,
+- `meteo-core.js`,
+- `glider-core.js`.
+
+### Pravidlo tempa
+
+Ladenie sa nerobí po každom riadku pôvodnej inventúry. Robí sa po celom cieľovom module a jeho hostiteľskom pracovisku. Podradené prvky zdedia stav svojho cieľového modulu. Hĺbková analýza sa otvorí iba pri chybe alebo nejasnom kontrakte.
+
 ## A. Spoločné pracoviskové a systémové moduly
 
 | ID kandidáta | Pracovný názov | Typ | Skutočný účel | Dôkaz v kóde | Hlavné závislosti | Univerzálnosť | Stav XC |
