@@ -5,30 +5,25 @@ PORT="${1:-${TERMIKA_BIND_PORT:-8000}}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCROOT="$ROOT_DIR/CC"
 APP_ROOT="$DOCROOT/app"
-CC_LOCAL_CONFIG="$APP_ROOT/asset/local-config.php"
-XC_LOCAL_CONFIG="$ROOT_DIR/XC/asset/local-config.php"
-ROOT_LOCAL_CONFIG="$ROOT_DIR/.local-config.php"
 LOG_FILE="/tmp/termikaxc-php.log"
 LOCAL_URL="http://127.0.0.1:${PORT}/"
 HEALTH_PATH="${TERMIKA_HEALTH_PATH:-app/index.php}"
 START_PATH="${TERMIKA_START_PATH:-app/terrain-analysis-test.php}"
+MODULE_HEALTH_PATH="ux/skewt-instrument/skewt-panel/source/XC__js__skewt-render.js"
 
-# CC je samostatná živá inštancia. Ak ešte nemá vlastnú lokálnu konfiguráciu,
-# prevezme ju pri prvom štarte z XC alebo z koreňového súboru. Existujúca
-# konfigurácia CC sa nikdy automaticky neprepíše, pretože ju spravuje setup.php.
-mkdir -p "$(dirname "$CC_LOCAL_CONFIG")"
-if [[ ! -f "$CC_LOCAL_CONFIG" ]]; then
-  if [[ -f "$XC_LOCAL_CONFIG" ]]; then
-    cp "$XC_LOCAL_CONFIG" "$CC_LOCAL_CONFIG"
-    echo "CC config: copied from XC/asset/local-config.php"
-  elif [[ -f "$ROOT_LOCAL_CONFIG" ]]; then
-    cp "$ROOT_LOCAL_CONFIG" "$CC_LOCAL_CONFIG"
-    echo "CC config: copied from .local-config.php"
+if [[ ! -f "$APP_ROOT/asset/local-config.php" ]]; then
+  if [[ -f "$ROOT_DIR/XC/asset/local-config.php" ]]; then
+    cp "$ROOT_DIR/XC/asset/local-config.php" "$APP_ROOT/asset/local-config.php"
+    chmod 600 "$APP_ROOT/asset/local-config.php" 2>/dev/null || true
+    echo "CC config: copied XC/asset/local-config.php -> CC/app/asset/local-config.php"
+  elif [[ -f "$ROOT_DIR/.local-config.php" ]]; then
+    cp "$ROOT_DIR/.local-config.php" "$APP_ROOT/asset/local-config.php"
+    chmod 600 "$APP_ROOT/asset/local-config.php" 2>/dev/null || true
+    echo "CC config: copied .local-config.php -> CC/app/asset/local-config.php"
   fi
 fi
 
-# setup.php aj asset/config.php musia čítať a zapisovať ten istý živý súbor CC.
-export TERMIKA_LOCAL_CONFIG_PATH="$CC_LOCAL_CONFIG"
+export TERMIKA_LOCAL_CONFIG_PATH="$APP_ROOT/asset/local-config.php"
 
 set_codespace_ports_private() {
   if [[ -z "${CODESPACE_NAME:-}" ]]; then
@@ -74,6 +69,11 @@ if [[ ! -f "$APP_ROOT/index.php" ]]; then
   exit 1
 fi
 
+if [[ ! -f "$DOCROOT/$MODULE_HEALTH_PATH" ]]; then
+  echo "ERROR: Missing CC module asset: $DOCROOT/$MODULE_HEALTH_PATH"
+  exit 1
+fi
+
 # Stop stale PHP development servers for this port.
 pkill -f "php -S.*:${PORT}" >/dev/null 2>&1 || true
 
@@ -106,6 +106,20 @@ if [[ "$STATUS" != "200" ]]; then
   ls -la "$APP_ROOT"
   cat "$LOG_FILE" || true
   ls -l "$APP_ROOT/index.php"
+  exit 1
+fi
+
+# A 200 HTML response here means the server still points at CC/app instead of CC.
+MODULE_URL="${LOCAL_URL}${MODULE_HEALTH_PATH}"
+MODULE_HEADERS="$(curl -sS -D - -o /dev/null "$MODULE_URL" || true)"
+MODULE_STATUS="$(printf '%s\n' "$MODULE_HEADERS" | awk 'toupper($1) ~ /^HTTP\// { code=$2 } END { print code }')"
+MODULE_TYPE="$(printf '%s\n' "$MODULE_HEADERS" | awk 'BEGIN{IGNORECASE=1} /^Content-Type:/ { sub(/^[^:]+:[[:space:]]*/, ""); gsub(/\r/, ""); print; exit }')"
+
+echo "Module health: $MODULE_URL -> HTTP ${MODULE_STATUS:-000} | ${MODULE_TYPE:-unknown}"
+
+if [[ "$MODULE_STATUS" != "200" || "$MODULE_TYPE" == text/html* ]]; then
+  echo "ERROR: CC modules are not being served as JavaScript. The server document root must be $DOCROOT, not $APP_ROOT."
+  cat "$LOG_FILE" || true
   exit 1
 fi
 
