@@ -8,6 +8,6 @@
     "asset/ui/bundles/public.bundle.css"
   ],
   "slots": ["head", "header", "content", "footer", "scripts"],
-  "language_domains": ["common", "public"],
+  "language_catalog": "selected",
   "implementation_status": "SCAFFOLDED"
 }
