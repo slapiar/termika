@@ -71,7 +71,7 @@
 
         if (!document.querySelector('script[data-workspace-hud-toggle="true"]')) {
             const script = document.createElement("script");
-            script.src = "js/workspace-hud-toggle.js?v=20260715-01";
+            script.src = "js/workspace-hud-toggle.js?v=20260717-01";
             script.defer = true;
             script.dataset.workspaceHudToggle = "true";
             document.body.appendChild(script);
