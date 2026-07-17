@@ -8,6 +8,6 @@
     "asset/ui/bundles/embedded.bundle.css"
   ],
   "slots": ["head", "content", "scripts"],
-  "language_domains": ["common", "embedded"],
+  "language_catalog": "selected",
   "implementation_status": "SCAFFOLDED"
 }
