@@ -1,0 +1,20 @@
+/*
+ * TermikaXC CC – hostiteľský zoznam štýlov vyčlenených modulových view.
+ * Súbor je generovaný aj nástrojom tools/build-cc-app.mjs.
+ * Každý modul zostáva vlastníkom svojho samostatného CSS súboru.
+ */
+@import url("../../ux/map-pointer-tools/cursor-coordinate-badge/cursor-coordinate-badge.css");
+@import url("../../ux/system-status-bar/release-footer/release-footer.css");
+@import url("../../ux/terrain-legend/terrain-legend/terrain-legend.css");
+@import url("../../ux/cell-diagnostics/cell-diagnostics/cell-diagnostics.css");
+@import url("../../ux/windy-map/windy-map-window/windy-map-window.css");
+@import url("../../ux/diagnostics-console/debug-console/debug-console.css");
+@import url("../../ux/workbench-shell/quick-tool-dock/quick-tool-dock.css");
+@import url("../../ux/workbench-shell/workspace-navigation/workspace-navigation.css");
+@import url("../../ux/wind-video/wind-cache-preview/wind-cache-preview.css");
+@import url("../../ux/flight-playback/flight-playback/flight-playback.css");
+@import url("../../ux/pilot-physiology-panel/pilot-physiology-panel/pilot-physiology-panel.css");
+@import url("../../ux/flight-meteo-panel/flight-meteo-panel/flight-meteo-panel.css");
+@import url("../../ux/skewt-instrument/skewt-panel/skewt-panel.css");
+@import url("../../infrastructure/window-core/window-manager/window-manager.css");
+@import url("../../infrastructure/host-context/host-context/host-context.css");
