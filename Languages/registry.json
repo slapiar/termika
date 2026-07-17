@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "default": "sk",
+  "fallback": "sk",
+  "languages": {
+    "sk": {
+      "label": "Slovenčina",
+      "direction": "ltr",
+      "domains": ["common", "workbench"]
+    }
+  }
+}
