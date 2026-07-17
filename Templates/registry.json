@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "default_family": "workbench",
+  "families": {
+    "workbench": "Templates/families/workbench/template.json",
+    "setup": "Templates/families/setup/template.json",
+    "public": "Templates/families/public/template.json",
+    "embedded": "Templates/families/embedded/template.json"
+  }
+}
