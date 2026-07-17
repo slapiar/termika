@@ -1,0 +1,11 @@
+{
+  "workbench.title": "Pracovisko TermikaXC",
+  "workbench.window.close": "Zavrieť okno",
+  "workbench.window.restore": "Obnoviť okno",
+  "workbench.navigation.title": "Navigácia",
+  "workbench.tools.title": "Nástroje",
+  "workbench.status.release": "Verzia {version}",
+  "terrain.analysis.title": "Analýza terénu",
+  "terrain.legend.title": "Legenda terénu",
+  "terrain.diagnostics.title": "Diagnostika bunky"
+}
