@@ -1,0 +1,7 @@
+RewriteEngine On
+
+# Priamy HTTP vstup do legacy jadra Prieskumníka musí prejsť cez explorer.php,
+# ktorý pripája spoločný workbench dizajn a autoload UX moduly.
+# Podmienka THE_REQUEST zabráni slučke pri serverovom require explorer-core.php.
+RewriteCond %{THE_REQUEST} \s/+(.*/)?explorer-core\.php(?:[?\s]) [NC]
+RewriteRule ^explorer-core\.php$ explorer.php [R=302,L,NE]
