@@ -61,7 +61,7 @@ Nástroje majú byť postupne spravované samostatným registrom doplnkov, praco
 |---|---|---|---|---|---|
 | `camera-hud` | Kamerový HUD | `OVERENÉ` | Testovacia 3D analýza terénu; pripravené na ďalšie pracoviská | `XC/js/terrain-camera-hud.js`, `XC/js/terrain-camera-hud-coordinates.js` | [`tools/HUD.md`](tools/HUD.md) |
 | `flight-simulator` | Letový režim kamery | `ROZPRACOVANÉ` | Prieskumník, Analýza a ďalšie Cesium pracoviská | `XC/js/flight-simulator.js`, `XC/js/workspace-flight-toggle.js` | [`tools/FLIGHT-SIMULATOR.md`](tools/FLIGHT-SIMULATOR.md) |
-| `release-badge` | Zobrazenie aktuálnej release verzie | `ROZPRACOVANÉ` | Hlavička testovacej analýzy | `XC/js/terrain-release-badge.js` | [`tools/RELEASE.md`](tools/RELEASE.md) |
+| `release-badge` | Zobrazenie aktuálnej release verzie a CC release balík | `ROZPRACOVANÉ` | CC pracoviská, release päta a nasadenie aplikácie | `CC/ux/system-status-bar/release-badge/`, `CC/app/release-version.php`, `CC/app/asset/RELEASE_VERSION.txt`, `release.sh` | [`tools/RELEASE.md`](tools/RELEASE.md) |
 | `focus-recompute` | Opakovaný prepočet aktuálneho fokusu | `AKTÍVNE` | Testovacia analýza terénu | `XC/js/terrain-analysis-focus-ui.js` | pripraví sa |
 | `mesh-viewer` | Diagnostické zobrazenie terénneho meshu | `ROZPRACOVANÉ` | Testovacia analýza terénu | `XC/js/terrain-mesh.js` | [`tools/MESH.md`](tools/MESH.md) |
 | `mesh-surface` | Dominantná alebo šedá plošná výplň meshu | `ROZPRACOVANÉ` | Testovacia analýza terénu | `XC/js/terrain-mesh-surface.js` | [`tools/MESH.md`](tools/MESH.md) |
@@ -87,7 +87,7 @@ Prvým používateľsky overeným referenčným nástrojom je kamerový HUD:
 - [`tools/FLIGHT-SIMULATOR.md`](tools/FLIGHT-SIMULATOR.md) – pohyb kamery ako letový režim, ovládanie myšou a rýchlosť klávesnicou,
 - [`tools/MESH.md`](tools/MESH.md) – drôt, dominantná výplň a jednotná šedá,
 - [`tools/BASEMAP.md`](tools/BASEMAP.md) – vypnutie obrazovej mapy pri zachovaní 3D reliéfu,
-- [`tools/RELEASE.md`](tools/RELEASE.md) – zobrazenie verzie zo súboru `RELEASE_VERSION`,
+- [`tools/RELEASE.md`](tools/RELEASE.md) – CC release marker, koreňová štruktúra ZIP-u a nasadenie,
 - [`tools/COMMUNICATION.md`](tools/COMMUNICATION.md) – univerzálne komunikačné API medzi nástrojmi,
 - [`tools/WINDY.md`](tools/WINDY.md) – návrh zapojenia Windy Map Forecast API do workflow pilotov,
 - [`tools/TIME-BADGES.md`](tools/TIME-BADGES.md) – samostatný modul riadkov `NOW` a `IGC`, ich zdroje údajov a životný cyklus.
