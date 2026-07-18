@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build a versioned release ZIP of TermikaXC from the authoritative CC runtime.
-# XC/ is a historical reference tree and is never included in a release.
-# Usage:
-#   ./release.sh                          # uses version from RELEASE_VERSION
-#   ./release.sh 1.2.0                    # uses provided version
-#   ./release.sh patch|minor|major|mini   # increments current RELEASE_VERSION
+# Vytvorí nasaditeľný release výhradne z autoritatívneho runtime CC/.
+# Obsah CC/ sa uloží priamo do koreňa ZIP-u:
+#   index.php, app/, ux/, infrastructure/, services/, kernels/, ...
+# Adresáre CC/ ani XC/ sa v archíve nesmú objaviť.
+#
+# Použitie:
+#   ./release.sh
+#   ./release.sh 3.1.5
+#   ./release.sh patch|minor|major|mini
 #   ./release.sh patch --auto-commit
 #   ./release.sh patch --auto-commit --auto-push
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
-VERSION_FILE="RELEASE_VERSION"
-CC_VERSION_FILE="$ROOT_DIR/CC/app/asset/RELEASE_VERSION.txt"
-DEFAULT_VERSION="2.6"
+VERSION_FILE="$ROOT_DIR/RELEASE_VERSION"
+CC_ROOT="$ROOT_DIR/CC"
+CC_VERSION_FILE="$CC_ROOT/app/asset/RELEASE_VERSION.txt"
+DEFAULT_VERSION="3.1.0"
 AUTO_COMMIT=false
 AUTO_PUSH=false
 COMMIT_MESSAGE=""
@@ -41,23 +45,22 @@ for arg in "$@"; do
       BUMP_MODE="$arg"
       ;;
     -h|--help)
-      cat <<EOF
-Usage: $0 [--auto-commit] [--auto-push] [--commit-message=...] [version|patch|minor|major|mini]
+      cat <<'EOF'
+Usage: ./release.sh [--auto-commit] [--auto-push] [--commit-message=...] [version|patch|minor|major|mini]
 
-Description:
-  Creates a release ZIP archive containing the authoritative CC/ runtime.
-  XC/ remains only a repository reference and is never packaged.
+Vytvorí ZIP z obsahu CC/ bez nadradeného priečinka CC/ a bez akéhokoľvek súboru z XC/.
+ZIP je pripravený na priame rozbalenie do koreňa aplikácie na hostingu.
 
-Options:
-  --auto-commit           Automatically commit RELEASE_VERSION, the CC marker and release ZIP
-  --auto-push             Push current branch to origin after release
-  --commit-message=MSG    Custom message for --auto-commit
+Voľby:
+  --auto-commit           Commitne RELEASE_VERSION, CC marker a vytvorený ZIP
+  --auto-push             Po commite pushne aktuálnu pracovnú vetvu
+  --commit-message=MSG    Vlastná správa auto-commitu
 
-Version argument:
-  version                 Explicit version, e.g. 3.1.4
-  patch                   Increment patch segment (x.y.z -> x.y.(z+1))
-  minor|mini              Increment minor segment (x.y.z -> x.(y+1).0)
-  major                   Increment major segment (x.y.z -> (x+1).0.0)
+Verzia:
+  version                 Explicitná verzia, napr. 3.1.5
+  patch                   x.y.z -> x.y.(z+1)
+  minor|mini              x.y.z -> x.(y+1).0
+  major                   x.y.z -> (x+1).0.0
 EOF
       exit 0
       ;;
@@ -86,15 +89,15 @@ if [[ -z "$CURRENT_VERSION" ]]; then
 fi
 
 if [[ -n "$BUMP_MODE" ]]; then
-  if ! [[ "$CURRENT_VERSION" =~ ^([0-9]+)\.([0-9]+)(\.([0-9]+))?$ ]]; then
-    echo "Error: current version '$CURRENT_VERSION' is not numeric and cannot be bumped automatically." >&2
-    echo "Use explicit version, e.g. ./release.sh 3.1.4" >&2
+  if ! [[ "$CURRENT_VERSION" =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+    echo "Error: current version '$CURRENT_VERSION' is not x.y.z and cannot be bumped automatically." >&2
+    echo "Use an explicit version, for example: ./release.sh 3.1.5" >&2
     exit 1
   fi
 
   major="${BASH_REMATCH[1]}"
   minor="${BASH_REMATCH[2]}"
-  patch="${BASH_REMATCH[4]:-0}"
+  patch="${BASH_REMATCH[3]}"
 
   case "$BUMP_MODE" in
     patch)
@@ -116,27 +119,24 @@ elif [[ -z "$VERSION" ]]; then
   VERSION="$CURRENT_VERSION"
 fi
 
-if [[ -z "$VERSION" ]]; then
-  echo "Error: release version is empty." >&2
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$ ]]; then
+  echo "Error: invalid version '$VERSION'. Expected x.y.z, for example 3.1.5 or 3.1.5-rc1." >&2
   exit 1
 fi
 
-if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}([.-][A-Za-z0-9]+)?$ ]]; then
-  echo "Error: invalid version '$VERSION'. Expected e.g. 3.1.4 or 3.1.4-rc1." >&2
-  exit 1
-fi
-
-# The CC tree is the only deployable application. Fail early if its real
-# entrypoints or module roots are missing instead of silently falling back to XC.
+# Kontrolujú sa iba skutočné, nasadzované vstupy CC. Release nikdy nesmie
+# dopĺňať chýbajúci súbor z historického stromu XC/.
 REQUIRED_CC_PATHS=(
   "CC/index.php"
   "CC/app/index.php"
   "CC/app/terrain-analysis-test.php"
   "CC/app/release-version.php"
-  "CC/app/asset"
+  "CC/app/asset/RELEASE_VERSION.txt"
+  "CC/registry/modules.json"
   "CC/ux"
   "CC/infrastructure"
   "CC/services"
+  "CC/kernels"
 )
 for required_path in "${REQUIRED_CC_PATHS[@]}"; do
   if [[ ! -e "$ROOT_DIR/$required_path" ]]; then
@@ -145,8 +145,8 @@ for required_path in "${REQUIRED_CC_PATHS[@]}"; do
   fi
 done
 
-# Ensure git working tree is clean. Release marker files are allowed to be dirty
-# because this script updates them before packaging.
+# Pred zmenou markerov musí byť pracovný strom čistý. Samotné release markery
+# sú povolené, pretože ich skript zjednotí na požadovanú verziu.
 DIRTY_STATUS="$(git status --porcelain | grep -vE '^[ MARC?DU]{1,2} (RELEASE_VERSION|CC/app/asset/RELEASE_VERSION\.txt)$' || true)"
 if [[ -n "$DIRTY_STATUS" ]]; then
   echo "Error: git working tree is not clean. Commit or stash your changes before releasing." >&2
@@ -154,79 +154,138 @@ if [[ -n "$DIRTY_STATUS" ]]; then
   exit 1
 fi
 
-# Persist the requested version both at repository level and inside the deployed
-# CC application. XC/asset/RELEASE_VERSION.txt is intentionally untouched.
-echo "$VERSION" > "$VERSION_FILE"
-mkdir -p "$(dirname "$CC_VERSION_FILE")"
-echo "$VERSION" > "$CC_VERSION_FILE"
+# Repozitárový marker riadi verziu. Nasadzovaný marker patrí do CC aplikácie.
+printf '%s\n' "$VERSION" > "$VERSION_FILE"
+printf '%s\n' "$VERSION" > "$CC_VERSION_FILE"
 
 OUT_DIR="$ROOT_DIR/releases"
 OUT_FILE="$OUT_DIR/termika-xc-${VERSION}.zip"
-TMP_LIST="$(mktemp)"
-trap 'rm -f "$TMP_LIST"' EXIT
+TMP_DIR="$(mktemp -d)"
+SOURCE_LIST="$TMP_DIR/cc-source-files.txt"
+STAGE_DIR="$TMP_DIR/release-root"
+ARCHIVE_LIST="$TMP_DIR/archive-files.txt"
+trap 'rm -rf "$TMP_DIR"' EXIT
 
-mkdir -p "$OUT_DIR"
+mkdir -p "$OUT_DIR" "$STAGE_DIR"
 
-# Package every tracked file from CC/. This preserves app/, ux/,
-# infrastructure/, services/ and other runtime dependencies as one coherent
-# deployable tree. Local secrets remain excluded because they are not tracked.
-git -C "$ROOT_DIR" ls-files "CC/" \
-  | grep -Ev '(^CC_backup/|\.zip$|\.tar|\.tgz)' \
-  > "$TMP_LIST"
+# Zdrojom je výhradne Gitom sledovaný obsah CC/. Prefix CC/ sa pri kopírovaní
+# odstráni, takže výsledný ZIP možno rozbaliť priamo do document rootu aplikácie.
+git -C "$ROOT_DIR" ls-files "CC/" > "$SOURCE_LIST"
 
-if ! grep -qx 'CC/app/asset/RELEASE_VERSION.txt' "$TMP_LIST"; then
-  echo 'CC/app/asset/RELEASE_VERSION.txt' >> "$TMP_LIST"
-fi
-
-if git -C "$ROOT_DIR" ls-files --error-unmatch "$VERSION_FILE" >/dev/null 2>&1; then
-  echo "$VERSION_FILE" >> "$TMP_LIST"
-fi
-
-if [[ ! -s "$TMP_LIST" ]]; then
+if [[ ! -s "$SOURCE_LIST" ]]; then
   echo "Error: no tracked files found in CC/." >&2
   exit 1
 fi
 
-if grep -q '^XC/' "$TMP_LIST"; then
-  echo "Error: release file list unexpectedly contains XC/." >&2
-  exit 1
-fi
+while IFS= read -r source_path; do
+  [[ -n "$source_path" ]] || continue
 
-# PHP lint all packaged PHP files before creating the archive.
-while IFS= read -r file; do
-  if [[ "$file" == *.php ]]; then
-    if ! php -l "$ROOT_DIR/$file" >/dev/null 2>&1; then
-      echo "Error: PHP syntax error in $file" >&2
+  if [[ "$source_path" != CC/* ]]; then
+    echo "Error: release source escaped CC/: $source_path" >&2
+    exit 1
+  fi
+
+  relative_path="${source_path#CC/}"
+  if [[ -z "$relative_path" ]]; then
+    continue
+  fi
+
+  case "$relative_path" in
+    .local-config.php|*/.local-config.php|app/asset/local-config.php)
+      echo "Error: local secret configuration must not be packaged: $source_path" >&2
+      exit 1
+      ;;
+  esac
+
+  if [[ ! -f "$ROOT_DIR/$source_path" ]]; then
+    echo "Error: tracked CC file is missing from working tree: $source_path" >&2
+    exit 1
+  fi
+
+  if [[ "$source_path" == *.php ]]; then
+    if ! php -l "$ROOT_DIR/$source_path" >/dev/null 2>&1; then
+      echo "Error: PHP syntax error in $source_path" >&2
       exit 1
     fi
   fi
-done < "$TMP_LIST"
+
+  mkdir -p "$STAGE_DIR/$(dirname "$relative_path")"
+  cp -p "$ROOT_DIR/$source_path" "$STAGE_DIR/$relative_path"
+done < "$SOURCE_LIST"
+
+# Marker sa musí dostať do ZIP-u aj v prípade, že bol v pracovnom strome práve
+# zmenený a ešte nebol commitnutý.
+mkdir -p "$STAGE_DIR/app/asset"
+cp -p "$CC_VERSION_FILE" "$STAGE_DIR/app/asset/RELEASE_VERSION.txt"
 
 rm -f "$OUT_FILE"
-zip -q -9 "$OUT_FILE" -@ < "$TMP_LIST"
+(
+  cd "$STAGE_DIR"
+  find . -type f -print \
+    | sed 's#^\./##' \
+    | LC_ALL=C sort \
+    | zip -q -9 "$OUT_FILE" -@
+)
 
-if unzip -Z1 "$OUT_FILE" | grep -q '^XC/'; then
+# Výpis archívu sa uloží raz. Tým sa vyhneme chybným výsledkom pipeline
+# unzip|grep pri zapnutom pipefail.
+unzip -Z1 "$OUT_FILE" > "$ARCHIVE_LIST"
+
+if [[ ! -s "$ARCHIVE_LIST" ]]; then
   rm -f "$OUT_FILE"
-  echo "Error: created archive contains forbidden XC/ entries." >&2
+  echo "Error: created archive is empty." >&2
   exit 1
 fi
 
-if ! unzip -Z1 "$OUT_FILE" | grep -qx 'CC/app/index.php'; then
+if grep -Eq '^(CC|XC)/' "$ARCHIVE_LIST"; then
   rm -f "$OUT_FILE"
-  echo "Error: created archive does not contain CC/app/index.php." >&2
+  echo "Error: archive contains forbidden top-level CC/ or XC/ directory." >&2
   exit 1
 fi
 
-if ! unzip -Z1 "$OUT_FILE" | grep -qx 'CC/app/release-version.php'; then
+if grep -Eq '(^|/)(\.local-config\.php|local-config\.php)$' "$ARCHIVE_LIST"; then
   rm -f "$OUT_FILE"
-  echo "Error: created archive does not contain CC/app/release-version.php." >&2
+  echo "Error: archive contains a local secret configuration file." >&2
+  exit 1
+fi
+
+REQUIRED_ARCHIVE_FILES=(
+  "index.php"
+  "app/index.php"
+  "app/terrain-analysis-test.php"
+  "app/release-version.php"
+  "app/asset/RELEASE_VERSION.txt"
+  "registry/modules.json"
+)
+for required_file in "${REQUIRED_ARCHIVE_FILES[@]}"; do
+  if ! grep -Fxq "$required_file" "$ARCHIVE_LIST"; then
+    rm -f "$OUT_FILE"
+    echo "Error: created archive does not contain $required_file." >&2
+    exit 1
+  fi
+done
+
+for required_prefix in "ux/" "infrastructure/" "services/" "kernels/"; do
+  if ! grep -Fq "$required_prefix" "$ARCHIVE_LIST"; then
+    rm -f "$OUT_FILE"
+    echo "Error: created archive does not contain runtime tree $required_prefix" >&2
+    exit 1
+  fi
+done
+
+ARCHIVED_VERSION="$(unzip -p "$OUT_FILE" app/asset/RELEASE_VERSION.txt | tr -d '[:space:]')"
+if [[ "$ARCHIVED_VERSION" != "$VERSION" ]]; then
+  rm -f "$OUT_FILE"
+  echo "Error: archived release marker '$ARCHIVED_VERSION' does not match requested version '$VERSION'." >&2
   exit 1
 fi
 
 echo "Release created: $OUT_FILE"
-echo "Contents: $(wc -l < "$TMP_LIST") tracked files from CC/ + RELEASE_VERSION"
-echo "Deployment root: CC/ (CC/index.php redirects to CC/app/index.php)"
-echo "Verified: archive contains no XC/ files"
+echo "Contents: $(wc -l < "$ARCHIVE_LIST") files from CC/"
+echo "Deployment: extract ZIP directly into the application document root"
+echo "Verified: ZIP root contains index.php, app/, ux/, infrastructure/, services/ and kernels/"
+echo "Verified: ZIP contains neither CC/ nor XC/ and no local secret configuration"
+echo "Verified release marker: $ARCHIVED_VERSION"
 
 if [[ "$AUTO_COMMIT" == true ]]; then
   if [[ -z "$COMMIT_MESSAGE" ]]; then
