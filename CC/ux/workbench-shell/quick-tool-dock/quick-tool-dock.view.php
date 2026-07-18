@@ -17,6 +17,6 @@
     <button type="button" id="quickCloudToggleButton" class="is-active" aria-pressed="true" title="3D oblačnosť z meteorologického poľa">☁</button>
     <button type="button" id="quickMapInstrumentsToggleButton" class="is-active" aria-pressed="true" title="Smerová ružica a mapová mierka">N</button>
 </nav>
-<script src="js/time-badges.js?v=1.0.0" data-tx-host-module="time-badges"></script>
+<script src="js/time-badges.js?v=1.0.1" data-tx-host-module="time-badges"></script>
 <script src="../ux/workbench-shell/quick-tool-dock/sky-realtime-tools.js?v=20260718-06"></script>
 <script src="../ux/workbench-shell/quick-tool-dock/quick-tool-dock-controller.js?v=20260718-05"></script>
