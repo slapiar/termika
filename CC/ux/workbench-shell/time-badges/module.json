@@ -1,7 +1,7 @@
 {
   "id": "time-badges",
   "title": "Časové značky pracoviska",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "group": "workbench-shell",
   "section": "ux",
   "kind": "module",
@@ -12,7 +12,8 @@
   ],
   "requires": [],
   "optional": [
-    "flight-playback"
+    "flight-playback",
+    "igc-parser"
   ],
   "scopes": [
     "workspace:workbench",
@@ -23,7 +24,7 @@
   "enabled": true,
   "migration": {
     "source_copied": false,
-    "functional_status": "IMPLEMENTOVANE_NEOVERENE",
+    "functional_status": "OPRAVENE_CAKA_NA_OVERENIE",
     "runtime_enabled": true
   }
 }
