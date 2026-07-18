@@ -25,87 +25,105 @@ Do globálnej vrstvy patria minimálne:
 - prepínač panela v sekcii `ZOBRAZENIE`,
 - kamerový HUD,
 - ovládanie LET,
-- aktuálny dátum a čas oblohy,
-- IGC dátum, čas štartu a pristátia,
+- modul časových značiek,
 - reálna poloha Slnka,
 - 3D oblačnosť,
 - smerová ružica a mapová mierka.
 
 ## 3. Jeden zdroj pravdy
 
-Každý globálny nástroj MUSÍ mať jeden zdroj pravdy pre:
-
-- viditeľnosť,
-- aktívny stav,
-- načítané dáta,
-- čas oblohy,
-- aktuálny bod letu.
-
-Stránka NESMIE vytvárať vlastnú kópiu rovnakého panela ani vlastný paralelný stav.
+Každý globálny nástroj MUSÍ mať jeden zdroj pravdy pre svoj stav. Stránka NESMIE vytvárať vlastnú kópiu rovnakého panela ani vlastný paralelný stav.
 
 Ak je modul načítaný viacerými spoločnými vstupmi, MUSÍ sa inicializovať iba raz pomocou globálneho identifikátora.
 
-## 4. IGC čas a obloha
+## 4. Modul časových značiek
 
-Po načítaní platného IGC MUSÍ globálny shell zobraziť:
+Časové značky predstavujú samostatný nástroj. NESMÚ byť implementované priamo v quick-docku, module oblohy ani v konkrétnej stránke.
+
+Zdroj modulu:
 
 ```text
-DD. MM. RRRR: HH:MM:SS
+CC/ux/workbench-shell/time-badges/
+├── time-badges.css
+└── source/time-badges.js
+```
+
+Modul MUSÍ na každej pracovnej stránke implicitne zobraziť dva riadky:
+
+```text
+NOW - DD. MM. RRRR: HH:MM:SS
 IGC DD.MM. RRRR, Štart - HH:MM:SS - Pristátie: HH:MM:SS
 ```
 
-Prvý riadok zobrazuje čas, podľa ktorého je nastavená obloha. Druhý riadok zobrazuje dátum letu a čas prvého a posledného platného B-záznamu.
+### 4.1 Riadok NOW
 
-IGC súhrn NESMIE byť závislý od konkrétnej stránky, od otvoreného menu ani od poradia načítania skriptov. Musí čítať spoločný stav `PilotNetwork` alebo štandardizovanú globálnu udalosť IGC jadra.
+- vždy zobrazuje lokálny dátum a čas zariadenia,
+- NESMIE sa meniť po načítaní IGC,
+- NESMIE čítať čas Cesium hodín ani čas aktuálneho bodu letu,
+- aktualizuje sa priebežne.
 
-Pri prehrávaní alebo ručnom posune časovej osi sa čas oblohy MUSÍ synchronizovať s aktuálnym bodom letu.
+### 4.2 Riadok IGC
 
-## 5. Reverzné ovládanie
+- je samostatný a nezávislý od riadku NOW,
+- po načítaní IGC zobrazí dátum letu a čas prvého a posledného platného B-záznamu,
+- pri načítaní ďalšieho IGC sa celý obsah nahradí novými údajmi,
+- pri vymazaní alebo zrušení načítaného IGC sa obsah riadku vymaže,
+- prázdny riadok zostáva súčasťou modulu, aby sa nemenila geometria rozhrania.
+
+IGC súhrn NESMIE byť závislý od konkrétnej stránky, otvoreného menu ani poradia načítania skriptov. Číta spoločný stav `PilotNetwork` alebo štandardizovanú globálnu udalosť IGC jadra.
+
+## 5. Quick-dock-tools
+
+Quick-dock je pevný nástrojový panel. NESMIE byť presúvateľný myšou.
+
+Jeho rozloženie MUSÍ byť pevný raster:
+
+```text
+4 stĺpce × potrebný počet riadkov
+```
+
+Každé tlačidlo má rovnakú šírku a výšku. Panel sa nesmie samovoľne prepnúť do jedného stĺpca ani prevziať layout iného docku.
+
+Quick-dock je na pracovných stránkach predvolene zobrazený. Používateľ ho môže vypnúť alebo zapnúť tlačidlom `NÁSTROJE` alebo ovládačom v sekcii `ZOBRAZENIE`.
+
+## 6. Reverzné ovládanie
 
 Každý stavový ovládač MUSÍ mať reverznú funkciu:
 
 - prvé kliknutie zapne alebo zobrazí,
 - druhé kliknutie vypne alebo skryje.
 
-To platí pre tlačidlá v navigačnej lište, quick-docku aj v oknách menu.
-
-Jednorazové príkazy, napríklad načítanie súboru, výpočet alebo export, nie sú stavové prepínače a reverznú funkciu nemajú.
+Jednorazové príkazy, napríklad načítanie súboru, výpočet alebo export, nie sú stavové prepínače.
 
 Všetky ovládače toho istého nástroja MUSIA zobrazovať zhodný aktívny stav pomocou `aria-pressed`, triedy `is-active` a zrozumiteľného titulku.
 
-## 6. Predvolená viditeľnosť
-
-Quick-dock-tools je na pracovných stránkach predvolene zobrazený. Používateľ môže panel skryť a stav môže byť zachovaný v lokálnom úložisku.
-
-Ak uložený stav neexistuje alebo je poškodený, systém MUSÍ použiť bezpečný predvolený stav `zobrazené`.
-
 ## 7. Technická implementácia
 
-Globálny bootstrap pre CC hostiteľské prostredie:
+Globálny bootstrap:
 
 ```text
 CC/app/js/global-map-tools.js
+XC/js/global-map-tools.js
 ```
 
-Spoločné vstupy, ktoré ho pripájajú:
+Globálny bootstrap smie:
 
-```text
-CC/app/js/workspace-hud-toggle.js
-CC/app/js/workspace-flight-toggle.js
-CC/ux/workbench-shell/quick-tool-dock/quick-tool-dock.view.php
-```
+- vytvoriť alebo pripojiť quick-dock,
+- načítať modul časových značiek,
+- vytvoriť prepínače v navigácii a sekcii `ZOBRAZENIE`.
 
-Nová pracovná stránka sa považuje za dizajnovo neúplnú, ak nepoužíva aspoň jeden zo spoločných vstupov globálneho shellu.
+Globálny bootstrap NESMIE obsahovať vlastnú implementáciu formátovania alebo vykresľovania časových značiek.
 
 ## 8. Kontrola prijatia
 
-Pred prijatím novej pracovnej stránky sa MUSÍ overiť:
+Pred prijatím pracovnej stránky sa MUSÍ overiť:
 
-1. quick-dock sa po otvorení stránky zobrazí,
-2. tlačidlo `NÁSTROJE` ho zapína aj vypína,
-3. sekcia `ZOBRAZENIE` ovláda ten istý panel,
-4. nevznikne druhá kópia panela,
-5. načítanie IGC zobrazí oba časové riadky,
-6. ručný posun letu mení čas oblohy,
-7. stavové tlačidlá majú reverznú funkciu,
-8. rovnaký výsledok platí na každej stránke rodiny `workbench`.
+1. quick-dock sa zobrazí ako pevný raster so štyrmi stĺpcami,
+2. panel sa nedá presúvať,
+3. tlačidlo `NÁSTROJE` ho zapína aj vypína,
+4. sekcia `ZOBRAZENIE` ovláda ten istý panel,
+5. nevznikne druhá kópia panela,
+6. riadok `NOW` vždy ukazuje čas zariadenia,
+7. načítanie IGC zmení iba riadok `IGC`,
+8. vymazanie IGC vyprázdni iba riadok `IGC`,
+9. rovnaký výsledok platí na každej stránke rodiny `workbench`.
