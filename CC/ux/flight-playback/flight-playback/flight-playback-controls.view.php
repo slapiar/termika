@@ -21,3 +21,4 @@
                     <span><i class="vario-swatch strong-down"></i>&lt; −1,5</span>
                 </div>
             </section>
+<?php require __DIR__ . '/../../workbench-shell/quick-tool-dock/quick-tool-dock.view.php'; ?>
