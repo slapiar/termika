@@ -125,8 +125,9 @@ if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}([.-][A-Za-z0-9]+)?$ ]]; then
 fi
 
 # Ensure git working tree is clean.
-# RELEASE_VERSION is allowed to be dirty because it is the release marker itself.
-DIRTY_STATUS="$(git status --porcelain | grep -vE '^[ MARC?DU]{1,2} RELEASE_VERSION$' || true)"
+# Release marker files are allowed to be dirty because they are updated by this script.
+XC_VERSION_FILE="$ROOT_DIR/XC/asset/RELEASE_VERSION.txt"
+DIRTY_STATUS="$(git status --porcelain | grep -vE '^[ MARC?DU]{1,2} (RELEASE_VERSION|XC/asset/RELEASE_VERSION\.txt)$' || true)"
 if [[ -n "$DIRTY_STATUS" ]]; then
   echo "Error: git working tree is not clean. Commit or stash your changes before releasing." >&2
   echo "$DIRTY_STATUS" >&2
@@ -139,7 +140,6 @@ echo "$VERSION" > "$VERSION_FILE"
 # Mirror the version inside XC/ so it always deploys together with the app
 # (RELEASE_VERSION at repo root is a sibling of XC/ and is not guaranteed to
 # reach the hosting document root during deployment).
-XC_VERSION_FILE="$ROOT_DIR/XC/asset/RELEASE_VERSION.txt"
 mkdir -p "$(dirname "$XC_VERSION_FILE")"
 echo "$VERSION" > "$XC_VERSION_FILE"
 
@@ -192,6 +192,7 @@ if [[ "$AUTO_COMMIT" == true ]]; then
   fi
 
   git add "$VERSION_FILE"
+  git add "$XC_VERSION_FILE"
   git add -f "$OUT_FILE"
 
   if git diff --cached --quiet; then

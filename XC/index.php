@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/bootstrap-cache.php';
+termika_send_no_store_headers();
+
 // Používame absolútnu cestu, aby načítanie konfigurácie nezáviselo od pracovného adresára servera.
 $configPath = __DIR__ . '/asset/config.php';
 
@@ -20,8 +23,8 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     exit('V asset/config.php chýba konštanta CESIUM_ACCESS_TOKEN.');
 }
 
-// Zmena verzie prinúti prehliadač načítať nové JS/CSS namiesto starej cache.
-$assetVersion = '20260715-03';
+// Release verzia vynúti načítanie nových JS/CSS namiesto starej cache.
+$assetVersion = termika_asset_version();
 
 $jsDirectory = __DIR__ . '/js';
 $jsPriority = [
@@ -63,6 +66,7 @@ usort($jsFiles, static function (string $a, string $b) use ($jsPriority): int {
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Cesium.js"></script>
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<?php echo termika_browser_cache_reset_tag(), "\n"; ?>
 
     <link href="asset/style.css?v=<?php echo rawurlencode($assetVersion); ?>" rel="stylesheet">
     <script src="ux/igc-parser.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>

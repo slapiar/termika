@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/bootstrap-cache.php';
+termika_send_no_store_headers();
+
 $configPath = __DIR__ . '/asset/config.php';
 if (!is_file($configPath)) {
     http_response_code(500);
@@ -9,7 +12,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     http_response_code(500);
     exit('Chýba CESIUM_ACCESS_TOKEN.');
 }
-$assetVersion = '20260716-01';
+$assetVersion = termika_asset_version();
 $currentYear = gmdate('Y');
 $releaseVersion = null;
 $releaseVersionPath = __DIR__ . '/asset/RELEASE_VERSION.txt';
@@ -31,6 +34,7 @@ if (is_readable($releaseVersionPath)) {
     <title>TermikaXC v2.6 – Terrain Analysis</title>
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Cesium.js"></script>
     <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Widgets/widgets.css">
+<?php echo termika_browser_cache_reset_tag(), "\n"; ?>
     <link rel="stylesheet" href="asset/workspace-polish.css?v=<?php echo rawurlencode($assetVersion); ?>">
     <link rel="stylesheet" href="asset/workspace-flight-simulator.css?v=<?php echo rawurlencode($assetVersion); ?>">
     <script src="js/terrain-analysis.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>

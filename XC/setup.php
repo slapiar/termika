@@ -1,5 +1,7 @@
 <?php
 session_start();
+require_once __DIR__ . '/bootstrap-cache.php';
+termika_send_no_store_headers();
 
 $configPath = '';
 $examplePath = __DIR__ . '/asset/local-config.php.example';

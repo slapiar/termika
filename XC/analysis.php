@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/bootstrap-cache.php';
+termika_send_no_store_headers();
+
 ob_start();
 require __DIR__ . '/terrain-analysis-test.php';
 $html = (string)ob_get_clean();
@@ -49,5 +52,8 @@ if ($bodyScripts !== '') {
         $html = substr_replace($html, $bodyScripts, $bodyEnd, 0);
     }
 }
+
+$html = termika_rewrite_local_asset_versions($html);
+$html = termika_inject_browser_cache_reset($html);
 
 echo $html;

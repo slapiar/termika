@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/bootstrap-cache.php';
+termika_send_no_store_headers();
+
 $configPath = __DIR__ . '/asset/config.php';
 
 if (!is_file($configPath)) {
@@ -14,7 +17,7 @@ if (!defined('CESIUM_ACCESS_TOKEN')) {
     exit('V asset/config.php chýba konštanta CESIUM_ACCESS_TOKEN.');
 }
 
-$assetVersion = '20260715-01';
+$assetVersion = termika_asset_version();
 $cesiumTokenJson = json_encode(CESIUM_ACCESS_TOKEN, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 ?>
 <!doctype html>
@@ -27,6 +30,7 @@ $cesiumTokenJson = json_encode(CESIUM_ACCESS_TOKEN, JSON_UNESCAPED_SLASHES | JSO
 
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Cesium.js"></script>
     <link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Widgets/widgets.css">
+<?php echo termika_browser_cache_reset_tag(), "\n"; ?>
     <script src="ux/igc-parser.js?v=<?php echo rawurlencode($assetVersion); ?>"></script>
 
     <style>
