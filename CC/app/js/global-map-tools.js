@@ -6,7 +6,7 @@
   const STORAGE_KEY = 'termikaXC.quickDock.visible.v3';
   const pad = (n) => String(Math.trunc(Number(n) || 0)).padStart(2, '0');
   let dock = null;
-  let skyBadge = null;
+  let nowBadge = null;
   let igcBadge = null;
   let navButton = null;
   let displayButton = null;
@@ -17,11 +17,15 @@
     const style = document.createElement('style');
     style.id = 'termikaGlobalMapToolsStyle';
     style.textContent = `
-      .termika-global-dock{position:fixed;right:12px;top:82px;z-index:80;display:flex;flex-direction:column;gap:6px;padding:7px;border:1px solid rgba(112,232,255,.45);border-radius:8px;background:rgba(7,16,24,.82);box-shadow:0 5px 18px rgba(0,0,0,.34);backdrop-filter:blur(5px)}
-      .termika-global-dock[hidden]{display:none}.termika-global-dock button{min-width:34px;height:32px;border:1px solid #54778a;border-radius:5px;background:#102937;color:#dff8ff;cursor:pointer}.termika-global-dock button.is-active{border-color:#70e8ff;background:#1c5368;color:#fff}
-      .termika-global-time{position:fixed;left:12px;top:82px;z-index:79;padding:5px 9px;border:1px solid rgba(112,232,255,.58);border-radius:6px;background:rgba(7,16,24,.76);color:#70e8ff;font:700 12px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap;pointer-events:none}
-      .termika-global-igc{position:fixed;left:12px;top:116px;z-index:79;padding:5px 9px;border:1px solid rgba(112,232,255,.42);border-radius:6px;background:rgba(7,16,24,.72);color:#70e8ff;font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap;pointer-events:none}.termika-global-igc[hidden]{display:none}
-      @media(max-width:760px){.termika-global-dock{right:8px;top:72px}.termika-global-time,.termika-global-igc{left:8px;max-width:calc(100vw - 72px);overflow:hidden;text-overflow:ellipsis}}
+      #termikaSkyTimeBadge,#termikaIgcFlightSummary{display:none!important}
+      .termika-global-dock{position:fixed!important;right:12px!important;top:82px!important;left:auto!important;bottom:auto!important;z-index:80!important;display:grid!important;grid-template-columns:repeat(4,34px)!important;grid-auto-rows:32px!important;gap:6px!important;width:auto!important;max-width:none!important;height:auto!important;padding:7px!important;border:1px solid rgba(112,232,255,.45)!important;border-radius:8px!important;background:rgba(7,16,24,.82)!important;box-shadow:0 5px 18px rgba(0,0,0,.34)!important;backdrop-filter:blur(5px);transform:none!important;cursor:default!important;user-select:none}
+      .termika-global-dock[hidden]{display:none!important}
+      .termika-global-dock button{box-sizing:border-box!important;width:34px!important;min-width:34px!important;max-width:34px!important;height:32px!important;min-height:32px!important;margin:0!important;padding:0!important;border:1px solid #54778a!important;border-radius:5px!important;background:#102937!important;color:#dff8ff!important;cursor:pointer!important;line-height:30px!important;text-align:center!important}
+      .termika-global-dock button.is-active{border-color:#70e8ff!important;background:#1c5368!important;color:#fff!important}
+      .termika-global-now,.termika-global-igc{position:fixed;left:12px;z-index:79;padding:5px 9px;border-radius:6px;background:rgba(7,16,24,.76);color:#70e8ff;font:700 12px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap;pointer-events:none}
+      .termika-global-now{top:82px;border:1px solid rgba(112,232,255,.58)}
+      .termika-global-igc{top:116px;min-width:1px;min-height:14px;border:1px solid rgba(112,232,255,.42);font-size:11px;background:rgba(7,16,24,.72)}
+      @media(max-width:760px){.termika-global-dock{right:8px!important;top:72px!important}.termika-global-now,.termika-global-igc{left:8px;max-width:calc(100vw - 170px);overflow:hidden;text-overflow:ellipsis}}
     `;
     document.head.appendChild(style);
   }
@@ -49,18 +53,18 @@
     if (!dock) {
       dock = document.createElement('nav');
       dock.id = 'quickToolDock';
-      dock.className = 'termika-global-dock';
       dock.setAttribute('aria-label', 'Rýchle mapové nástroje');
       dock.innerHTML = `
         <button type="button" data-global-action="igc" title="Načítať IGC">⇧</button>
-        <button type="button" data-global-action="hud" title="Kamerový HUD">HUD</button>
+        <button type="button" data-global-action="hud" title="Kamerový HUD">H</button>
         <button type="button" data-global-action="sky" class="is-active" title="Slnko a obloha">☀</button>
         <button type="button" data-global-action="clouds" class="is-active" title="3D oblačnosť">☁</button>
         <button type="button" data-global-action="instruments" class="is-active" title="Ružica a mierka">N</button>`;
       document.body.appendChild(dock);
-    } else {
-      dock.classList.add('termika-global-dock');
     }
+    dock.classList.add('termika-global-dock');
+    dock.removeAttribute('draggable');
+    dock.style.removeProperty('transform');
     dock.hidden = !readVisible();
     if (!dock.dataset.globalBound) {
       dock.addEventListener('click', (event) => {
@@ -80,23 +84,24 @@
   }
 
   function ensureBadges() {
-    if (!skyBadge) {
-      skyBadge = document.getElementById('termikaSkyTimeBadge') || document.createElement('div');
-      skyBadge.id = 'termikaSkyTimeBadge';
-      skyBadge.classList.add('termika-global-time');
-      if (!skyBadge.isConnected) document.body.appendChild(skyBadge);
+    if (!nowBadge?.isConnected) {
+      nowBadge = document.getElementById('termikaNowTimeBadge') || document.createElement('div');
+      nowBadge.id = 'termikaNowTimeBadge';
+      nowBadge.className = 'termika-global-now';
+      nowBadge.setAttribute('aria-label', 'Aktuálny dátum a čas zariadenia');
+      if (!nowBadge.isConnected) document.body.appendChild(nowBadge);
     }
-    if (!igcBadge) {
-      igcBadge = document.getElementById('termikaIgcFlightSummary') || document.createElement('div');
-      igcBadge.id = 'termikaIgcFlightSummary';
-      igcBadge.classList.add('termika-global-igc');
+    if (!igcBadge?.isConnected) {
+      igcBadge = document.getElementById('termikaGlobalIgcTimeBadge') || document.createElement('div');
+      igcBadge.id = 'termikaGlobalIgcTimeBadge';
+      igcBadge.className = 'termika-global-igc';
+      igcBadge.setAttribute('aria-label', 'Dátum letu, čas štartu a pristátia z IGC');
       if (!igcBadge.isConnected) document.body.appendChild(igcBadge);
-      igcBadge.hidden = true;
     }
   }
 
-  function formatUtc(date) {
-    return `${pad(date.getUTCDate())}. ${pad(date.getUTCMonth()+1)}. ${date.getUTCFullYear()}: ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`;
+  function formatLocal(date) {
+    return `${pad(date.getDate())}. ${pad(date.getMonth()+1)}. ${date.getFullYear()}: ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
   function formatSeconds(seconds) {
     const s = ((Math.trunc(Number(seconds)||0)%86400)+86400)%86400;
@@ -109,26 +114,34 @@
 
   function updateCurrentTime() {
     ensureBadges();
-    let date = new Date();
-    const cesiumTime = window.TermikaSkyTools?.getState?.().time;
-    if (cesiumTime) { const parsed = new Date(cesiumTime); if (Number.isFinite(parsed.getTime())) date = parsed; }
-    skyBadge.textContent = formatUtc(date);
+    nowBadge.textContent = `NOW - ${formatLocal(new Date())}`;
+  }
+
+  function clearFlightSummary() {
+    ensureBadges();
+    if (igcBadge.textContent !== '') igcBadge.textContent = '';
+    lastFlightKey = '';
   }
 
   function updateFlightSummary() {
     const network = window.PilotNetwork;
     const points = network?.letoveBody;
     const metadata = network?.metadata;
-    if (!Array.isArray(points) || !points.length) return;
+    if (!Array.isArray(points) || !points.length) {
+      clearFlightSummary();
+      return;
+    }
     const date = formatFlightDate(metadata?.flightDate);
     const first = points.find((p) => Number.isFinite(Number(p?.time_s)));
     const last = [...points].reverse().find((p) => Number.isFinite(Number(p?.time_s)));
-    if (!date || !first || !last) return;
+    if (!date || !first || !last) {
+      clearFlightSummary();
+      return;
+    }
     const key = `${date}|${first.time_s}|${last.time_s}|${points.length}`;
-    if (key === lastFlightKey && !igcBadge?.hidden) return;
+    if (key === lastFlightKey && igcBadge?.textContent) return;
     ensureBadges();
     igcBadge.textContent = `IGC ${date}, Štart - ${formatSeconds(first.time_s)} - Pristátie: ${formatSeconds(last.time_s)}`;
-    igcBadge.hidden = false;
     lastFlightKey = key;
     window.dispatchEvent(new CustomEvent('termika:igc-loaded', { detail: { metadata, points } }));
   }
@@ -142,23 +155,31 @@
     navButton.type = 'button';
     navButton.textContent = 'NÁSTROJE';
     navButton.className = navButton.className || 'nav-theme-toggle';
-    navButton.addEventListener('click', toggleVisible);
+    if (!navButton.dataset.globalBound) {
+      navButton.addEventListener('click', toggleVisible);
+      navButton.dataset.globalBound = 'true';
+    }
     const hud = document.getElementById('workspaceHudToggle');
     const flight = document.getElementById('workspaceFlightToggle');
     const anchor = flight || hud;
-    if (anchor?.parentElement === navMeta) anchor.insertAdjacentElement('afterend', navButton); else navMeta.appendChild(navButton);
+    if (!navButton.isConnected) {
+      if (anchor?.parentElement === navMeta) anchor.insertAdjacentElement('afterend', navButton); else navMeta.appendChild(navButton);
+    }
   }
 
   function addDisplayToggle() {
     if (displayButton?.isConnected) return;
     const display = document.querySelector('[data-nav-section="display"] .action-row, #displayPanel .action-row');
     if (!display) return;
-    displayButton = document.createElement('button');
+    displayButton = document.getElementById('displayQuickDockToggle') || document.createElement('button');
     displayButton.type = 'button';
     displayButton.id = 'displayQuickDockToggle';
     displayButton.textContent = 'Zobraziť/skryť nástrojový panel';
-    displayButton.addEventListener('click', toggleVisible);
-    display.appendChild(displayButton);
+    if (!displayButton.dataset.globalBound) {
+      displayButton.addEventListener('click', toggleVisible);
+      displayButton.dataset.globalBound = 'true';
+    }
+    if (!displayButton.isConnected) display.appendChild(displayButton);
   }
 
   function tick() {
