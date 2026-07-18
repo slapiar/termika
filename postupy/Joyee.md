@@ -15,6 +15,7 @@ Pred prvým zásahom do kódu MUSÍ Joyee:
 6. Skontrolovať cieľovú kostru v `CC/`, manifest `module.json`, vlastníctvo zdrojov v `CC/registry/host-code-owners.json` a existujúce zdrojové súbory modulu.
 7. Určiť jediného vlastníka zmeny a overiť, či už rovnaká funkcia alebo stav neexistuje v inom module.
 8. Porovnať zamýšľanú zmenu so všetkými záväznými rozhodnutiami. Pri rozpore sa implementácia zastaví a najprv sa spresní alebo opraví dokumentácia.
+9. Nezabudnúť prečítať všetky súbory typu .md, vytvorené dnes
 
 Táto kontrola nie je voliteľná a nesmie byť nahradená pamäťou z chatu.
 
