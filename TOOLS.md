@@ -72,6 +72,7 @@ Nástroje majú byť postupne spravované samostatným registrom doplnkov, praco
 | `cell-diagnostics` | Diagnostika geometrickej bunky | `AKTÍVNE` | Testovacia analýza terénu | `XC/terrain-analysis-test.php`, `XC/js/terrain-design-ui.js`, ďalšie diagnostické moduly | pripraví sa |
 | `flight-temp-linker` | IGC → TEMP linker (dátum letu, dosah 100 km, viacstaničné pripojenie) | `AKTÍVNE` | CC testovacia stránka terénnej analýzy | `CC/app/js/flight-temp-linker.js`, akcia `findTempNear` v `CC/app/genauto.php` | [`tools/FLIGHT-TEMP-LINKER.md`](tools/FLIGHT-TEMP-LINKER.md) |
 | `terrain-test-link` | Rýchly vstup na test terénu | `AKTÍVNE` | Hlavná stránka TermikaXC | `XC/js/terrain-test-link.js` | pripraví sa |
+| `time-badges` | Časové značky pracoviska | `ROZPRACOVANÉ` | Hlavné pracovisko, test terénu, Analýza, Prieskumník a ďalšie podporované obrazovky | `CC/ux/workbench-shell/time-badges/module.json`, `time-badges.js`, `time-badges.css`; host proxy `CC/app/js/time-badges.js` | [`tools/TIME-BADGES.md`](tools/TIME-BADGES.md) |
 
 ## 4. Referenčné dokumenty nástrojov
 
@@ -88,7 +89,8 @@ Prvým používateľsky overeným referenčným nástrojom je kamerový HUD:
 - [`tools/BASEMAP.md`](tools/BASEMAP.md) – vypnutie obrazovej mapy pri zachovaní 3D reliéfu,
 - [`tools/RELEASE.md`](tools/RELEASE.md) – zobrazenie verzie zo súboru `RELEASE_VERSION`,
 - [`tools/COMMUNICATION.md`](tools/COMMUNICATION.md) – univerzálne komunikačné API medzi nástrojmi,
-- [`tools/WINDY.md`](tools/WINDY.md) – návrh zapojenia Windy Map Forecast API do workflow pilotov.
+- [`tools/WINDY.md`](tools/WINDY.md) – návrh zapojenia Windy Map Forecast API do workflow pilotov,
+- [`tools/TIME-BADGES.md`](tools/TIME-BADGES.md) – samostatný modul riadkov `NOW` a `IGC`, ich zdroje údajov a životný cyklus.
 
 Dokument `tools/HUD.md` zostáva vzorom štruktúry pre ďalšie nástroje.
 
@@ -183,6 +185,8 @@ Register má neskôr zabezpečovať:
 - [`tools/RELEASE.md`](tools/RELEASE.md)
 - [`tools/COMMUNICATION.md`](tools/COMMUNICATION.md)
 - [`tools/WINDY.md`](tools/WINDY.md)
+- [`tools/TIME-BADGES.md`](tools/TIME-BADGES.md)
 - [`postupy/TermikaXC-v2.6-opakovany-fokus-a-kamerovy-HUD.md`](postupy/TermikaXC-v2.6-opakovany-fokus-a-kamerovy-HUD.md)
 - [`postupy/TermikaXC-v2.6-terenny-mesh.md`](postupy/TermikaXC-v2.6-terenny-mesh.md)
 - [`postupy/TermikaXC-v2.6-terenny-mesh-M1.2-vypln.md`](postupy/TermikaXC-v2.6-terenny-mesh-M1.2-vypln.md)
+- [`postupy/2026-07-18_09-50_Casove-znacky-ako-samostatny-modul.md`](postupy/2026-07-18_09-50_Casove-znacky-ako-samostatny-modul.md)
