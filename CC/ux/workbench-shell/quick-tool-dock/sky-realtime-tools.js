@@ -8,7 +8,6 @@
         cloudsEnabled: true,
         instrumentsEnabled: true,
         instruments: null,
-        timeBadge: null,
         postRenderRemove: null,
         lastScaleUpdate: 0,
         cloudRecords: [],
@@ -127,17 +126,6 @@
         if (subtitle) subtitle.remove();
     }
 
-    function createTimeBadge() {
-        if (state.timeBadge) return;
-        const badge = document.createElement("div");
-        badge.id = "termikaSkyTimeBadge";
-        badge.className = "termika-sky-time-badge";
-        badge.setAttribute("aria-label", "Dátum a čas oblohy");
-        badge.textContent = "--. --. ----: --:--:--";
-        document.body.appendChild(badge);
-        state.timeBadge = badge;
-    }
-
     function createInstruments() {
         if (state.instruments || !state.viewer) return;
         const root = document.createElement("div");
@@ -171,7 +159,6 @@
             scaleLabel: root.querySelector(".termika-scale-label")
         };
 
-        createTimeBadge();
         state.postRenderRemove = state.viewer.scene.postRender.addEventListener(updateInstruments);
         updateInstruments();
     }
@@ -223,36 +210,11 @@
         state.instruments.scaleLabel.textContent = formatDistance(targetDistance);
     }
 
-    function formatSkyTime(julianDate) {
-        if (!julianDate) return "--. --. ----: --:--:--";
-        const date = Cesium.JulianDate.toDate(julianDate);
-        const pad = value => String(value).padStart(2, "0");
-        return `${pad(date.getUTCDate())}. ${pad(date.getUTCMonth() + 1)}. ${date.getUTCFullYear()}: ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`;
-    }
-
-    function updateTimeBadge() {
-        if (!state.timeBadge || !state.viewer) return;
-        state.timeBadge.textContent = formatSkyTime(state.viewer.clock.currentTime);
-        state.timeBadge.dataset.mode = state.timeMode;
-        state.timeBadge.title = state.timeMode === "flight"
-            ? "Obloha synchronizovaná s časom načítaného IGC (UTC)"
-            : "Obloha podľa aktuálneho času zariadenia (UTC)";
-
-        const nav = document.getElementById("navShell");
-        if (nav?.dataset.dock === "top") {
-            const bottom = Math.round(nav.getBoundingClientRect().bottom);
-            state.timeBadge.style.top = `${Math.max(8, bottom + 8)}px`;
-        } else {
-            state.timeBadge.style.top = "12px";
-        }
-    }
-
     function updateInstruments() {
         if (!state.instruments || !state.viewer) return;
         const headingDegrees = Cesium.Math.toDegrees(state.viewer.camera.heading || 0);
         state.instruments.rose.style.transform = `rotate(${-headingDegrees}deg)`;
         updateScale();
-        updateTimeBadge();
     }
 
     function setInstrumentsEnabled(enabled) {
@@ -311,7 +273,6 @@
         state.viewer.clock.shouldAnimate = false;
         state.viewer.timeline?.zoomTo?.(start, stop);
         state.viewer.scene.requestRender();
-        updateTimeBadge();
         return true;
     }
 
@@ -322,7 +283,6 @@
         state.viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
         state.viewer.clock.shouldAnimate = false;
         state.viewer.scene.requestRender();
-        updateTimeBadge();
     }
 
     function hookPilotNetwork() {
