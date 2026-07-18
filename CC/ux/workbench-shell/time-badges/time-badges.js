@@ -14,7 +14,9 @@
         igcLine: null,
         timer: null,
         lastNowText: '',
-        lastIgcKey: ''
+        lastIgcKey: '',
+        igcSource: '',
+        parserHooked: false
     };
 
     const pad = (value) => String(Math.trunc(Number(value) || 0)).padStart(2, '0');
@@ -98,9 +100,10 @@
         ensureView();
         state.igcLine.textContent = '';
         state.lastIgcKey = '';
+        state.igcSource = '';
     }
 
-    function updateIgc(metadata, points) {
+    function updateIgc(metadata, points, options = {}) {
         ensureView();
 
         if (!Array.isArray(points) || points.length === 0) {
@@ -112,31 +115,76 @@
         const first = points.find((point) => Number.isFinite(Number(point?.time_s)));
         const last = [...points].reverse().find((point) => Number.isFinite(Number(point?.time_s)));
 
-        if (!date || !first || !last) {
+        if (!first || !last) {
             clearIgc();
             return false;
         }
 
-        const key = `${date}|${Number(first.time_s)}|${Number(last.time_s)}|${points.length}`;
+        const source = String(options.source || 'external');
+        const dateText = date ? `${date}, ` : '';
+        const key = `${date || ''}|${Number(first.time_s)}|${Number(last.time_s)}|${points.length}|${source}`;
         if (key === state.lastIgcKey && state.igcLine.textContent !== '') return true;
 
-        state.igcLine.textContent = `IGC ${date}, Štart - ${formatIgcTime(first.time_s)} - Pristátie: ${formatIgcTime(last.time_s)}`;
+        state.igcLine.textContent = `IGC ${dateText}Štart - ${formatIgcTime(first.time_s)} - Pristátie: ${formatIgcTime(last.time_s)}`;
         state.lastIgcKey = key;
+        state.igcSource = source;
         return true;
     }
 
     function syncIgcFromSharedState() {
         const network = window.PilotNetwork;
-        if (!network || !Array.isArray(network.letoveBody) || network.letoveBody.length === 0) {
-            clearIgc();
-            return false;
+        if (!network) return false;
+
+        if (Array.isArray(network.letoveBody) && network.letoveBody.length > 0) {
+            return updateIgc(network.metadata || {}, network.letoveBody, { source: 'pilot-network' });
         }
-        return updateIgc(network.metadata || {}, network.letoveBody);
+
+        // Prázdny PilotNetwork smie vymazať iba značku, ktorú sám vytvoril.
+        // Na testovacom pracovisku sa IGC načítava cez samostatný parser a
+        // prázdny PilotNetwork nesmie každých 500 ms zmazať platný IGC riadok.
+        if (state.igcSource === 'pilot-network') {
+            clearIgc();
+        }
+        return false;
+    }
+
+    function hookSharedParser() {
+        const parser = window.TermikaUxIgcParser;
+        const current = parser?.parseBTrack;
+        if (!parser || typeof current !== 'function') return false;
+
+        if (current.__termikaTimeBadgesHooked === true) {
+            state.parserHooked = true;
+            return true;
+        }
+
+        const wrapped = function () {
+            const parsed = current.apply(this, arguments);
+            const points = Array.isArray(parsed?.body) ? parsed.body : [];
+            if (points.length > 0) {
+                updateIgc(parsed || {}, points, { source: 'igc-parser' });
+            }
+            return parsed;
+        };
+
+        Object.defineProperty(wrapped, '__termikaTimeBadgesHooked', {
+            value: true,
+            enumerable: false
+        });
+        Object.defineProperty(wrapped, '__termikaTimeBadgesOriginal', {
+            value: current,
+            enumerable: false
+        });
+
+        parser.parseBTrack = wrapped;
+        state.parserHooked = true;
+        return true;
     }
 
     function tick() {
         if (!state.active) return;
         updateNow();
+        hookSharedParser();
         syncIgcFromSharedState();
         updatePosition();
     }
@@ -148,6 +196,7 @@
         window.addEventListener('termika:igc-loaded', handleIgcLoaded);
         window.addEventListener('termika:igc-cleared', clearIgc);
         state.installed = true;
+        hookSharedParser();
         return true;
     }
 
@@ -181,17 +230,18 @@
         state.igcLine = null;
         state.lastNowText = '';
         state.lastIgcKey = '';
+        state.igcSource = '';
         state.installed = false;
         return true;
     }
 
     function handleIgcLoaded(event) {
-        updateIgc(event.detail?.metadata || {}, event.detail?.points || []);
+        updateIgc(event.detail?.metadata || {}, event.detail?.points || [], { source: 'event' });
     }
 
     const api = Object.freeze({
         id: MODULE_ID,
-        version: '1.0.0',
+        version: '1.0.1',
         install,
         activate,
         deactivate,
@@ -204,7 +254,9 @@
             installed: state.installed,
             active: state.active,
             now: state.nowLine?.textContent || '',
-            igc: state.igcLine?.textContent || ''
+            igc: state.igcLine?.textContent || '',
+            igcSource: state.igcSource,
+            parserHooked: state.parserHooked
         })
     });
 
