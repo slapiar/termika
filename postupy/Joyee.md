@@ -15,7 +15,8 @@ Pred prvým zásahom do kódu MUSÍ Joyee:
 6. Skontrolovať cieľovú kostru v `CC/`, manifest `module.json`, vlastníctvo zdrojov v `CC/registry/host-code-owners.json` a existujúce zdrojové súbory modulu.
 7. Určiť jediného vlastníka zmeny a overiť, či už rovnaká funkcia alebo stav neexistuje v inom module.
 8. Porovnať zamýšľanú zmenu so všetkými záväznými rozhodnutiami. Pri rozpore sa implementácia zastaví a najprv sa spresní alebo opraví dokumentácia.
-9. Nezabudnúť prečítať všetky súbory typu .md, vytvorené dnes
+9. Nezabudnúť prečítať všetky súbory typu `.md`, vytvorené dnes.
+10. Zistiť pracovnú vetvu, z ktorej bude Joyee pracovať, a zaznamenať aktuálny stav vetvy `main` pred prvým zásahom.
 
 Táto kontrola nie je voliteľná a nesmie byť nahradená pamäťou z chatu.
 
@@ -30,8 +31,10 @@ Táto kontrola nie je voliteľná a nesmie byť nahradená pamäťou z chatu.
 - CSS a JavaScript musia rešpektovať Dizajn manuál: vizuál patrí do CSS, funkčný stav do JavaScriptu; nepovolené `!important` a inline vizuálne opravy sa nepoužívajú.
 - Nástroj nesmie vlastniť globálny stav iného nástroja. Komunikácia prebieha cez zdokumentovaný kontrakt, službu alebo udalosť.
 - Jednorazový príkaz a stavový prepínač sa nesmú zamieňať.
+- Joyee nemení dohodnutý model práce s vetvami bez výslovného pokynu používateľa.
+- Pri súbežnej práci používateľa, Joyee a Copilota sa nesmie predpokladať, že `main` ostal počas práce nezmenený.
 
-## Kontrola pred zápisom do `main`
+## Kontrola pred synchronizáciou s `main`
 
 Pred označením práce za hotovú MUSÍ Joyee:
 
@@ -41,8 +44,16 @@ Pred označením práce za hotovú MUSÍ Joyee:
 4. preveriť prázdny, načítaný, zmenený a vymazaný stav údajov,
 5. aktualizovať dokumentáciu nástroja, register modulov a samostatný záznam v `postupy/`, ak ide o dôležité technické rozhodnutie,
 6. jasne rozlíšiť stav `IMPLEMENTOVANÉ`, `NEOVERENÉ`, `OVERENÉ` a `STABILNÉ`,
-7. nikdy netvrdiť, že bola zmena overená v prehliadači alebo produkcii, ak také overenie skutočne neprebehlo.
+7. nikdy netvrdiť, že bola zmena overená v prehliadači alebo produkcii, ak také overenie skutočne neprebehlo,
+8. znovu načítať aktuálny stav vetvy `main` a porovnať ho so stavom zaznamenaným pred začiatkom práce,
+9. skontrolovať, či sú všetky commity Joyee už zahrnuté v `main`,
+10. ak nie sú zahrnuté, najprv overiť, či možno zmeny bezpečne synchronizovať bez prepísania novšej práce používateľa alebo Copilota,
+11. ak je synchronizácia bezpečná a dostupná, vykonať ju,
+12. ak `main` medzitým pokročil, najprv porovnať rozdiely a použiť iba bezpečné zlúčenie alebo aktualizáciu bez straty cudzej práce,
+13. nikdy nepoužiť force-push, násilný reset ani slepé posunutie `main`,
+14. pri konflikte, chýbajúcom oprávnení alebo nedostupnom bezpečnom spôsobe synchronizácie zastaviť operáciu a pravdivo uviesť, ktoré commity alebo súbory ešte nie sú v `main`,
+15. v záverečnej správe uviesť pracovnú vetvu, posledný commit Joyee a stav synchronizácie s `main`: `SYNCHRONIZOVANÉ`, `NESYNCHRONIZOVANÉ` alebo `NEOVERITEĽNÉ`.
 
 ## Konečné pravidlo
 
-> Najprv dokumentácia a vlastníctvo modulu, potom minimálna zmena správneho zdroja, napokon poctivá kontrola a pravdivý stav overenia.
+> Najprv dokumentácia a vlastníctvo modulu, potom minimálna zmena správneho zdroja, napokon poctivá kontrola, bezpečná synchronizácia a pravdivý stav overenia.
