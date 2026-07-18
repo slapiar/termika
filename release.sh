@@ -126,13 +126,14 @@ if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}([.-][A-Za-z0-9]+)?$ ]]; then
   exit 1
 fi
 
-# The CC tree is the only deployable application. Fail early if its entrypoints
-# or module roots are missing instead of silently falling back to XC.
+# The CC tree is the only deployable application. Fail early if its real
+# entrypoints or module roots are missing instead of silently falling back to XC.
 REQUIRED_CC_PATHS=(
   "CC/index.php"
   "CC/app/index.php"
   "CC/app/terrain-analysis-test.php"
-  "CC/app/bootstrap-cache.php"
+  "CC/app/release-version.php"
+  "CC/app/asset"
   "CC/ux"
   "CC/infrastructure"
   "CC/services"
@@ -213,6 +214,12 @@ fi
 if ! unzip -Z1 "$OUT_FILE" | grep -qx 'CC/app/index.php'; then
   rm -f "$OUT_FILE"
   echo "Error: created archive does not contain CC/app/index.php." >&2
+  exit 1
+fi
+
+if ! unzip -Z1 "$OUT_FILE" | grep -qx 'CC/app/release-version.php'; then
+  rm -f "$OUT_FILE"
+  echo "Error: created archive does not contain CC/app/release-version.php." >&2
   exit 1
 fi
 
