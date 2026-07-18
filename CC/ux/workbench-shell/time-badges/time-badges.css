@@ -1,0 +1,47 @@
+#termikaSkyTimeBadge,
+#termikaIgcFlightSummary {
+    display: none !important;
+}
+
+.termika-time-badges {
+    position: fixed;
+    left: 12px;
+    top: 82px;
+    z-index: 79;
+    display: grid;
+    gap: 5px;
+    pointer-events: none;
+}
+
+.termika-time-badge {
+    width: max-content;
+    max-width: calc(100vw - 24px);
+    min-height: 14px;
+    padding: 5px 9px;
+    border: 1px solid rgba(112, 232, 255, 0.58);
+    border-radius: 6px;
+    background: rgba(7, 16, 24, 0.76);
+    color: #70e8ff;
+    font: 700 12px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.termika-time-badge--igc {
+    border-color: rgba(112, 232, 255, 0.42);
+    background: rgba(7, 16, 24, 0.72);
+    font-size: 11px;
+}
+
+@media (max-width: 760px) {
+    .termika-time-badges {
+        left: 8px;
+        top: 72px;
+        max-width: calc(100vw - 16px);
+    }
+
+    .termika-time-badge {
+        max-width: calc(100vw - 16px);
+    }
+}
