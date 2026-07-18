@@ -132,14 +132,15 @@ $exampleExists = is_file($examplePath);
         .cc-page-nav a:hover { border-color:#35d8ff; }
         @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
     </style>
+    <script src="js/time-badges.js?v=1.0.0" data-tx-host-module="time-badges"></script>
 </head>
-<body>
+<body data-tx-family="setup">
 <div class="wrap">
     <div class="card">
         <nav class="cc-page-nav" aria-label="Navigácia TermikaXC">
             <a href="index.php">3D pracovisko</a>
             <a href="terrain-analysis-test.php">Test terénu</a>
-            <a href="explorer-core.php">Prieskumník</a>
+            <a href="explorer.php">Prieskumník</a>
         </nav>
         <h1>TermikaXC setup bez terminalu</h1>
         <p>Vypln hodnoty a uloz. Toto je urcene pre hostovanie, kde nechces riesit serverove env premenne.</p>
