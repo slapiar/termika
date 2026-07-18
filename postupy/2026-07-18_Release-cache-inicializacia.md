@@ -1,74 +1,83 @@
-# Release cache inicializácia inštancie
+# Release marker a cache v CC runtime
 
 **Dátum:** 18. júl 2026  
-**Stav:** IMPLEMENTOVANÉ, RELEASE ZATIAĽ NEOVERENÝ NA HOSTINGU
+**Stav:** OPRAVENÁ DOKUMENTÁCIA – SPOLOČNÝ CC CACHE BOOTSTRAP ZATIAĽ NEEXISTUJE
 
 ## Autoritatívny runtime
 
-TermikaXC sa vyvíja a nasadzuje výhradne zo stromu:
+TermikaXC sa vyvíja a nasadzuje výhradne zo zdrojového stromu `CC/`. Adresár `XC/` je iba historická referencia a nesmie byť zdrojom release ani fallbackom.
 
-```text
-CC/
-```
+## Release marker
 
-Adresár `XC/` zostáva v repozitári iba ako historická referencia pôvodného hostiteľa. Nesmie byť zdrojom release balíka ani fallbackom pri jeho zostavovaní.
-
-## Zdroj cache-busting verzie
-
-Jediný nasadzovaný zdroj cache-busting verzie je:
-
-```text
-CC/app/asset/RELEASE_VERSION.txt
-```
-
-Koreňový súbor:
+Repozitárový zdroj verzie:
 
 ```text
 RELEASE_VERSION
 ```
 
-slúži na riadenie verzie v repozitári. `release.sh` z neho určí novú verziu a zrkadlí ju do `CC/app/asset/RELEASE_VERSION.txt`.
+Nasadzovaný marker aplikácie:
 
-Spoločná inicializácia prehliadačovej cache je v:
+```text
+CC/app/asset/RELEASE_VERSION.txt
+```
+
+`release.sh` zapíše požadovanú verziu do oboch súborov. Do ZIP-u sa dostane iba nasadzovaný marker z `CC/app/asset/RELEASE_VERSION.txt`, pretože ZIP obsahuje výhradne runtime odvodený z obsahu `CC/`.
+
+Endpoint:
+
+```text
+CC/app/release-version.php
+```
+
+číta nasadzovaný marker a vracia iba validnú verziu ako `text/plain` bez cache.
+
+## Oprava nepravdivého zápisu
+
+Predchádzajúca verzia tohto dokumentu tvrdila, že existuje:
 
 ```text
 CC/app/bootstrap-cache.php
 ```
 
-Bootstrap:
+Tento súbor v CC neexistuje. Išlo o cestu prenesenú zo starého stromu `XC/`. Release ju nesmie kontrolovať a dokumentácia ju nesmie označovať za súčasť CC runtime.
 
-- nastavuje `Cache-Control: no-store, no-cache, must-revalidate, max-age=0` pre HTML/PHP vstupy,
-- používa release verziu ako `?v=` token pre lokálne CSS a JavaScript assety,
-- pri zmene release verzie vymaže dostupné Cache API záznamy, odregistruje prípadné service workery a jednorazovo načíta stránku s `termika_cache_bust` parametrom.
+## Aktuálny stav cache-bustingu
 
-## Zapojené vstupy
+CC stránky zatiaľ nepoužívajú jeden spoločný cache bootstrap. Jednotlivé hostiteľské vstupy používajú vlastné hodnoty `$assetVersion` alebo vlastné verzie modulových URL.
 
-- `CC/app/index.php`,
-- `CC/app/terrain-analysis-test.php`,
-- `CC/app/explorer-core.php`,
-- `CC/app/explorer.php`,
-- `CC/app/analysis.php`,
-- `CC/app/setup.php`.
+Z toho vyplýva:
 
-Koreňový `CC/index.php` presmeruje používateľa na `CC/app/index.php`.
+- release marker spoľahlivo určuje zobrazenú release verziu,
+- správne zostavený ZIP nasadí aktuálne CC súbory,
+- samotná zmena `CC/app/asset/RELEASE_VERSION.txt` zatiaľ automaticky nezmení všetky URL JavaScriptu a CSS na všetkých CC stránkach,
+- tvrdenie, že CC už má jednotné automatické vymazanie prehliadačovej cache, by bolo nepravdivé.
 
-## Release pravidlo
+Zjednotenie cache-bustingu je samostatná úloha. Nesmie sa potichu primiešať do opravy release balenia.
 
-`release.sh`:
+## Záväzný release layout
 
-1. overí povinné vstupy a modulové korene v `CC/`,
-2. aktualizuje `RELEASE_VERSION` a `CC/app/asset/RELEASE_VERSION.txt`,
-3. balí iba sledované súbory z `CC/`,
-4. vykoná PHP lint všetkých balených PHP súborov,
-5. po vytvorení ZIP-u overí, že archív obsahuje `CC/app/index.php`,
-6. zastaví release, ak by sa v archíve objavil čo i len jeden súbor z `XC/`.
+Obsah `CC/` sa v ZIP-e uloží priamo do koreňa:
+
+```text
+index.php
+app/
+ux/
+infrastructure/
+services/
+kernels/
+registry/
+```
+
+ZIP neobsahuje nadradený priečinok `CC/`, žiadny priečinok `XC/` ani lokálne tajné konfigurácie.
 
 ## Overenie
 
-Pred označením za `OVERENÉ` treba vytvoriť nasledujúci release a skontrolovať:
+Pred označením release za `OVERENÉ` treba potvrdiť:
 
-- ZIP neobsahuje žiadnu cestu `XC/`,
-- ZIP obsahuje celý strom `CC/`, najmä `CC/app`, `CC/ux`, `CC/infrastructure` a `CC/services`,
-- po nasadení sa otvorí `CC/index.php` a presmeruje na `CC/app/index.php`,
-- päta aj cache-busting používajú rovnakú novú verziu,
-- testovacia stránka načítava modulové view a skripty z `CC/`, nie historické súbory z `XC/`.
+- ZIP má `index.php` priamo v koreni,
+- ZIP obsahuje `app/`, `ux/`, `infrastructure/`, `services/`, `kernels/` a `registry/`,
+- ZIP neobsahuje `CC/` ani `XC/`,
+- `app/asset/RELEASE_VERSION.txt` v ZIP-e zodpovedá požadovanej verzii,
+- po rozbalení do document rootu funguje presmerovanie `index.php` → `app/index.php`,
+- po nasadení sa v Network paneli neobjavujú požiadavky do historického stromu `XC/`,
+- pri prípadnej starej browser cache sa stav označí pravdivo a rieši sa samostatnou cache-busting úlohou.
