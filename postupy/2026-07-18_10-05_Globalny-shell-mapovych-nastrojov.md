@@ -1,61 +1,57 @@
-# Globálny shell mapových nástrojov
+# Globálny shell mapových nástrojov – vyradené riešenie
 
-**Dátum:** 18. júl 2026  
-**Stav:** implementované v `main`
+**Dátum pôvodného rozhodnutia:** 18. júl 2026  
+**Stav:** VYRADENÉ – NEPOUŽÍVAŤ AKO IMPLEMENTAČNÝ POSTUP  
+**Nahradené:** `postupy/2026-07-18_09-50_Casove-znacky-ako-samostatny-modul.md`
 
-## Dôvod zmeny
+## Dôvod vyradenia
 
-Čas oblohy, IGC súhrn a quick-dock boli pôvodne pripájané cez konkrétne stránky a krehké prepisovanie funkcií `PilotNetwork`. Výsledok závisel od stránky a poradia načítania skriptov.
+Tento dokument pôvodne zaviedol spoločný súbor `global-map-tools.js`, ktorý miešal:
 
-## Prijaté rozhodnutie
+- quick-dock,
+- navigačné prepínače,
+- časové značky,
+- stav oblohy,
+- hostiteľské pripájanie rôznych nástrojov.
 
-Spoločné mapové nástroje patria do globálneho pracovného shellu a nesmú byť viazané na konkrétny PHP súbor.
+Po opätovnom prečítaní záväzných postupov, Dizajn manuálu, `TOOLS.md`, zoznamu modulov CC a registra vlastníctva bolo potvrdené, že takýto súbor je v rozpore s modulárnou architektúrou TermikaXC.
 
-Zdrojový modul:
+Funkčná skupina `workbench-shell` nie je jeden modul. Jednotlivé nástroje musia zostať samostatné, mať vlastný manifest, životný cyklus a jediného vlastníka.
 
-```text
-XC/js/global-map-tools.js
-```
-
-CC hostiteľský modul:
+## Odstránené súbory
 
 ```text
 CC/app/js/global-map-tools.js
+XC/js/global-map-tools.js
 ```
 
-Spoločné vstupy:
+HUD a LET proxy už tento monolit nenačítavajú.
+
+## Platná náhrada
+
+Časové značky vlastní samostatný modul:
 
 ```text
-CC/app/js/workspace-hud-toggle.js
-CC/app/js/workspace-flight-toggle.js
-CC/ux/workbench-shell/quick-tool-dock/quick-tool-dock.view.php
+CC/ux/workbench-shell/time-badges/
+├── module.json
+├── time-badges.js
+└── time-badges.css
 ```
 
-Tým sú pokryté pracovné stránky `index.php`, `explorer.php`, `analysis.php`, `terrain-analysis-test.php` a budúce stránky, ktoré používajú spoločný HUD, LET alebo quick-dock vstup.
-
-## IGC súhrn
-
-Globálny modul pravidelne číta spoločný stav:
+Hostiteľský proxy vstup:
 
 ```text
-PilotNetwork.metadata.flightDate
-PilotNetwork.letoveBody
+CC/app/js/time-badges.js
 ```
 
-Po dostupnosti platných údajov zobrazí:
+Quick-dock zostáva samostatným modulom `quick-tool-dock`. Obloha, oblačnosť, prístroje, HUD a LET zostávajú vo svojich vlastníckych moduloch.
 
-```text
-IGC DD.MM. RRRR, Štart - HH:MM:SS - Pristátie: HH:MM:SS
-```
+## Záväzné pravidlo
 
-Tým sa odstránila závislosť od poradia wrapperov okolo `pripravPrehravanieLetu()`.
+Tento súbor zostáva zachovaný iba ako záznam vyradeného rozhodnutia. Pri ďalšej práci sa musí použiť:
 
-## Dizajnové pravidlo
-
-Normatívny dodatok bol zapísaný do:
-
-```text
-docs/TERMIKAXC-UI-UX-DESIGN-MANUAL-GLOBALNE-MAPOVE-NASTROJE.md
-```
-
-Quick-dock je predvolene viditeľný. Navigačné tlačidlo a tlačidlo v sekcii ZOBRAZENIE ovládajú rovnaký stav. Stavové ovládače musia mať reverznú funkciu.
+- `postupy/Joyee.md`,
+- `postupy/2026-07-17_06-06_CC-modularna-struktura-a-kontrola-postupov.md`,
+- `postupy/2026-07-18_09-50_Casove-znacky-ako-samostatny-modul.md`,
+- `tools/TIME-BADGES.md`,
+- aktuálny Dizajn manuál.
