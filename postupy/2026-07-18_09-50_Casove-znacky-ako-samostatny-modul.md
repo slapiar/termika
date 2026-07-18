@@ -1,7 +1,7 @@
 # Časové značky ako samostatný modul
 
 **Dátum rozhodnutia:** 18. júl 2026, 09:50 Europe/Bratislava  
-**Stav:** IMPLEMENTOVANÉ – FUNKČNE NEOVERENÉ V PREHLIADAČI
+**Stav:** OPRAVENÉ PO PRVOM PREHLIADAČOVOM TESTE – ČAKÁ NA OPAKOVANÉ OVERENIE
 
 ## Dôvod opravy
 
@@ -46,7 +46,8 @@ IGC DD.MM. RRRR, Štart - HH:MM:SS - Pristátie: HH:MM:SS
 - naplní sa podľa dátumu letu a prvého a posledného platného B-záznamu,
 - pri načítaní ďalšieho IGC sa nahradí,
 - pri vymazaní načítaného letu sa jeho obsah vyprázdni,
-- prázdny riadok zostáva v DOM, aby sa nemenila geometria modulu.
+- prázdny riadok zostáva v DOM, aby sa nemenila geometria modulu,
+- ak chýba rozpoznateľný dátum, zobrazia sa reálne časy B-záznamov bez vymysleného dátumu.
 
 ## Odstránené paralelné riešenia
 
@@ -66,6 +67,23 @@ install / activate / deactivate / destroy
 
 Pri `destroy()` musí odstrániť DOM, interval a všetky vlastné listenery.
 
+## Oprava verzie 1.0.1 po prvom teste
+
+Prvý reálny test ukázal, že IGC riadok sa po načítaní na testovacom pracovisku nezobrazil.
+
+Príčina bola dvojitá:
+
+1. testovacie pracovisko načíta IGC priamo cez `TermikaUxIgcParser.parseBTrack`, ale nenapĺňa `PilotNetwork.letoveBody`,
+2. modul každých 500 ms čítal prázdny `PilotNetwork` a vymazal IGC riadok bez ohľadu na to, z akého zdroja pochádzal.
+
+Oprava:
+
+- modul pasívne dekoruje spoločný parser a preberá jeho platný výsledok,
+- eviduje vlastníka aktuálneho IGC riadku v `igcSource`,
+- prázdny `PilotNetwork` smie vymazať iba riadok, ktorý vytvoril samotný `PilotNetwork`,
+- IGC riadok vytvorený parserom alebo udalosťou zostane zachovaný až do výslovného `termika:igc-cleared` alebo nahradenia novým IGC,
+- verzia modulu a hostiteľských URL bola zvýšená na `1.0.1`, aby prehliadač nepoužil starú cache.
+
 ## Overenie
 
-Implementácia nebola v čase zápisu overená v bežiacom prehliadači. Pred zmenou stavu na `OVERENÉ` treba vykonať kontrolný zoznam z `tools/TIME-BADGES.md` a Dizajn manuálu.
+Verzia `1.0.0` bola v prehliadači potvrdená ako chybná. Verzia `1.0.1` je implementovaná, ale ešte čaká na opakovaný používateľský test načítaním IGC.
