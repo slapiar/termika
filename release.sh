@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build a versioned release ZIP of TermikaXC from tracked repository files.
-# Packages files from XC/ directory and RELEASE_VERSION for deployment.
+# Build a versioned release ZIP of TermikaXC from the authoritative CC runtime.
+# XC/ is a historical reference tree and is never included in a release.
 # Usage:
 #   ./release.sh                          # uses version from RELEASE_VERSION
 #   ./release.sh 1.2.0                    # uses provided version
@@ -14,6 +14,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
 VERSION_FILE="RELEASE_VERSION"
+CC_VERSION_FILE="$ROOT_DIR/CC/app/asset/RELEASE_VERSION.txt"
 DEFAULT_VERSION="2.6"
 AUTO_COMMIT=false
 AUTO_PUSH=false
@@ -44,15 +45,16 @@ for arg in "$@"; do
 Usage: $0 [--auto-commit] [--auto-push] [--commit-message=...] [version|patch|minor|major|mini]
 
 Description:
-  Creates a release ZIP archive containing files from XC/ and RELEASE_VERSION.
+  Creates a release ZIP archive containing the authoritative CC/ runtime.
+  XC/ remains only a repository reference and is never packaged.
 
 Options:
-  --auto-commit           Automatically commit RELEASE_VERSION and release ZIP
+  --auto-commit           Automatically commit RELEASE_VERSION, the CC marker and release ZIP
   --auto-push             Push current branch to origin after release
-  --commit-message=MSG    Custom commit message for --auto-commit
+  --commit-message=MSG    Custom message for --auto-commit
 
 Version argument:
-  version                 Explicit version, e.g. 2.6.1
+  version                 Explicit version, e.g. 3.1.4
   patch                   Increment patch segment (x.y.z -> x.y.(z+1))
   minor|mini              Increment minor segment (x.y.z -> x.(y+1).0)
   major                   Increment major segment (x.y.z -> (x+1).0.0)
@@ -86,7 +88,7 @@ fi
 if [[ -n "$BUMP_MODE" ]]; then
   if ! [[ "$CURRENT_VERSION" =~ ^([0-9]+)\.([0-9]+)(\.([0-9]+))?$ ]]; then
     echo "Error: current version '$CURRENT_VERSION' is not numeric and cannot be bumped automatically." >&2
-    echo "Use explicit version, e.g. ./release.sh 2.6.1" >&2
+    echo "Use explicit version, e.g. ./release.sh 3.1.4" >&2
     exit 1
   fi
 
@@ -120,28 +122,42 @@ if [[ -z "$VERSION" ]]; then
 fi
 
 if ! [[ "$VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}([.-][A-Za-z0-9]+)?$ ]]; then
-  echo "Error: invalid version '$VERSION'. Expected e.g. 2.6, 2.6.0 or 2.6-rc1." >&2
+  echo "Error: invalid version '$VERSION'. Expected e.g. 3.1.4 or 3.1.4-rc1." >&2
   exit 1
 fi
 
-# Ensure git working tree is clean.
-# Release marker files are allowed to be dirty because they are updated by this script.
-XC_VERSION_FILE="$ROOT_DIR/XC/asset/RELEASE_VERSION.txt"
-DIRTY_STATUS="$(git status --porcelain | grep -vE '^[ MARC?DU]{1,2} (RELEASE_VERSION|XC/asset/RELEASE_VERSION\.txt)$' || true)"
+# The CC tree is the only deployable application. Fail early if its entrypoints
+# or module roots are missing instead of silently falling back to XC.
+REQUIRED_CC_PATHS=(
+  "CC/index.php"
+  "CC/app/index.php"
+  "CC/app/terrain-analysis-test.php"
+  "CC/app/bootstrap-cache.php"
+  "CC/ux"
+  "CC/infrastructure"
+  "CC/services"
+)
+for required_path in "${REQUIRED_CC_PATHS[@]}"; do
+  if [[ ! -e "$ROOT_DIR/$required_path" ]]; then
+    echo "Error: missing required CC runtime path: $required_path" >&2
+    exit 1
+  fi
+done
+
+# Ensure git working tree is clean. Release marker files are allowed to be dirty
+# because this script updates them before packaging.
+DIRTY_STATUS="$(git status --porcelain | grep -vE '^[ MARC?DU]{1,2} (RELEASE_VERSION|CC/app/asset/RELEASE_VERSION\.txt)$' || true)"
 if [[ -n "$DIRTY_STATUS" ]]; then
   echo "Error: git working tree is not clean. Commit or stash your changes before releasing." >&2
   echo "$DIRTY_STATUS" >&2
   exit 1
 fi
 
-# Persist requested/default version after validation.
+# Persist the requested version both at repository level and inside the deployed
+# CC application. XC/asset/RELEASE_VERSION.txt is intentionally untouched.
 echo "$VERSION" > "$VERSION_FILE"
-
-# Mirror the version inside XC/ so it always deploys together with the app
-# (RELEASE_VERSION at repo root is a sibling of XC/ and is not guaranteed to
-# reach the hosting document root during deployment).
-mkdir -p "$(dirname "$XC_VERSION_FILE")"
-echo "$VERSION" > "$XC_VERSION_FILE"
+mkdir -p "$(dirname "$CC_VERSION_FILE")"
+echo "$VERSION" > "$CC_VERSION_FILE"
 
 OUT_DIR="$ROOT_DIR/releases"
 OUT_FILE="$OUT_DIR/termika-xc-${VERSION}.zip"
@@ -150,15 +166,15 @@ trap 'rm -f "$TMP_LIST"' EXIT
 
 mkdir -p "$OUT_DIR"
 
-# Package tracked files from XC/ directory (includes XC/asset/RELEASE_VERSION.txt)
-# plus the root RELEASE_VERSION marker for local/dev convenience.
-# Exclude local node_modules or build artifacts if present.
-git -C "$ROOT_DIR" ls-files "XC/" \
-  | grep -Ev '(^XC_backup/|\.zip$|\.tar|\.tgz)' \
+# Package every tracked file from CC/. This preserves app/, ux/,
+# infrastructure/, services/ and other runtime dependencies as one coherent
+# deployable tree. Local secrets remain excluded because they are not tracked.
+git -C "$ROOT_DIR" ls-files "CC/" \
+  | grep -Ev '(^CC_backup/|\.zip$|\.tar|\.tgz)' \
   > "$TMP_LIST"
 
-if ! grep -qx 'XC/asset/RELEASE_VERSION.txt' "$TMP_LIST"; then
-  echo 'XC/asset/RELEASE_VERSION.txt' >> "$TMP_LIST"
+if ! grep -qx 'CC/app/asset/RELEASE_VERSION.txt' "$TMP_LIST"; then
+  echo 'CC/app/asset/RELEASE_VERSION.txt' >> "$TMP_LIST"
 fi
 
 if git -C "$ROOT_DIR" ls-files --error-unmatch "$VERSION_FILE" >/dev/null 2>&1; then
@@ -166,11 +182,16 @@ if git -C "$ROOT_DIR" ls-files --error-unmatch "$VERSION_FILE" >/dev/null 2>&1; 
 fi
 
 if [[ ! -s "$TMP_LIST" ]]; then
-  echo "Error: no tracked files found in XC/ or RELEASE_VERSION to package." >&2
+  echo "Error: no tracked files found in CC/." >&2
   exit 1
 fi
 
-# PHP lint all PHP files before packaging
+if grep -q '^XC/' "$TMP_LIST"; then
+  echo "Error: release file list unexpectedly contains XC/." >&2
+  exit 1
+fi
+
+# PHP lint all packaged PHP files before creating the archive.
 while IFS= read -r file; do
   if [[ "$file" == *.php ]]; then
     if ! php -l "$ROOT_DIR/$file" >/dev/null 2>&1; then
@@ -183,8 +204,22 @@ done < "$TMP_LIST"
 rm -f "$OUT_FILE"
 zip -q -9 "$OUT_FILE" -@ < "$TMP_LIST"
 
+if unzip -Z1 "$OUT_FILE" | grep -q '^XC/'; then
+  rm -f "$OUT_FILE"
+  echo "Error: created archive contains forbidden XC/ entries." >&2
+  exit 1
+fi
+
+if ! unzip -Z1 "$OUT_FILE" | grep -qx 'CC/app/index.php'; then
+  rm -f "$OUT_FILE"
+  echo "Error: created archive does not contain CC/app/index.php." >&2
+  exit 1
+fi
+
 echo "Release created: $OUT_FILE"
-echo "Contents: $(wc -l < "$TMP_LIST") files from XC/ + RELEASE_VERSION"
+echo "Contents: $(wc -l < "$TMP_LIST") tracked files from CC/ + RELEASE_VERSION"
+echo "Deployment root: CC/ (CC/index.php redirects to CC/app/index.php)"
+echo "Verified: archive contains no XC/ files"
 
 if [[ "$AUTO_COMMIT" == true ]]; then
   if [[ -z "$COMMIT_MESSAGE" ]]; then
@@ -192,7 +227,7 @@ if [[ "$AUTO_COMMIT" == true ]]; then
   fi
 
   git add "$VERSION_FILE"
-  git add "$XC_VERSION_FILE"
+  git add "$CC_VERSION_FILE"
   git add -f "$OUT_FILE"
 
   if git diff --cached --quiet; then
