@@ -15,8 +15,8 @@ IGC DD.MM. RRRR, Štart - HH:MM:SS - Pristátie: HH:MM:SS
 |---|---|
 | ID nástroja | `time-badges` |
 | Typ | prístroj / HUD pracoviska |
-| Verzia | `1.0.0` |
-| Stav | `IMPLEMENTOVANÉ – NEOVERENÉ V PREHLIADAČI` |
+| Verzia | `1.0.1` |
+| Stav | `OPRAVENÉ – ČAKÁ NA OPAKOVANÉ OVERENIE V PREHLIADAČI` |
 | Predvolené správanie | implicitne aktívny |
 | Vlastník | `CC/ux/workbench-shell/time-badges/` |
 
@@ -34,11 +34,13 @@ Riadok `NOW` používa výhradne lokálny dátum a čas zariadenia používateľ
 
 Riadok `IGC` používa:
 
-- dátum letu z hlavičky IGC,
+- dátum letu z hlavičky IGC, ak je dostupný,
 - čas prvého platného B-záznamu ako štart,
 - čas posledného platného B-záznamu ako pristátie.
 
-Pri načítaní ďalšieho IGC sa obsah nahradí. Keď spoločný stav neobsahuje načítaný let, obsah riadku sa vyprázdni. Prázdny riadok zostáva v DOM a zachováva výšku modulu.
+Pri načítaní ďalšieho IGC sa obsah nahradí. Keď vlastník aktuálneho IGC stavu oznámi vymazanie letu, obsah riadku sa vyprázdni. Prázdny riadok zostáva v DOM a zachováva výšku modulu.
+
+Ak IGC neobsahuje rozpoznateľný dátum, modul nezamlčí reálne časy B-záznamov. Zobrazí riadok bez dátumu a nevymýšľa chýbajúci údaj.
 
 ## 5. Závislosti a údaje
 
@@ -56,7 +58,9 @@ termika:igc-loaded
 termika:igc-cleared
 ```
 
-Modul nemení IGC dáta, Cesium hodiny, oblohu ani analytické výsledky.
+Testovacie pracovisko načítava IGC priamo cez `TermikaUxIgcParser.parseBTrack`, pričom jeho `PilotNetwork` môže zostať prázdny. Modul preto verzie `1.0.1` pasívne dekoruje spoločný parser a prevezme jeho platný výsledok. Prázdny `PilotNetwork` už nesmie vymazať značku vytvorenú parserom alebo udalosťou; smie vymazať iba značku, ktorej zdrojom bol samotný `PilotNetwork`.
+
+Modul nemení návratové údaje parsera, IGC dáta, Cesium hodiny, oblohu ani analytické výsledky.
 
 ## 6. Životný cyklus a API
 
@@ -80,6 +84,8 @@ syncIgcFromSharedState()
 getState()
 ```
 
+`getState()` vracia aj diagnostické položky `igcSource` a `parserHooked`.
+
 ## 7. Súvisiace súbory
 
 ```text
@@ -100,4 +106,5 @@ Pred zmenou stavu na `OVERENÉ` treba v každom podporovanom pracovisku skontrol
 5. vymazanie IGC,
 6. nezávislosť riadku `NOW` od Cesium času,
 7. deaktiváciu a opätovnú aktiváciu,
-8. zrušenie časovačov a listenerov pri `destroy()`.
+8. zrušenie časovačov a listenerov pri `destroy()`,
+9. diagnostiku `TermikaTimeBadges.getState()` – na testovacom pracovisku má byť `parserHooked: true` a po načítaní `igcSource: "igc-parser"`.
