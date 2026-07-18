@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="../ux/workbench-shell/quick-tool-dock/sky-realtime-tools.css?v=20260718-04">
+<link rel="stylesheet" href="../ux/workbench-shell/quick-tool-dock/sky-realtime-tools.css?v=20260718-05">
 <link rel="stylesheet" href="../ux/workbench-shell/quick-tool-dock/sky-flight-summary.css?v=20260718-04">
 <nav id="quickToolDock" class="quick-tool-dock" aria-label="Rýchle mapové nástroje" data-visible="true">
     <button type="button" id="quickOpenSourcesButton" title="Zdroje a nastavenia">◎</button>
@@ -21,4 +21,4 @@
 <script src="js/global-map-tools.js?v=20260718-04" data-termika-global-map-tools="true"></script>
 <script src="../ux/workbench-shell/quick-tool-dock/sky-realtime-tools.js?v=20260718-04"></script>
 <script src="../ux/workbench-shell/quick-tool-dock/sky-flight-summary.js?v=20260718-04"></script>
-<script src="../ux/workbench-shell/quick-tool-dock/quick-tool-dock-controller.js?v=20260718-04"></script>
+<script src="../ux/workbench-shell/quick-tool-dock/quick-tool-dock-controller.js?v=20260718-05"></script>

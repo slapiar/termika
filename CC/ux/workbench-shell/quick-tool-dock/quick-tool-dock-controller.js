@@ -66,10 +66,11 @@
         navButton = document.createElement("button");
         navButton.id = "workspaceQuickToolsToggle";
         navButton.type = "button";
-        navButton.textContent = "NÁSTROJE";
+        navButton.innerHTML = '<span class="workspace-quick-tools-icon" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>';
+        navButton.setAttribute("aria-label", "Panel nástrojov");
         navButton.className = document.getElementById("explorerNavShell")
-            ? "explorer-theme-toggle"
-            : "nav-theme-toggle";
+            ? "workspace-quick-tools-toggle explorer-theme-toggle"
+            : "workspace-quick-tools-toggle nav-theme-toggle";
         navButton.addEventListener("click", toggleVisible);
 
         const hudButton = document.getElementById("workspaceHudToggle");

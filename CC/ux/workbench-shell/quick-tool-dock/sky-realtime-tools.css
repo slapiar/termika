@@ -5,6 +5,38 @@
     box-shadow: 0 0 0 1px rgba(112, 232, 255, 0.3) inset, 0 0 10px rgba(53, 216, 255, 0.18);
 }
 
+.workspace-quick-tools-toggle {
+    display: inline-grid;
+    place-items: center;
+    min-width: 38px;
+    padding-inline: 9px;
+}
+
+#explorerNavShell .workspace-quick-tools-toggle {
+    width: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.workspace-quick-tools-icon {
+    display: grid;
+    grid-template-columns: repeat(3, 4px);
+    grid-template-rows: repeat(3, 4px);
+    gap: 3px;
+    align-items: center;
+    justify-content: center;
+}
+
+.workspace-quick-tools-icon span {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.86;
+}
+
 .termika-sky-time-badge {
     position: absolute;
     top: 62px;

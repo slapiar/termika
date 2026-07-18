@@ -371,6 +371,90 @@ Presúvateľné okno:
 - po zmene veľkosti viewportu sa vráti do dostupnej oblasti,
 - uchováva rozmer a polohu iba vtedy, ak je to pre používateľa užitočné.
 
+### 8.6 Mapové HUD vrstvy, prístroje a quick dock
+
+Mapové pracovisko môže obsahovať trvalé alebo dočasné HUD prvky nad scénou, napríklad kamerový HUD, čas oblohy, súhrn načítaného IGC, smerovú ružicu, mapovú mierku, prepínač reálnej oblohy alebo prepínač 3D oblačnosti.
+
+Tieto prvky patria do vrstvy pracoviska, nie do tela nemodálneho okna. MUSIA byť navrhnuté tak, aby používateľ mohol stále ovládať mapu, kameru a základný pracovný tok.
+
+#### Quick dock
+
+Quick dock je kompaktný panel rýchlych mapových nástrojov rodiny `workbench`.
+
+Používa sa na:
+
+- jednorazové príkazy, napríklad spustenie analýzy, vymazanie výsledkov alebo načítanie IGC,
+- stavové prepínače vrstiev, prístrojov a režimov,
+- rýchle otvorenie alebo skrytie pracovných okien,
+- viditeľné nástroje, ktoré musia zostať dostupné bez otvárania navigačného draweru.
+
+Quick dock MÁ byť dostupný z navigačnej lišty a zo sekcie zobrazenia. Ak má používateľ možnosť panel skryť, stav sa MÁ uchovať ako používateľská preferencia. Prvé zobrazenie pracoviska MÁ panel zobraziť, pokiaľ neexistuje uložená opačná preferencia.
+
+#### Jednorazový príkaz a stavový prepínač
+
+Jednorazový príkaz vykoná akciu a nezostáva aktívny. Príklady:
+
+- načítať súbor,
+- spustiť výpočet,
+- vymazať výsledky,
+- presunúť kameru do konkrétneho režimu.
+
+Stavový prepínač mení trvalý alebo dočasný stav pracoviska. Príklady:
+
+- zobraziť alebo skryť okno,
+- zapnúť alebo vypnúť HUD,
+- zapnúť alebo vypnúť oblohu, 3D oblačnosť alebo mapové prístroje,
+- prepnúť režim kurzora.
+
+Stavový prepínač MUSÍ vizuálne aj prístupovo vyjadriť stav. Používa triedu `is-active` a atribút `aria-pressed="true"` alebo `aria-pressed="false"`. Jednorazový príkaz tieto stavy nepoužíva, pokiaľ po vykonaní skutočne nepredstavuje pretrvávajúci stav.
+
+#### Reverzné ovládanie okien
+
+Tlačidlo, ktoré otvára nemodálne pracovné okno z quick docku, MUSÍ mať reverzné správanie: prvý klik okno zobrazí, druhý klik ho skryje. Pri otvorení sa okno prenesie dopredu cez správcu okien, ak je dostupný.
+
+Odporúčaný kontrakt pre takéto tlačidlo je:
+
+```html
+<button type="button" data-show-window="legend" aria-pressed="false">
+    L
+</button>
+```
+
+Hodnota `data-show-window` je JavaScript hook na existujúce okno. Vzhľad tlačidla NESMIE závisieť od ID cieľového okna, ale od spoločnej triedy alebo stavového atribútu.
+
+#### HUD nad mapou
+
+HUD nad mapou MÁ spĺňať tieto pravidlá:
+
+- neblokuje pointer events mapy, pokiaľ sám nie je interaktívny,
+- používa stabilnú z-index vrstvu určenú tokenmi pracoviska,
+- reaguje na polohu hornej navigácie alebo draweru tak, aby sa neprekrýval s ovládaním,
+- používa čitateľný kontrast aj nad svetlou ortofotomapou alebo oblohou,
+- dátum, čas, smer, mierka a letové hodnoty používajú `font-variant-numeric: tabular-nums`,
+- zmena viditeľnosti HUD nesmie zmeniť analytický výsledok ani stav dátového modelu.
+
+Mapové prístroje, napríklad smerová ružica a mierka, sa považujú za HUD/prístroj pracoviska. Ich výpočty patria do JavaScriptu alebo analytického modulu; CSS určuje iba vzhľad, polohu, kontrast a responzívne správanie.
+
+#### Obloha, oblačnosť a čas letu
+
+Prepínač reálnej oblohy ovláda iba vizuálnu scénu: osvetlenie, Slnko, Mesiac a atmosféru. Prepínač 3D oblačnosti ovláda iba zobrazenie cloud vrstvy. Ani jeden z nich NESMIE ticho meniť meteorologický výpočet, TEMP profil, IGC dáta ani výsledok terénnej analýzy.
+
+Ak sa obloha synchronizuje s načítaným IGC, používateľ musí vidieť, že čas scény je odvodený od letu. Časová značka oblohy MÁ používať UTC alebo explicitne označenú časovú interpretáciu a nesmie byť schovaná v dekoratívnom texte navigácie.
+
+Časový HUD v ľavom hornom rohu pracoviska MÁ byť dvojriadkový informačný blok:
+
+1. horný riadok zobrazuje dátum a čas aktuálnej oblohy alebo scény,
+2. spodný riadok sa zobrazí po načítaní IGC a uvádza dátum letu, čas štartu a čas pristátia z prvého a posledného platného B-záznamu.
+
+Spodný IGC riadok MÁ byť zarovnaný podľa horného časového riadku a má sa automaticky presunúť, ak sa horná navigácia alebo samotný časový HUD posunie. Ak IGC nie je načítané alebo neobsahuje použiteľný dátum a časové body, spodný riadok sa nezobrazuje.
+
+Oba riadky MUSIA používať jednotný vizuálny štýl, čitateľný kontrast nad mapou a `pointer-events: none`, aby neblokovali ovládanie scény. Text IGC riadku musí jasne rozlišovať čas scény od času načítaného letu; odporúčaný formát je napríklad:
+
+```text
+18. 07. 2026: 11:42:07
+IGC 25.06. 2026, Štart - 09:14:03 - Pristátie: 12:48:55
+```
+
 ---
 
 ## 9. Načítanie štýlov okien
