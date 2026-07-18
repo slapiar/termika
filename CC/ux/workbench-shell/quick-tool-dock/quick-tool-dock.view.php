@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="../ux/workbench-shell/quick-tool-dock/sky-realtime-tools.css?v=20260718-01">
+<link rel="stylesheet" href="../ux/workbench-shell/quick-tool-dock/sky-realtime-tools.css?v=20260718-02">
 <nav id="quickToolDock" class="quick-tool-dock" aria-label="Rýchle mapové nástroje">
     <button type="button" id="quickOpenSourcesButton" title="Zdroje a nastavenia">◎</button>
     <button type="button" id="quickAnalyzeButton" title="Spustiť analýzu">▶</button>
@@ -17,4 +17,4 @@
     <button type="button" id="quickCloudToggleButton" class="is-active" aria-pressed="true" title="3D oblačnosť z meteorologického poľa">☁</button>
     <button type="button" id="quickMapInstrumentsToggleButton" class="is-active" aria-pressed="true" title="Smerová ružica a mapová mierka">N</button>
 </nav>
-<script src="../ux/workbench-shell/quick-tool-dock/sky-realtime-tools.js?v=20260718-01"></script>
+<script src="../ux/workbench-shell/quick-tool-dock/sky-realtime-tools.js?v=20260718-02"></script>
