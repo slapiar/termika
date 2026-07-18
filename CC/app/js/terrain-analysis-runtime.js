@@ -82,6 +82,12 @@
     const quickTempReachButton = document.getElementById('quickTempReachButton');
     const quickPilotModelToggleButton = document.getElementById('quickPilotModelToggleButton');
     const pilotModelSelect = document.getElementById('pilotModelSelect');
+    const pilotModelPreview = document.getElementById('pilotModelPreview');
+    const pilotModelPreviewRender = document.getElementById('pilotModelPreviewRender');
+    const pilotModelPreviewIcon = document.getElementById('pilotModelPreviewIcon');
+    const pilotModelPreviewName = document.getElementById('pilotModelPreviewName');
+    const pilotModelPreviewState = document.getElementById('pilotModelPreviewState');
+    const pilotModelPreviewFile = document.getElementById('pilotModelPreviewFile');
     const igcInput = document.getElementById('igcFileInput');
     const loadIgcButton = document.getElementById('loadIgcButton');
     const tempInput = document.getElementById('tempFileInput');
@@ -117,6 +123,9 @@
     const communicationDisposers = [];
     let runtimeCleanupDone = false;
     let sceneInputHandler = null;
+    let pilotModelPreviewViewer = null;
+    let pilotModelPreviewEntity = null;
+    let pilotModelPreviewRenderedId = '';
 
     function formatCenter(point) {
         return point.lat.toFixed(5) + ', ' + point.lon.toFixed(5);
@@ -478,6 +487,9 @@
         });
         if (forceOpen && navDrawer) {
             navDrawer.hidden = false;
+        }
+        if (sectionId === 'sources') {
+            resizePilotModelPreviewViewer();
         }
     }
 
@@ -1565,6 +1577,177 @@
     window.TermikaCC3DObjectLoader?.attachViewer(viewer);
     viewer.clock.shouldAnimate = true;
 
+    function getPilotModelPreviewLabel(modelId) {
+        const labels = {
+            cesium_air: { icon: 'AIR', name: 'Lietadlo' },
+            cesium_drone: { icon: 'DRN', name: 'Dron' },
+            cesium_balloon: { icon: 'BAL', name: 'Balón' },
+            ground_vehicle: { icon: 'CAR', name: 'Pozemné vozidlo' },
+            cesium_milk_truck: { icon: 'TRK', name: 'Nákladiak' }
+        };
+        return labels[modelId] || { icon: '●', name: 'Guľa' };
+    }
+
+    function setPilotModelPreviewPlaceholder(visible) {
+        if (pilotModelPreviewIcon) pilotModelPreviewIcon.hidden = visible === false;
+        if (pilotModelPreviewRender) pilotModelPreviewRender.hidden = visible !== false;
+    }
+
+    function destroyPilotModelPreviewRender() {
+        pilotModelPreviewRenderedId = '';
+        pilotModelPreviewEntity = null;
+        if (!pilotModelPreviewViewer) return;
+        try {
+            if (!pilotModelPreviewViewer.isDestroyed()) pilotModelPreviewViewer.destroy();
+        } catch (error) {
+            console.warn('[pilot-model-preview] destroy failed:', error?.message || error);
+        }
+        pilotModelPreviewViewer = null;
+        if (pilotModelPreviewRender) pilotModelPreviewRender.replaceChildren();
+    }
+
+    function ensurePilotModelPreviewViewer() {
+        if (!pilotModelPreviewRender || typeof Cesium === 'undefined') return null;
+        if (pilotModelPreviewViewer && !pilotModelPreviewViewer.isDestroyed()) return pilotModelPreviewViewer;
+
+        pilotModelPreviewViewer = new Cesium.Viewer(pilotModelPreviewRender, {
+            animation: false,
+            timeline: false,
+            infoBox: false,
+            selectionIndicator: false,
+            geocoder: false,
+            homeButton: false,
+            sceneModePicker: false,
+            baseLayerPicker: false,
+            navigationHelpButton: false,
+            fullscreenButton: false,
+            skyBox: false,
+            skyAtmosphere: false,
+            requestRenderMode: false
+        });
+        pilotModelPreviewViewer.scene.globe.show = false;
+        pilotModelPreviewViewer.scene.fog.enabled = false;
+        pilotModelPreviewViewer.scene.backgroundColor = Cesium.Color.fromCssColorString('#050c12');
+        pilotModelPreviewViewer.scene.screenSpaceCameraController.enableInputs = true;
+        pilotModelPreviewViewer.scene.screenSpaceCameraController.enableTranslate = false;
+        pilotModelPreviewViewer.scene.screenSpaceCameraController.enableTilt = true;
+        pilotModelPreviewViewer.scene.screenSpaceCameraController.enableRotate = true;
+        pilotModelPreviewViewer.scene.screenSpaceCameraController.enableZoom = true;
+        pilotModelPreviewViewer.clock.shouldAnimate = true;
+        resizePilotModelPreviewViewer();
+        return pilotModelPreviewViewer;
+    }
+
+    function resizePilotModelPreviewViewer() {
+        if (!pilotModelPreviewViewer || pilotModelPreviewViewer.isDestroyed()) return;
+        const render = () => {
+            if (!pilotModelPreviewViewer || pilotModelPreviewViewer.isDestroyed()) return;
+            pilotModelPreviewViewer.resize();
+            pilotModelPreviewViewer.scene.requestRender();
+        };
+        window.requestAnimationFrame(render);
+        window.setTimeout(render, 80);
+        window.setTimeout(render, 260);
+        window.setTimeout(render, 700);
+    }
+
+    function renderPilotModelPreview(modelId) {
+        if (!modelId) {
+            destroyPilotModelPreviewRender();
+            setPilotModelPreviewPlaceholder(true);
+            return;
+        }
+
+        const uri = window.TermikaCC3DObjectLoader?.resolveUri?.(modelId);
+        if (!uri) {
+            destroyPilotModelPreviewRender();
+            setPilotModelPreviewPlaceholder(true);
+            return;
+        }
+
+        const previewViewer = ensurePilotModelPreviewViewer();
+        if (!previewViewer) return;
+        setPilotModelPreviewPlaceholder(false);
+
+        if (pilotModelPreviewEntity && pilotModelPreviewRenderedId === modelId) {
+            resizePilotModelPreviewViewer();
+            return;
+        }
+
+        previewViewer.entities.removeAll();
+        const position = Cesium.Cartesian3.fromDegrees(0, 0, 0);
+        const orientation = Cesium.Transforms.headingPitchRollQuaternion(
+            position,
+            new Cesium.HeadingPitchRoll(Cesium.Math.toRadians(35), 0, 0)
+        );
+        pilotModelPreviewEntity = previewViewer.entities.add({
+            name: 'Náhľad 3D objektu pilota',
+            position,
+            orientation,
+            model: {
+                uri,
+                minimumPixelSize: 123,
+                maximumScale: 12000,
+                scale: 1.5
+            }
+        });
+        pilotModelPreviewRenderedId = modelId;
+        previewViewer.trackedEntity = pilotModelPreviewEntity;
+        previewViewer.camera.setView({
+            destination: Cesium.Cartesian3.fromDegrees(0.0008, -0.0015, 260),
+            orientation: {
+                heading: Cesium.Math.toRadians(28),
+                pitch: Cesium.Math.toRadians(-18),
+                roll: 0
+            }
+        });
+        previewViewer.flyTo(pilotModelPreviewEntity, {
+            duration: 0,
+            offset: new Cesium.HeadingPitchRange(
+                Cesium.Math.toRadians(32),
+                Cesium.Math.toRadians(-18),
+                125
+            )
+        }).catch(() => {
+            // Fly-to can reject while the drawer is resizing; scheduled renders below recover.
+        });
+        resizePilotModelPreviewViewer();
+    }
+
+    function updatePilotModelPreviewUi() {
+        if (!pilotModelPreview) return;
+
+        const modelId = pilotModelChoice || '';
+        const label = getPilotModelPreviewLabel(modelId);
+        pilotModelPreview.dataset.model = modelId || 'ball';
+        if (pilotModelPreviewIcon) pilotModelPreviewIcon.textContent = label.icon;
+        if (pilotModelPreviewName) pilotModelPreviewName.textContent = label.name;
+        if (pilotModelPreviewState) {
+            pilotModelPreviewState.textContent = modelId
+                ? (pilotModelActive ? 'Aktívny 3D objekt pilota' : 'Zobrazený v náhľade ZDROJE')
+                : 'Predvolená značka';
+        }
+        if (!pilotModelPreviewFile) return;
+
+        if (!modelId) {
+            pilotModelPreviewFile.textContent = 'bez GLB';
+            pilotModelPreviewFile.title = '';
+            renderPilotModelPreview('');
+            return;
+        }
+
+        try {
+            const uri = window.TermikaCC3DObjectLoader?.resolveUri?.(modelId) || '';
+            pilotModelPreviewFile.textContent = uri ? uri.split('/').pop() : 'nezistené';
+            pilotModelPreviewFile.title = uri;
+            renderPilotModelPreview(modelId);
+        } catch (error) {
+            pilotModelPreviewFile.textContent = 'chyba modelu';
+            pilotModelPreviewFile.title = error?.message || String(error);
+            renderPilotModelPreview('');
+        }
+    }
+
     function updatePilotModelToggleUi() {
         if (!quickPilotModelToggleButton) return;
         quickPilotModelToggleButton.classList.toggle('is-active', pilotModelActive);
@@ -1572,6 +1755,7 @@
         quickPilotModelToggleButton.title = pilotModelChoice
             ? (pilotModelActive ? 'Zobraziť pilota ako guľu' : 'Zobraziť pilota ako 3D objekt')
             : 'Vyber 3D objekt v sekcii Zdroje';
+        updatePilotModelPreviewUi();
     }
 
     if (pilotModelSelect) {
@@ -2872,6 +3056,8 @@
             }
         }
         sceneInputHandler = null;
+
+        destroyPilotModelPreviewRender();
 
         try {
             window.WindyMapAdapterTool?.destroy?.({ silent: true });

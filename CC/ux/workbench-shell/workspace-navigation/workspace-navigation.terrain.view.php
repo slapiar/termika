@@ -79,7 +79,21 @@
                             <option value="cesium_milk_truck">Nákladiak</option>
                         </select>
                     </label>
-                    <p style="margin:6px 0 0;color:#6f8594;font-size:12px;">Model sa načíta vopred (skrytý), tlačidlo ✈ v rýchlom docku ho potom okamžite prepne s guľou.</p>
+                    <p style="margin:6px 0 0;color:#6f8594;font-size:12px;">Model sa načíta vopred; tlačidlo ✈ v rýchlom docku ho prepne s guľou v hlavnej mape.</p>
+                </div>
+                <div class="drawer-card wide pilot-model-preview-card">
+                    <h3>Náhľad objektu pilota</h3>
+                    <div id="pilotModelPreview" class="pilot-model-preview" data-model="ball">
+                        <div class="pilot-model-preview-visual" aria-hidden="true">
+                            <div id="pilotModelPreviewRender" class="pilot-model-preview-render" hidden></div>
+                            <span id="pilotModelPreviewIcon">●</span>
+                        </div>
+                        <dl class="pilot-model-preview-meta">
+                            <div><dt>Objekt</dt><dd id="pilotModelPreviewName">Guľa</dd></div>
+                            <div><dt>Stav</dt><dd id="pilotModelPreviewState">Predvolená značka</dd></div>
+                            <div><dt>Súbor</dt><dd id="pilotModelPreviewFile">bez GLB</dd></div>
+                        </dl>
+                    </div>
                 </div>
                 <div class="drawer-card full">
                     <h3>Zdroje TEMP a sieťové nastavenia</h3>

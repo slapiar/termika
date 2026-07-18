@@ -21,9 +21,17 @@ window.CesiumRender = {
     },
 
     resetujLet: function (viewer) {
-        [this.p3DBodPilota, this.p3DObjektPilota, this.startEntity, this.finishEntity].forEach((entity) => {
+        [this.p3DBodPilota, this.startEntity, this.finishEntity].forEach((entity) => {
             if (entity) viewer.entities.remove(entity);
         });
+
+        if (this.p3DObjektPilota) {
+            if (window.TermikaCC3DObjectLoader?.removeInstance) {
+                window.TermikaCC3DObjectLoader.removeInstance('flight-playback', 'pilot-live-marker', { viewer });
+            } else {
+                viewer.entities.remove(this.p3DObjektPilota);
+            }
+        }
 
         if (this.celaLetovaStopaPrimitive) {
             viewer.scene.primitives.remove(this.celaLetovaStopaPrimitive);
@@ -337,6 +345,22 @@ window.CesiumRender = {
             new Cesium.HeadingPitchRoll(headingRad, 0, 0)
         );
 
+        if (window.TermikaCC3DObjectLoader?.upsertInstance) {
+            this.p3DObjektPilota = window.TermikaCC3DObjectLoader.upsertInstance(this.pilotModelId, {
+                viewer,
+                owner: 'flight-playback',
+                instanceId: 'pilot-live-marker',
+                name: "Aktuálna poloha pilota (3D objekt)",
+                position: pozicia,
+                orientation,
+                minimumPixelSize: 48,
+                maximumScale: 4000,
+                scale: 1,
+                show: true
+            });
+            return;
+        }
+
         if (!this.p3DObjektPilota || this.p3DObjektPilota.__modelId !== this.pilotModelId) {
             if (this.p3DObjektPilota) viewer.entities.remove(this.p3DObjektPilota);
             this.p3DObjektPilota = viewer.entities.add({
@@ -383,6 +407,21 @@ window.CesiumRender = {
         const pozicia = this.p3DBodPilota
             ? this.p3DBodPilota.position.getValue(viewer.clock.currentTime)
             : Cesium.Cartesian3.fromDegrees(11.85, 46.43, 1500);
+
+        if (window.TermikaCC3DObjectLoader?.upsertInstance) {
+            this.p3DObjektPilota = window.TermikaCC3DObjectLoader.upsertInstance(modelId, {
+                viewer,
+                owner: 'flight-playback',
+                instanceId: 'pilot-live-marker',
+                name: "Aktuálna poloha pilota (3D objekt)",
+                position: pozicia,
+                minimumPixelSize: 48,
+                maximumScale: 4000,
+                scale: 1,
+                show: Boolean(this.pilotModelId)
+            });
+            return;
+        }
 
         if (this.p3DObjektPilota) viewer.entities.remove(this.p3DObjektPilota);
         this.p3DObjektPilota = viewer.entities.add({

@@ -184,6 +184,24 @@ if (is_readable($releaseVersionPath)) {
         .drawer-card .action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
         .drawer-card button{padding:7px 10px;border:1px solid #54778a;border-radius:6px;background:#10212b;color:#dff7ff;cursor:pointer}
         .drawer-card button:hover{background:#1c3b4b;border-color:#70e8ff}
+        .pilot-model-preview{display:grid;grid-template-columns:104px minmax(0,1fr);gap:10px;align-items:center;margin:10px 0 8px;padding:10px;border:1px solid rgba(84,119,138,.72);border-radius:8px;background:linear-gradient(135deg,rgba(16,33,43,.86),rgba(7,16,24,.64))}
+        .pilot-model-preview-visual{position:relative;display:flex;align-items:center;justify-content:center;width:104px;height:92px;overflow:hidden;border:1px solid rgba(112,232,255,.46);border-radius:8px;background:radial-gradient(circle at 38% 28%,rgba(112,232,255,.24),rgba(16,33,43,.9) 58%,rgba(4,9,14,.92));box-shadow:inset 0 0 18px rgba(112,232,255,.12)}
+        .pilot-model-preview-card .pilot-model-preview{grid-template-columns:minmax(220px,1fr) minmax(180px,260px);gap:12px;margin-top:0}
+        .pilot-model-preview-card .pilot-model-preview-visual{width:100%;height:180px}
+        .pilot-model-preview-card .pilot-model-preview-meta{align-content:center}
+        .pilot-model-preview-render{position:absolute;inset:0;background:#050c12}
+        .pilot-model-preview-render .cesium-viewer,.pilot-model-preview-render .cesium-viewer-cesiumWidgetContainer,.pilot-model-preview-render .cesium-widget,.pilot-model-preview-render canvas{width:100%;height:100%;display:block}
+        .pilot-model-preview-render .cesium-widget-credits,.pilot-model-preview-render .cesium-viewer-toolbar,.pilot-model-preview-render .cesium-viewer-bottom{display:none!important}
+        .pilot-model-preview-visual span{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border:1px solid rgba(223,247,255,.38);border-radius:999px;background:rgba(2,8,12,.4);color:#dff7ff;font:800 13px/1 system-ui;letter-spacing:.04em;text-align:center}
+        .pilot-model-preview[data-model="cesium_air"] .pilot-model-preview-visual span{border-radius:48% 48% 42% 42%;transform:rotate(-18deg)}
+        .pilot-model-preview[data-model="cesium_drone"] .pilot-model-preview-visual span{border-radius:8px}
+        .pilot-model-preview[data-model="cesium_balloon"] .pilot-model-preview-visual span{border-radius:999px 999px 46% 46%}
+        .pilot-model-preview[data-model="ground_vehicle"] .pilot-model-preview-visual span,.pilot-model-preview[data-model="cesium_milk_truck"] .pilot-model-preview-visual span{border-radius:9px;transform:perspective(120px) rotateX(12deg)}
+        .pilot-model-preview-meta{display:grid;gap:5px;margin:0;min-width:0}
+        .pilot-model-preview-meta div{display:grid;grid-template-columns:46px minmax(0,1fr);gap:6px;align-items:baseline}
+        .pilot-model-preview-meta dt{color:#8fa9b8;font-size:11px;font-weight:700;text-transform:uppercase}
+        .pilot-model-preview-meta dd{margin:0;color:#e8f7ff;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        @media (max-width:760px){.pilot-model-preview{grid-template-columns:92px minmax(0,1fr)}.pilot-model-preview-visual{width:92px;height:84px}.pilot-model-preview-card .pilot-model-preview{grid-template-columns:1fr}.pilot-model-preview-card .pilot-model-preview-visual{width:100%;height:150px}}
         .quick-tool-dock{position:absolute;top:76px;right:12px;z-index:31;display:grid;grid-template-columns:repeat(4,32px);gap:6px;padding:6px;border:1px solid #426277;border-radius:9px;background:rgba(7,16,24,.86);box-shadow:0 8px 18px rgba(0,0,0,.32)}
         .quick-tool-dock button{width:32px;height:32px;padding:0;border:1px solid #54778a;border-radius:8px;background:#10212b;color:#dff7ff;cursor:pointer;font:700 13px/1 system-ui}
         .quick-tool-dock button:hover{background:#1c3b4b;border-color:#70e8ff}
