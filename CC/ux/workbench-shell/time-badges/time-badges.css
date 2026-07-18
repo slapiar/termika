@@ -1,3 +1,8 @@
+#termikaSkyTimeBadge,
+#termikaIgcFlightSummary {
+    display: none;
+}
+
 .tx-time-badges {
     position: fixed;
     left: 12px;
