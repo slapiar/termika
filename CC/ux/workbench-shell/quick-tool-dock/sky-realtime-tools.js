@@ -8,9 +8,15 @@
         cloudsEnabled: true,
         instrumentsEnabled: true,
         instruments: null,
+        timeBadge: null,
         postRenderRemove: null,
         lastScaleUpdate: 0,
-        cloudRecords: []
+        cloudRecords: [],
+        timeMode: "current",
+        flightDate: null,
+        flightStartSeconds: null,
+        flightPoints: [],
+        pilotNetworkHooked: false
     };
 
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
@@ -43,7 +49,7 @@
         activeViewer.scene.light = state.skyEnabled ? new Cesium.SunLight() : new Cesium.DirectionalLight({
             direction: new Cesium.Cartesian3(0.2, 0.3, -1)
         });
-        activeViewer.clock.shouldAnimate = true;
+        activeViewer.clock.shouldAnimate = state.timeMode === "current";
         setButtonState("quickSkyToggleButton", state.skyEnabled);
         activeViewer.scene.requestRender();
     }
@@ -116,6 +122,22 @@
         state.viewer?.scene.requestRender();
     }
 
+    function removeNavigationSubtitle() {
+        const subtitle = document.querySelector("#navShell .nav-brand > span");
+        if (subtitle) subtitle.remove();
+    }
+
+    function createTimeBadge() {
+        if (state.timeBadge) return;
+        const badge = document.createElement("div");
+        badge.id = "termikaSkyTimeBadge";
+        badge.className = "termika-sky-time-badge";
+        badge.setAttribute("aria-label", "Dátum a čas oblohy");
+        badge.textContent = "--. --. ----: --:--:--";
+        document.body.appendChild(badge);
+        state.timeBadge = badge;
+    }
+
     function createInstruments() {
         if (state.instruments || !state.viewer) return;
         const root = document.createElement("div");
@@ -149,6 +171,7 @@
             scaleLabel: root.querySelector(".termika-scale-label")
         };
 
+        createTimeBadge();
         state.postRenderRemove = state.viewer.scene.postRender.addEventListener(updateInstruments);
         updateInstruments();
     }
@@ -200,11 +223,36 @@
         state.instruments.scaleLabel.textContent = formatDistance(targetDistance);
     }
 
+    function formatSkyTime(julianDate) {
+        if (!julianDate) return "--. --. ----: --:--:--";
+        const date = Cesium.JulianDate.toDate(julianDate);
+        const pad = value => String(value).padStart(2, "0");
+        return `${pad(date.getUTCDate())}. ${pad(date.getUTCMonth() + 1)}. ${date.getUTCFullYear()}: ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}:${pad(date.getUTCSeconds())}`;
+    }
+
+    function updateTimeBadge() {
+        if (!state.timeBadge || !state.viewer) return;
+        state.timeBadge.textContent = formatSkyTime(state.viewer.clock.currentTime);
+        state.timeBadge.dataset.mode = state.timeMode;
+        state.timeBadge.title = state.timeMode === "flight"
+            ? "Obloha synchronizovaná s časom načítaného IGC (UTC)"
+            : "Obloha podľa aktuálneho času zariadenia (UTC)";
+
+        const nav = document.getElementById("navShell");
+        if (nav?.dataset.dock === "top") {
+            const bottom = Math.round(nav.getBoundingClientRect().bottom);
+            state.timeBadge.style.top = `${Math.max(8, bottom + 8)}px`;
+        } else {
+            state.timeBadge.style.top = "12px";
+        }
+    }
+
     function updateInstruments() {
         if (!state.instruments || !state.viewer) return;
         const headingDegrees = Cesium.Math.toDegrees(state.viewer.camera.heading || 0);
         state.instruments.rose.style.transform = `rotate(${-headingDegrees}deg)`;
         updateScale();
+        updateTimeBadge();
     }
 
     function setInstrumentsEnabled(enabled) {
@@ -212,6 +260,94 @@
         createInstruments();
         if (state.instruments) state.instruments.root.hidden = !state.instrumentsEnabled;
         setButtonState("quickMapInstrumentsToggleButton", state.instrumentsEnabled);
+    }
+
+    function parseFlightDate(value) {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+        if (!match) return null;
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const date = new Date(Date.UTC(year, month - 1, day));
+        return Number.isFinite(date.getTime()) ? date : null;
+    }
+
+    function pointDate(index) {
+        if (!state.flightDate || !state.flightPoints.length) return null;
+        const safeIndex = Math.max(0, Math.min(state.flightPoints.length - 1, Math.round(Number(index) || 0)));
+        const pointSeconds = finite(state.flightPoints[safeIndex]?.time_s, state.flightStartSeconds);
+        let elapsed = pointSeconds - state.flightStartSeconds;
+        if (elapsed < 0) elapsed += 86400;
+        return new Date(state.flightDate.getTime() + (state.flightStartSeconds + elapsed) * 1000);
+    }
+
+    function configureFlightClock(metadata, points) {
+        const flightDate = parseFlightDate(metadata?.flightDate);
+        if (!flightDate || !Array.isArray(points) || !points.length || !Number.isFinite(Number(points[0]?.time_s))) {
+            state.timeMode = "current";
+            state.flightDate = null;
+            state.flightPoints = [];
+            state.flightStartSeconds = null;
+            if (state.viewer) {
+                state.viewer.clock.currentTime = Cesium.JulianDate.fromDate(new Date());
+                state.viewer.clock.shouldAnimate = true;
+            }
+            return false;
+        }
+
+        state.timeMode = "flight";
+        state.flightDate = flightDate;
+        state.flightPoints = points;
+        state.flightStartSeconds = Number(points[0].time_s);
+
+        const startDate = pointDate(0);
+        const stopDate = pointDate(points.length - 1);
+        const start = Cesium.JulianDate.fromDate(startDate);
+        const stop = Cesium.JulianDate.fromDate(stopDate);
+        state.viewer.clock.startTime = Cesium.JulianDate.clone(start);
+        state.viewer.clock.stopTime = Cesium.JulianDate.clone(stop);
+        state.viewer.clock.currentTime = Cesium.JulianDate.clone(start);
+        state.viewer.clock.clockRange = Cesium.ClockRange.CLAMPED;
+        state.viewer.clock.shouldAnimate = false;
+        state.viewer.timeline?.zoomTo?.(start, stop);
+        state.viewer.scene.requestRender();
+        updateTimeBadge();
+        return true;
+    }
+
+    function syncFlightTime(index) {
+        if (state.timeMode !== "flight" || !state.viewer) return;
+        const date = pointDate(index);
+        if (!date) return;
+        state.viewer.clock.currentTime = Cesium.JulianDate.fromDate(date);
+        state.viewer.clock.shouldAnimate = false;
+        state.viewer.scene.requestRender();
+        updateTimeBadge();
+    }
+
+    function hookPilotNetwork() {
+        if (state.pilotNetworkHooked || !window.PilotNetwork) return false;
+        const network = window.PilotNetwork;
+        if (typeof network.pripravPrehravanieLetu !== "function" || typeof network.posunNaIndex !== "function") return false;
+
+        const originalPrepare = network.pripravPrehravanieLetu;
+        network.pripravPrehravanieLetu = function (points, temp, activeViewer, chart, metadata) {
+            if (activeViewer?.scene && !state.viewer) initialize(activeViewer);
+            configureFlightClock(metadata, points);
+            const result = originalPrepare.apply(this, arguments);
+            syncFlightTime(this.currentIndex || 0);
+            return result;
+        };
+
+        const originalMove = network.posunNaIndex;
+        network.posunNaIndex = function (index, options) {
+            const result = originalMove.apply(this, arguments);
+            syncFlightTime(this.currentIndex);
+            return result;
+        };
+
+        state.pilotNetworkHooked = true;
+        return true;
     }
 
     function bindButtons() {
@@ -223,12 +359,14 @@
     function initialize(activeViewer) {
         if (state.viewer) return;
         state.viewer = activeViewer;
+        removeNavigationSubtitle();
         configureSky(true);
         ensureCloudCollection();
         createInstruments();
         setCloudsEnabled(true);
         setInstrumentsEnabled(true);
         bindButtons();
+        hookPilotNetwork();
 
         window.dispatchEvent(new CustomEvent("termika:sky-ready", {
             detail: { api: window.TermikaSkyTools }
@@ -243,12 +381,15 @@
         setSkyEnabled: configureSky,
         setCloudsEnabled,
         setInstrumentsEnabled,
+        configureFlightClock,
+        syncFlightTime,
         getState: () => ({
             skyEnabled: state.skyEnabled,
             cloudsEnabled: state.cloudsEnabled,
             instrumentsEnabled: state.instrumentsEnabled,
             cloudRecordCount: state.cloudRecords.length,
             renderedCloudCount: state.cloudCollection?.length ?? 0,
+            timeMode: state.timeMode,
             time: state.viewer ? Cesium.JulianDate.toIso8601(state.viewer.clock.currentTime) : null
         })
     });
@@ -257,12 +398,13 @@
         setClouds(event.detail?.clouds ?? event.detail ?? []);
     });
 
-    const waitForViewer = window.setInterval(() => {
+    const integrationWait = window.setInterval(() => {
+        hookPilotNetwork();
         const activeViewer = getViewer();
         if (!activeViewer) return;
-        window.clearInterval(waitForViewer);
         initialize(activeViewer);
+        if (state.pilotNetworkHooked) window.clearInterval(integrationWait);
     }, 120);
 
-    window.setTimeout(() => window.clearInterval(waitForViewer), 30000);
+    window.setTimeout(() => window.clearInterval(integrationWait), 30000);
 })();
