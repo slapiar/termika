@@ -7,8 +7,8 @@
 
     const currentScript = document.currentScript;
     const baseUrl = currentScript?.src || document.baseURI;
-    const styleUrl = new URL('../../ux/workbench-shell/time-badges/time-badges.css?v=1.0.0', baseUrl).href;
-    const moduleUrl = new URL('../../ux/workbench-shell/time-badges/time-badges.js?v=1.0.0', baseUrl).href;
+    const styleUrl = new URL('../../ux/workbench-shell/time-badges/time-badges.css?v=1.0.1', baseUrl).href;
+    const moduleUrl = new URL('../../ux/workbench-shell/time-badges/time-badges.js?v=1.0.1', baseUrl).href;
 
     if (!document.querySelector('link[data-tx-module-style="time-badges"]')) {
         const link = document.createElement('link');
