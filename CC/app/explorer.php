@@ -61,7 +61,7 @@ if (stripos($html, 'ux/igc-parser.js') === false) {
     $bodyScripts .= '    <script src="ux/igc-parser.js?v=20260716-01"></script>' . "\n";
 }
 if (stripos($html, 'js/time-badges.js') === false) {
-    $bodyScripts .= '    <script src="js/time-badges.js?v=1.0.0" data-tx-host-module="time-badges"></script>' . "\n";
+    $bodyScripts .= '    <script src="js/time-badges.js?v=1.0.1" data-tx-host-module="time-badges"></script>' . "\n";
 }
 if (stripos($html, 'js/termika-style-loader.js') === false) {
     $bodyScripts .= '    <script src="js/termika-style-loader.js?v=1.0.0"></script>' . "\n";
