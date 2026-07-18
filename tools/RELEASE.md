@@ -2,71 +2,90 @@
 
 ## 1. Účel
 
-Nástroj zobrazuje v hlavičke ovládacieho panela testovacej analýzy aktuálnu verziu zo súboru:
-
-```text
-RELEASE_VERSION
-```
-
-Používateľ tak okamžite vidí, či pracuje s očakávaným release.
+Nástroj zobrazuje aktuálnu verziu nasadeného modulového runtime TermikaXC. Používateľ tak okamžite vidí, či pracuje s očakávaným release.
 
 ## 2. Identita a stav
 
 | Položka | Hodnota |
 |---|---|
 | ID nástroja | `release-badge` |
-| Stav | `ROZPRACOVANÉ` – opravené po prvom teste, čaká na opakované používateľské overenie |
+| Stav | `ROZPRACOVANÉ` – čaká na opakované používateľské overenie po prechode release na CC |
 | Verzia nástroja | `1.0.1` |
-| Klientská implementácia | `XC/js/terrain-release-badge.js` |
-| Serverový endpoint | `XC/release-version.php` |
-| Autoritatívny zdroj verzie | `RELEASE_VERSION` |
+| Vlastník | `CC/ux/system-status-bar/release-badge/` |
+| Hostiteľský proxy vstup | `CC/app/js/terrain-release-badge.js` |
+| Serverový endpoint | `CC/app/release-version.php` |
+| Nasadzovaný zdroj verzie | `CC/app/asset/RELEASE_VERSION.txt` |
+| Repozitárový zdroj verzie | `RELEASE_VERSION` |
 
 ## 3. Zobrazenie
 
-Statický núdzový text sa po úspešnom načítaní zmení napríklad na:
+Platná verzia sa zobrazuje napríklad ako:
 
 ```text
-TermikaXC v2.6.11 · modulárna analýza terénu
+TermikaXC v3.1.4
 ```
 
-Rovnaká verzia sa použije aj v titulku karty prehliadača.
+Rovnaký release marker používa päta stránok aj cache-busting lokálnych JavaScript a CSS súborov.
 
 ## 4. Spôsob načítania
 
-Pôvodná verzia sa pokúšala čítať `../RELEASE_VERSION` priamo cez HTTP. Pri prvom používateľskom teste server namiesto textového súboru vrátil HTML dokument. Príliš benevolentná normalizácia následne odstránila značky a časť HTML zobrazila v hlavičke.
-
-Od verzie nástroja `1.0.1` sa používa endpoint:
+Endpoint:
 
 ```text
-release-version.php
+CC/app/release-version.php
+```
+
+číta:
+
+```text
+CC/app/asset/RELEASE_VERSION.txt
 ```
 
 Endpoint:
 
-- číta koreňový `RELEASE_VERSION` priamo zo súborového systému,
 - vracia `Content-Type: text/plain`,
 - zakazuje cache,
 - prijíma iba prísny formát verzie,
 - pri chybe vracia chybový stav, nie HTML stránku.
 
-Klient následne vykoná druhú kontrolu regulárnym výrazom. Platný príklad:
+Klient vykoná druhú kontrolu regulárnym výrazom. Platný príklad:
 
 ```text
-2.6.11
+3.1.4
 ```
 
-Neplatný obsah, napríklad HTML dokument, sa odmietne a do hlavičky sa nezapíše.
+Neplatný obsah sa odmietne a do rozhrania sa nezapíše.
 
-## 5. Správanie pri chybe
+## 5. Release kontrakt
+
+`release.sh` pracuje výhradne so stromom:
+
+```text
+CC/
+```
+
+Pri vytvorení release:
+
+1. určí verziu z koreňového `RELEASE_VERSION`,
+2. zapíše ju do `CC/app/asset/RELEASE_VERSION.txt`,
+3. zabalí sledované súbory z `CC/`,
+4. nezabalí žiadny súbor z `XC/`,
+5. overí prítomnosť `CC/app/index.php` a neprítomnosť ciest `XC/` v hotovom ZIP-e.
+
+`XC/` je iba historická referencia v repozitári a nie je súčasťou nasadzovaného produktu.
+
+## 6. Správanie pri chybe
 
 Pri chybe načítania alebo validácie:
 
-- zostane pôvodný núdzový text hlavičky,
+- zostane pôvodný núdzový text,
 - chyba sa zapíše do konzoly,
 - neplatný obsah sa nikdy nezobrazí ako verzia,
 - analytické výsledky a 3D scéna zostanú nedotknuté.
 
-## 6. Verejné rozhranie
+Pri chybe zostavenia release sa `release.sh` ukončí bez vytvorenia platného ZIP-u.
+
+## 7. Verejné rozhranie
 
 ```js
 window.TermikaReleaseBadge = {
@@ -79,11 +98,13 @@ window.TermikaReleaseBadge = {
 };
 ```
 
-## 7. Súvisiace súbory
+## 8. Súvisiace súbory
 
 - [`../RELEASE_VERSION`](../RELEASE_VERSION)
-- [`../XC/release-version.php`](../XC/release-version.php)
-- [`../XC/js/terrain-release-badge.js`](../XC/js/terrain-release-badge.js)
-- [`../postupy/TermikaXC-v2.6.11-oprava-release-a-mesh-renderera.md`](../postupy/TermikaXC-v2.6.11-oprava-release-a-mesh-renderera.md)
-- [`../TOOLS.md`](../TOOLS.md)
-- [`../CHANGELOG.md`](../CHANGELOG.md)
+- [`../release.sh`](../release.sh)
+- [`../CC/app/asset/RELEASE_VERSION.txt`](../CC/app/asset/RELEASE_VERSION.txt)
+- [`../CC/app/release-version.php`](../CC/app/release-version.php)
+- [`../CC/app/js/terrain-release-badge.js`](../CC/app/js/terrain-release-badge.js)
+- [`../CC/ux/system-status-bar/release-badge/`](../CC/ux/system-status-bar/release-badge/)
+- [`../postupy/2026-07-18_Release-cache-inicializacia.md`](../postupy/2026-07-18_Release-cache-inicializacia.md)
+- [`../postupy/2026-07-18_Release-vyhradne-z-CC.md`](../postupy/2026-07-18_Release-vyhradne-z-CC.md)
