@@ -1,0 +1,29 @@
+{
+  "id": "time-badges",
+  "title": "Časové značky pracoviska",
+  "version": "1.0.0",
+  "group": "workbench-shell",
+  "section": "ux",
+  "kind": "module",
+  "type": "instrument",
+  "entry": "time-badges.js",
+  "styles": [
+    "time-badges.css"
+  ],
+  "requires": [],
+  "optional": [
+    "flight-playback"
+  ],
+  "scopes": [
+    "workspace:workbench",
+    "page:setup"
+  ],
+  "autoload": true,
+  "singleton": true,
+  "enabled": true,
+  "migration": {
+    "source_copied": false,
+    "functional_status": "IMPLEMENTOVANE_NEOVERENE",
+    "runtime_enabled": true
+  }
+}
