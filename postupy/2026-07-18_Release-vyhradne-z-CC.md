@@ -1,70 +1,111 @@
 # Release výhradne z CC
 
 **Dátum rozhodnutia:** 18. júl 2026  
-**Stav:** IMPLEMENTOVANÉ, NEOVERENÉ VYTVORENÍM A NASADENÍM NOVÉHO RELEASE
+**Stav:** OPRAVENÉ PO NEÚSPEŠNOM RELEASE 3.1.4, ČAKÁ NA NOVÝ SKÚŠOBNÝ RELEASE
 
-## Rozhodnutie
+## Autoritatívny zdroj
 
-TermikaXC sa od tohto rozhodnutia vyvíja a nasadzuje výhradne zo stromu:
+TermikaXC sa vyvíja a nasadzuje výhradne zo stromu:
 
 ```text
 CC/
 ```
 
-Adresár:
+Adresár `XC/` zostáva v repozitári iba ako historická referencia pôvodného riešenia. Nesmie byť runtime, zdroj buildu, fallback ani súčasť release balíka.
 
-```text
-XC/
-```
+## Oprava chybného prvého návrhu
 
-zostáva v repozitári iba ako historická referencia pôvodného riešenia. Slúži na kontrolu pôvodného zámeru pri diagnostike zrútenej alebo chýbajúcej funkcie. Nie je runtime, zdroj buildu ani súčasť release balíka.
+Prvý CC-only návrh obsahoval dve chyby:
 
-## Dôvod
+1. kontroloval neexistujúci súbor `CC/app/bootstrap-cache.php`, ktorý patril iba starému stromu `XC/`,
+2. ukladal do ZIP-u nadradený priečinok `CC/`, hoci nasadenie potrebuje obsah `CC/` priamo v koreňovom adresári aplikácie.
 
-Predchádzajúci `release.sh` balil iba súbory z `XC/`. Preto sa do release nedostali nové modulové implementácie, view, štýly a hostiteľské proxy uložené v `CC/`. Číslo verzie v päte dokazovalo iba úspešné nasadenie starého XC balíka, nie nasadenie aktuálneho CC runtime.
+Obe pravidlá sú vyradené.
 
-## Nový release kontrakt
+## Záväzná štruktúra ZIP-u
 
-`release.sh` musí:
-
-1. overiť existenciu povinných vstupov a modulových koreňov v `CC/`,
-2. aktualizovať koreňový `RELEASE_VERSION`,
-3. zrkadliť verziu do `CC/app/asset/RELEASE_VERSION.txt`,
-4. baliť iba sledované súbory z `CC/`,
-5. zachovať celý strom potrebný pre runtime: `app/`, `ux/`, `infrastructure/`, `services/`, `kernels/` a ďalšie súčasti CC,
-6. nečítať, nekopírovať ani negenerovať runtime z `XC/`,
-7. vykonať PHP lint všetkých balených PHP súborov,
-8. po vytvorení ZIP-u overiť prítomnosť `CC/app/index.php`,
-9. zastaviť release a odstrániť chybný ZIP, ak archív obsahuje ľubovoľnú cestu `XC/`.
-
-## Vstup aplikácie
-
-Release obsahuje:
+Zdrojové cesty v repozitári:
 
 ```text
 CC/index.php
+CC/app/
+CC/ux/
+CC/infrastructure/
+CC/services/
+CC/kernels/
+CC/registry/
 ```
 
-ktorý presmeruje na:
+sa v ZIP-e ukladajú bez prefixu `CC/`:
 
 ```text
-CC/app/index.php
+index.php
+app/
+ux/
+infrastructure/
+services/
+kernels/
+registry/
 ```
 
-Pri nasadení sa preto musí zachovať koreň stromu `CC/` alebo musí byť webový document root nastavený na rozbalený adresár `CC`.
+ZIP sa preto rozbaľuje priamo do document rootu aplikácie. Koreňový `index.php` následne presmeruje na `app/index.php`.
+
+V ZIP-e NESMIE vzniknúť ani priečinok `CC/`, ani priečinok `XC/`.
+
+## Release kontrakt
+
+`release.sh` MUSÍ:
+
+1. overiť iba skutočné nasadzované vstupy a koreňové moduly v `CC/`,
+2. nikdy nehľadať chýbajúci súbor v `XC/`,
+3. aktualizovať repozitárový `RELEASE_VERSION`,
+4. zrkadliť verziu do `CC/app/asset/RELEASE_VERSION.txt`,
+5. zostaviť dočasný staging výhradne z Gitom sledovaných súborov pod `CC/`,
+6. pri stagingu odstrániť z ciest prefix `CC/`,
+7. nevkladať do ZIP-u koreňový repozitárový `RELEASE_VERSION`, pretože nepatrí do nasadzovaného runtime,
+8. nezabaliť `local-config.php` ani `.local-config.php`,
+9. vykonať PHP lint všetkých balených PHP súborov,
+10. vytvoriť ZIP s `index.php` priamo v jeho koreni,
+11. po vytvorení uložiť výpis ZIP-u do súboru a kontrolovať ho bez krehkej pipeline `unzip | grep` pri `pipefail`,
+12. overiť prítomnosť `index.php`, `app/index.php`, release endpointu, release markera a stromov `ux/`, `infrastructure/`, `services/`, `kernels/`,
+13. overiť, že release marker v ZIP-e presne zodpovedá požadovanej verzii,
+14. chybný ZIP okamžite odstrániť.
 
 ## Zakázané postupy
 
-- kopírovať zmeny z CC späť do XC iba kvôli release,
-- spúšťať pred release build, ktorý prepíše aktuálny `CC/app` obsahom z `XC/`,
-- používať XC ako tichý fallback pri chýbajúcom CC súbore,
-- vydávať release iba podľa správneho čísla v päte bez kontroly, z ktorého stromu bol vytvorený.
+- baliť `XC/`,
+- baliť nadradený priečinok `CC/`,
+- kopírovať alebo generovať `CC/app` z `XC/` pred release,
+- pridávať do kontroly cesty iba podľa pamäti bez overenia ich existencie,
+- baliť lokálne tajné konfigurácie,
+- označiť release za overený iba preto, že bol vytvorený ZIP alebo sa zmenilo číslo v päte.
 
 ## Povinné overenie nasledujúceho release
 
-- výpis ZIP-u neobsahuje `XC/`,
-- výpis ZIP-u obsahuje `CC/index.php` a `CC/app/index.php`,
-- testovacia stránka načíta nové modulové view z `CC/ux`,
-- časové značky a quick-dock zodpovedajú aktuálnemu CC zdroju,
-- päta zobrazuje rovnakú verziu ako `CC/app/asset/RELEASE_VERSION.txt`,
-- po nasadení sa v Network paneli neobjavujú lokálne požiadavky smerujúce do `XC/`.
+Výpis ZIP-u musí obsahovať napríklad:
+
+```text
+index.php
+app/index.php
+app/terrain-analysis-test.php
+app/asset/RELEASE_VERSION.txt
+ux/workbench-shell/time-badges/module.json
+ux/workbench-shell/quick-tool-dock/quick-tool-dock.view.php
+```
+
+Nesmie obsahovať:
+
+```text
+CC/
+XC/
+local-config.php
+.local-config.php
+```
+
+Po nasadení sa musí potvrdiť:
+
+- otvorenie aplikácie cez koreňový `index.php`,
+- načítanie modulov z `ux/`, `infrastructure/`, `services/` a `kernels/`,
+- zobrazenie aktuálneho quick-docku a časových značiek,
+- rovnaká verzia v päte a v `app/asset/RELEASE_VERSION.txt`,
+- žiadna lokálna požiadavka smerujúca do `XC/`.
