@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="../ux/workbench-shell/quick-tool-dock/sky-realtime-tools.css?v=20260718-01">
 <nav id="quickToolDock" class="quick-tool-dock" aria-label="Rýchle mapové nástroje">
     <button type="button" id="quickOpenSourcesButton" title="Zdroje a nastavenia">◎</button>
     <button type="button" id="quickAnalyzeButton" title="Spustiť analýzu">▶</button>
@@ -12,4 +13,8 @@
     <button type="button" id="quickLoadIgcButton" title="Načítať IGC (dátum letu → TEMP podľa trate)">⇧</button>
     <button type="button" id="quickTempReachButton" title="Zobraziť dosah pripojených TEMP profilov (100 km)">⊚</button>
     <button type="button" id="quickPilotModelToggleButton" title="Vyber 3D objekt v sekcii Zdroje" disabled>✈</button>
+    <button type="button" id="quickSkyToggleButton" class="is-active" aria-pressed="true" title="Reálna poloha Slnka a osvetlenie oblohy">☀</button>
+    <button type="button" id="quickCloudToggleButton" class="is-active" aria-pressed="true" title="3D oblačnosť z meteorologického poľa">☁</button>
+    <button type="button" id="quickMapInstrumentsToggleButton" class="is-active" aria-pressed="true" title="Smerová ružica a mapová mierka">N</button>
 </nav>
+<script src="../ux/workbench-shell/quick-tool-dock/sky-realtime-tools.js?v=20260718-01"></script>
