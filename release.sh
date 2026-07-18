@@ -119,7 +119,7 @@ elif [[ -z "$VERSION" ]]; then
   VERSION="$CURRENT_VERSION"
 fi
 
-if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$ ]]; then
+if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$ ]]; then
   echo "Error: invalid version '$VERSION'. Expected x.y.z, for example 3.1.5 or 3.1.5-rc1." >&2
   exit 1
 fi
@@ -266,7 +266,7 @@ for required_file in "${REQUIRED_ARCHIVE_FILES[@]}"; do
 done
 
 for required_prefix in "ux/" "infrastructure/" "services/" "kernels/"; do
-  if ! grep -Fq "$required_prefix" "$ARCHIVE_LIST"; then
+  if ! grep -q "^${required_prefix}" "$ARCHIVE_LIST"; then
     rm -f "$OUT_FILE"
     echo "Error: created archive does not contain runtime tree $required_prefix" >&2
     exit 1
