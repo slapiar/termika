@@ -7,7 +7,6 @@
     const STORAGE_KEY = "termikaXC.quickToolDock.visible.v1";
     let dock = null;
     let navButton = null;
-    let displayButton = null;
 
     function readVisible() {
         try {
@@ -39,7 +38,6 @@
         dock.hidden = !visible;
         dock.dataset.visible = visible ? "true" : "false";
         updateControl(navButton, visible);
-        updateControl(displayButton, visible);
         if (save) saveVisible(visible);
         window.dispatchEvent(new CustomEvent("termika:quick-tool-dock-visibility", {
             detail: { visible }
@@ -88,21 +86,6 @@
         return navButton;
     }
 
-    function createDisplayButton() {
-        if (displayButton?.isConnected) return displayButton;
-        const section = document.querySelector('.nav-drawer-section[data-nav-section="display"] .action-row')
-            || document.querySelector('[data-nav-section="display"] .action-row');
-        if (!section) return null;
-
-        displayButton = document.createElement("button");
-        displayButton.id = "displayQuickToolsToggle";
-        displayButton.type = "button";
-        displayButton.textContent = "Panel nástrojov";
-        displayButton.addEventListener("click", toggleVisible);
-        section.prepend(displayButton);
-        return displayButton;
-    }
-
     function toggleWindow(targetId, sourceButton) {
         const target = document.getElementById(targetId);
         if (!target) return false;
@@ -147,10 +130,9 @@
 
         const timer = window.setInterval(() => {
             createNavButton();
-            createDisplayButton();
             setVisible(!dock.hidden, { save: false });
             synchronizeWindowButtons();
-            if (navButton && (displayButton || !document.getElementById("navShell"))) {
+            if (navButton || !findNavMeta()) {
                 window.clearInterval(timer);
             }
         }, 120);

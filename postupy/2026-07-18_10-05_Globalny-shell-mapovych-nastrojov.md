@@ -52,6 +52,7 @@ Tento súbor zostáva zachovaný iba ako záznam vyradeného rozhodnutia. Pri ď
 
 - `postupy/Joyee.md`,
 - `postupy/2026-07-17_06-06_CC-modularna-struktura-a-kontrola-postupov.md`,
+- `postupy/2026-07-18_09-10_Quick-dock-v-indexe-a-reverzne-ovladanie.md`,
 - `postupy/2026-07-18_09-50_Casove-znacky-ako-samostatny-modul.md`,
 - `tools/TIME-BADGES.md`,
 - aktuálny Dizajn manuál.

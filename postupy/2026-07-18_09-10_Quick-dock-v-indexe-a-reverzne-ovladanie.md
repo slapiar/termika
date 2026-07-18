@@ -10,9 +10,9 @@ Modul oblohy, časová značka a IGC súhrn boli načítané iba cez quick-dock 
 
 - `quick-tool-dock` sa načítava implicitne aj v hlavnom prostredí cez view modulu prehrávania letu,
 - stav zobrazenia panela sa zachováva v `localStorage`, pričom prvé zobrazenie je zapnuté,
-- do navigačnej lišty sa dynamicky dopĺňa prepínač `NÁSTROJE` vedľa ovládania HUD/LET,
-- do sekcie `Zobrazenie` sa dopĺňa rovnaký prepínač panela,
-- oba ovládače sú synchronizované a druhým kliknutím panel skryjú,
+- do navigačnej lišty sa dynamicky dopĺňa ikonový prepínač s maticou 9 bodiek vedľa ovládania HUD/LET,
+- textový prepínač `NÁSTROJE` sa v navigácii nevytvára, aby nevznikol druhý vstup k tomu istému panelu,
+- ikonový ovládač druhým kliknutím panel skryje,
 - tlačidlá s atribútom `data-show-window` majú jednotné reverzné správanie: prvé kliknutie okno zobrazí, druhé ho skryje,
 - tlačidlá priebežne zobrazujú stav cez `is-active` a `aria-pressed`.
 
