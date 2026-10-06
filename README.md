@@ -7,6 +7,11 @@ Od 6. 10. 2026 je dohodnutá nová cieľová adresa **https://xc.toptour.top/**.
 Aplikácia bude v koreni subdomény, bez podadresára `/termika/`.
 Testovacie pracovisko: https://xc.toptour.top/terrain-analysis-test.php.
 
+Serverový koreň subdomény (document root, potvrdený používateľom 6. 10. 2026):
+`/home/u706532562/domains/toptour.top/public_html/xc`
+
+Táto cesta na hostingu zodpovedá URL `https://xc.toptour.top/`.
+
 Stav: adresa je dohodnutá; nasadenie a dostupnosť zatiaľ neboli overené.
 Vo Windy whiteliste bude potrebné nastaviť hostname `xc.toptour.top` bez protokolu a cesty.
 
