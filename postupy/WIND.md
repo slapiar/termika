@@ -221,9 +221,9 @@ aby sa nestracal cas hladanim, kde je problem.
 ### Domain whitelist pravidlo
 
 - **Do whitelist pola vo Windy dashboarde (api.windy.com) zapisuj holy hostname, BEZ `https://` a BEZ path.**
-- Spravne: `xc.flyfree.cloud`
-- Nespravne: `https://xc.flyfree.cloud` (s protokolom) -> Windy takyto zaznam **odmietne zhodovat** s realnym originom a vrati 403 `Cannot use Windy API, key is used from unauthorized domain.`, hoci sa na prvy pohlad zda spravny.
-- Nespravne: `https://xc.flyfree.cloud/termika` (s cestou).
+- Spravne: `xc.toptour.top`
+- Nespravne: `https://xc.toptour.top` (s protokolom) -> Windy takyto zaznam **odmietne zhodovat** s realnym originom a vrati 403 `Cannot use Windy API, key is used from unauthorized domain.`, hoci sa na prvy pohlad zda spravny.
+- Nespravne: `https://xc.toptour.top/terrain-analysis-test.php` (s cestou).
 - Overene empiricky (16.7.2026): novy kluc s whitelistom zapisanym vo forme `https://<domena>` zlyhaval s 403 aj pre presne zhodujuci sa origin; po oprave na holy hostname bez protokolu zacal fungovat.
 - Pri Codespaces je potrebna presna subdomena bez protokolu, napr. `probable-disco-vgp5qpjpw5q3xjj5-8000.app.github.dev`.
 

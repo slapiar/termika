@@ -1,6 +1,15 @@
 # termika
 Výpočet preletových možností a stavu pilota za letu
 
+## Adresa nasadenia
+
+Od 6. 10. 2026 je dohodnutá nová cieľová adresa **https://xc.toptour.top/**.
+Aplikácia bude v koreni subdomény, bez podadresára `/termika/`.
+Testovacie pracovisko: https://xc.toptour.top/terrain-analysis-test.php.
+
+Stav: adresa je dohodnutá; nasadenie a dostupnosť zatiaľ neboli overené.
+Vo Windy whiteliste bude potrebné nastaviť hostname `xc.toptour.top` bez protokolu a cesty.
+
 ## Spustenie v GitHub Codespaces
 
 Pre lokálny štart v Codespaces použi:

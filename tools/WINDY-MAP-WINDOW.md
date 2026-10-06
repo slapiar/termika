@@ -104,7 +104,7 @@ Handler `windyUseFocusButton`:
 
 Kľúč `WINDY_MAP_KEY` sa nastavuje cez `setup.php` a číta z `XC/asset/local-config.php` (mimo git repozitára – pozri `.gitignore`).
 
-**Dôležité (overené 16.7.2026):** Windy Map Forecast API whitelist domén sa zapisuje ako **holý hostname bez `https://` a bez cesty** (napr. `xc.flyfree.cloud`), nie ako plný origin s protokolom. Detailné pravidlo a história overenia sú v [postupy/WIND.md – sekcia „Domain whitelist pravidlo“](../postupy/WIND.md#domain-whitelist-pravidlo).
+**Dôležité (overené 16.7.2026):** Windy Map Forecast API whitelist domén sa zapisuje ako **holý hostname bez `https://` a bez cesty** (napr. `xc.toptour.top`), nie ako plný origin s protokolom. Detailné pravidlo a história overenia sú v [postupy/WIND.md – sekcia „Domain whitelist pravidlo“](../postupy/WIND.md#domain-whitelist-pravidlo).
 
 | Príznak | Typická príčina |
 |---|---|

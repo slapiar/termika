@@ -4,6 +4,19 @@ Tento súbor zachytáva významné používateľské, analytické a architektoni
 
 Záznam sa zavádza od pracovného obdobia po release `v2.6.9`. Staršie verzie zatiaľ nie sú spätne rekonštruované, aby sa do histórie nedopĺňali neoverené údaje.
 
+## 2026-10-06 – Nová adresa nasadenia
+
+### Zmenené
+
+- Po expirácii pôvodnej domény bola dohodnutá nová adresa TermikaXC: `https://xc.toptour.top/`.
+- Aplikácia bude nasadená priamo v koreni subdomény, bez podadresára `/termika/`; cesty k jednotlivým stránkam zostávajú zachované.
+- Odkazy a príklady hostname v dokumentácii boli aktualizované vrátane pokynov pre Windy whitelist.
+- Historický záznam júlového overovania odlišuje novú cieľovú adresu od pôvodne testovaného nasadenia.
+
+### Stav overenia
+
+- Aktualizovaná dokumentácia; nové nasadenie, DNS, HTTPS ani nastavenie domény v externých API zatiaľ neboli overené alebo zmenené v rámci tejto úpravy.
+
 ## v2.6.19
 
 ### Pridané

@@ -19,7 +19,7 @@ Overenie v XC sa eviduje samostatne od prenosu zdrojov do CC. Neoverený modul m
 - Všetkých osem manifestov je platný JSON a každý odkazovaný zdroj v `XC` existuje.
 - Všetky kotvy uvedené za `#` boli nájdené v príslušnom zdroji.
 - Opravený bol chybný zápis pôvodu `window-core` z `XC/terrain-analysis-test.php:.floating-window` na `XC/terrain-analysis-test.php#.floating-window`.
-- Produkčná inštancia je v podadresári `https://xc.flyfree.cloud/termika/`; testovacie pracovisko sa z nej otvára na `https://xc.flyfree.cloud/termika/terrain-analysis-test.php`.
+- Aktualizácia adresy (6. 10. 2026): nová cieľová adresa je `https://xc.toptour.top/`; testovacie pracovisko bude na `https://xc.toptour.top/terrain-analysis-test.php`. Aplikácia bude v koreni subdomény, bez podadresára `/termika/`. Júlové výsledky nižšie patria pôvodnému nasadeniu; nepotvrdzujú funkčnosť novej adresy.
 - Živý test potvrdil na testovacom pracovisku pätičku `© PIAR Team 2026 · v3.1.0`.
 - Cloudový prehliadač nevytvoril WebGL kontext (`Error constructing CesiumWidget`), preto výsledok nemožno použiť ako dôkaz mapových a Cesium interakcií. V pracovnom prostredí zároveň nie je PHP runtime pre plnohodnotné lokálne spustenie.
 
